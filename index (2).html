@@ -1,0 +1,4016 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HEILOG - Painel do Analista</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Chart.js e plugins -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix"></script>
+
+  <style>
+    body { background-color: #111827; }
+    .modal-backdrop { transition: opacity 0.3s ease; }
+    .kpi-card-sm {
+      background-color: rgba(31, 41, 55, 0.7);
+      border: 1px solid rgba(75, 85, 99, 0.5);
+    }
+    @keyframes pulse-red { 50% { background-color: rgba(239, 68, 68, 0.15); } }
+    .animate-pulse-red { animation: pulse-red 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+    @keyframes pulse-yellow { 50% { background-color: rgba(245, 158, 11, 0.15); } }
+    .animate-pulse-yellow { animation: pulse-yellow 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+
+    #performance-chart { cursor: pointer; }
+
+    .alert-banner { animation: fadeIn-slideDown 0.5s ease-out forwards; }
+    @keyframes fadeIn-slideDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+
+<body class="text-white font-sans">
+<div class="max-w-screen-2xl mx-auto p-4 sm:p-6 lg:p-8">
+
+  <!-- Cabeçalho -->
+  <header class="mb-6 flex flex-wrap justify-between items-center gap-4">
+    <div>
+      <h1 class="text-3xl font-bold">Painel do Analista</h1>
+      <p class="text-gray-400 mt-1">Visão em tempo real do pátio - HEILOG</p>
+    </div>
+
+    <div id="predictive-alert" class="w-full md:w-auto text-center md:text-right"></div>
+
+    <div>
+      <button id="toggle-sound-btn" class="p-2 rounded-full hover:bg-gray-700" title="Ativar/Desativar Som"></button>
+    </div>
+  </header>
+
+  <!-- Alertas -->
+  <div id="system-alerts-container" class="mb-6 space-y-2"></div>
+
+  <!-- Abas -->
+  <div class="mb-4">
+    <div class="border-b border-gray-700">
+      <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+        <button id="tab-patio" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-blue-500 text-white">Pátio</button>
+        <button id="tab-historico" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-300">Histórico</button>
+        <button id="tab-ocorrencias" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-300">Ocorrências</button>
+        <button id="tab-performance" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-300">Perf. do Turno</button>
+        <!-- ✅ NOVA ABA -->
+        <button id="tab-motoristas" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-300">Motoristas</button>
+        <button id="tab-baldeios" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-300">Baldeios Ritmo</button>
+        <button id="tab-ritmo" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-300">Controle Ritmo</button>
+        <button id="tab-dashboard" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-300">Dashboard</button>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Conteúdo -->
+  <div id="main-content">
+
+    <!-- KPIs + gráfico lateral -->
+    <section id="kpi-section" class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-6" id="kpi-container"></div>
+
+      <div class="bg-gray-800 p-4 rounded-lg shadow-lg flex flex-col justify-center items-center">
+        <h3 id="context-chart-title" class="text-lg font-semibold text-white mb-2">Composição do Pátio</h3>
+        <div id="context-chart-container" class="relative w-full h-full min-h-52">
+          <canvas id="context-chart" class="max-h-52"></canvas>
+          <div id="context-chart-no-data" class="absolute inset-0 flex items-center justify-center text-gray-400 hidden">
+            <span>Pátio vazio.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tabela principal -->
+    <main id="table-main-content" class="bg-gray-800 p-6 rounded-lg shadow-lg">
+      <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
+        <h2 id="table-title" class="text-2xl font-semibold">Pátio</h2>
+
+        <div id="filters-container" class="flex flex-wrap items-center gap-4">
+
+          <!-- Filtros avançados (Histórico) -->
+          <div id="advanced-filters" class="hidden flex-wrap items-center gap-4">
+            <input type="date" id="filter-date"
+                   class="bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <select id="filter-shift"
+                    class="bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="todos">Todos os Turnos</option>
+              <option value="1">1º Turno (06-14h)</option>
+              <option value="2">2º Turno (14-22h)</option>
+              <option value="3">3º Turno (22-06h)</option>
+            </select>
+            <button id="clear-date-filter-btn"
+                    class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2">
+              Limpar
+            </button>
+          </div>
+
+          <!-- Filtro Tempo no Pátio (somente Pátio) -->
+          <select id="filter-tempo-patio"
+                  class="bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="todos">Tempo no Pátio (Todos)</option>
+            <option value="0">0h (0-59m)</option>
+            <option value="1">1h (1:00-1:59)</option>
+            <option value="2">2h (2:00-2:59)</option>
+            <option value="3">3h (3:00-3:59)</option>
+            <option value="4">4h (4:00-4:59)</option>
+            <option value="5">5h (5:00-5:59)</option>
+            <option value="6">6h (6:00-6:59)</option>
+            <option value="7">7h (7:00-7:59)</option>
+            <option value="8plus">8h+ (>= 8h)</option>
+          </select>
+
+          <select id="filter-status"
+                  class="bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+
+          <select id="filter-transportadora"
+                  class="bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="todas">Todas Transportadoras</option>
+          </select>
+
+          <input type="text" id="search-input" placeholder="Buscar por DT, Motorista ou Placas..."
+                 class="w-full sm:w-auto bg-gray-700 border border-gray-600 rounded-lg py-2 pl-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+
+          <button id="mass-finish-btn"
+                  class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2">
+            Finalizar em Massa
+          </button>
+
+          <button id="clear-history-btn"
+                  class="hidden bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2">
+            Limpar Histórico
+          </button>
+
+          <button id="clear-occurrences-btn"
+                  class="hidden bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2">
+            Limpar Ocorrências
+          </button>
+
+          <button id="export-csv-btn"
+                  class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2">
+            Exportar
+          </button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead id="table-head"></thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+    </main>
+
+    <!-- Performance do turno -->
+    <div id="performance-content" class="hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-1 space-y-6">
+          <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+            <h3 id="hora-hora-title" class="text-xl font-bold mb-4">Chegadas no Pátio (Hora a Hora)</h3>
+            <div id="hora-hora-table" class="max-h-80 overflow-y-auto"></div>
+          </div>
+
+          <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+            <h3 class="text-lg font-bold mb-4">Fluxo Carregamento (Finalizados no Turno)</h3>
+            <div id="fluxo-carregamento-kpis" class="grid grid-cols-2 gap-4"></div>
+          </div>
+
+          <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+            <h3 class="text-lg font-bold mb-4">Fluxo para Entrar (Veículos no Pátio)</h3>
+            <div id="fluxo-entrar-kpis" class="grid grid-cols-2 gap-4"></div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-2 bg-gray-800 p-4 rounded-lg shadow-lg">
+          <h3 id="performance-chart-title" class="text-xl font-bold mb-4">Chegadas no Pátio (Hora a Hora)</h3>
+          <div id="performance-chart-container" class="relative h-96">
+            <canvas id="performance-chart"></canvas>
+            <div id="performance-chart-no-data" class="absolute inset-0 flex items-center justify-center text-gray-400 hidden">
+              <span>Sem chegadas no turno para exibir.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ✅ MOTORISTAS -->
+    <div id="motoristas-content" class="hidden">
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+        <h3 class="text-2xl font-semibold">Motoristas</h3>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <input id="drivers-search" type="text"
+                 placeholder="Buscar por Nome, CPF, Telefone ou Placas..."
+                 class="w-full sm:w-80 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+
+          <select id="drivers-transportadora-filter"
+                  class="bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="todas">Todas Transportadoras</option>
+          </select>
+</div>
+      </div>
+
+      <div class="overflow-x-auto bg-gray-800 p-6 rounded-lg shadow-lg">
+        <table class="w-full text-left">
+          <thead class="border-b border-gray-700">
+            <tr>
+              <th class="p-4 text-sm font-semibold text-gray-400">Motorista</th>
+              <th class="p-4 text-sm font-semibold text-gray-400">Transportadora</th>
+              <th class="p-4 text-sm font-semibold text-gray-400">Placa Cavalo</th>
+              <th class="p-4 text-sm font-semibold text-gray-400">Placa Carreta</th>
+              <th class="p-4 text-sm font-semibold text-gray-400">Última DT</th>
+              <th class="p-4 text-sm font-semibold text-gray-400">Encerrada em</th>
+              <th class="p-4 text-sm font-semibold text-gray-400">TMP (última)</th>
+              <th class="p-4 text-sm font-semibold text-gray-400">Encerradas (7d)</th>
+              <th class="p-4 text-sm font-semibold text-gray-400">Resumo</th>
+              <th class="p-4 text-sm font-semibold text-gray-400">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="drivers-table-body"></tbody>
+        </table>
+      </div>
+
+      <!-- Paginação (leve) -->
+      <div class="flex items-center justify-between mt-4" id="drivers-pagination-bar">
+        <p id="drivers-pagination-info" class="text-sm text-gray-400"></p>
+        <button id="drivers-load-more"
+                class="hidden bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg">
+          Carregar mais
+        </button>
+      </div>
+    </div>
+
+    
+    <!-- ✅ Baldeios Ritmo -->
+    <div id="baldeios-content" class="hidden">
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+        <h3 class="text-2xl font-semibold">Baldeios — Ritmo</h3>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <input id="baldeios-date" type="date"
+            class="bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+
+          <input id="baldeios-search" type="text" placeholder="Buscar placa..."
+            class="w-full sm:w-72 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+
+          <select id="baldeios-plate-mode"
+            class="bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="carreta">Placa Carreta (prioridade)</option>
+            <option value="cavalo">Placa Cavalo (prioridade)</option>
+          </select>
+
+          <button id="baldeios-export-csv-btn"
+            class="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow whitespace-nowrap">
+            Exportar CSV
+          </button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto bg-gray-800 p-6 rounded-lg shadow-lg">
+        <table class="w-full text-left">
+          <thead class="border-b border-gray-700">
+            <tr>
+              <th class="p-4 text-sm font-semibold text-gray-400">Placa</th>
+              <th class="p-4 text-sm font-semibold text-gray-400">Marcações no dia</th>
+              <th class="p-4 text-sm font-semibold text-gray-400">Horários</th>
+              <th class="p-4 text-sm font-semibold text-gray-400">Tempo entre marcações</th>
+              <th class="p-4 text-sm font-semibold text-gray-400">1ª → Última</th>
+            </tr>
+          </thead>
+          <tbody id="baldeios-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+
+    <!-- ✅ Controle Ritmo (Placa a Placa) -->
+    <div id="ritmo-placa-content" class="hidden">
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+        <div>
+          <h3 class="text-2xl font-semibold">Controle Ritmo — Placa a Placa</h3>
+          <p class="text-sm text-gray-400 mt-1">Agrupa baldeios por placa e separa por dia (inclui histórico antigo + novos em tempo real).</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-gray-400">De</span>
+            <input id="ritmo-start" type="date"
+              class="bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-gray-400">Até</span>
+            <input id="ritmo-end" type="date"
+              class="bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+          </div>
+
+          <select id="ritmo-plate-mode"
+            class="bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="carreta">Placa Carreta (prioridade)</option>
+            <option value="cavalo">Placa Cavalo (prioridade)</option>
+          </select>
+
+          <input id="ritmo-search" type="text" placeholder="Buscar placa/DT..."
+            class="w-full sm:w-72 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+
+          <label class="flex items-center gap-2 text-sm text-gray-300 bg-gray-700/40 border border-gray-600 rounded-lg py-2 px-3">
+            <input id="ritmo-only-baldeio" type="checkbox" class="accent-blue-500">
+            <span>Somente Baldeio</span>
+          </label>
+
+          <button id="ritmo-refresh-btn"
+            class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg">
+            Atualizar
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 bg-gray-800 p-6 rounded-lg shadow-lg overflow-x-auto">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-lg font-semibold">Resumo por Placa</h4>
+            <p id="ritmo-summary-info" class="text-sm text-gray-400"></p>
+          </div>
+
+          <table class="w-full text-left">
+            <thead class="border-b border-gray-700">
+              <tr>
+                <th class="p-4 text-sm font-semibold text-gray-400">Placa</th>
+                <th class="p-4 text-sm font-semibold text-gray-400">Dias</th>
+                <th class="p-4 text-sm font-semibold text-gray-400">Marcações</th>
+                <th class="p-4 text-sm font-semibold text-gray-400">Última</th>
+                <th class="p-4 text-sm font-semibold text-gray-400">Média entre marcações</th>
+                <th class="p-4 text-sm font-semibold text-gray-400">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="ritmo-table-body"></tbody>
+          </table>
+
+          <div class="flex items-center justify-between mt-4">
+            <p id="ritmo-pagination-info" class="text-sm text-gray-400"></p>
+            <button id="ritmo-load-more"
+              class="hidden bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg">
+              Carregar mais
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-lg font-semibold">Detalhe por Dia</h4>
+            <button id="ritmo-clear-selected"
+              class="hidden bg-gray-700 hover:bg-gray-600 text-white font-bold py-1.5 px-3 rounded-lg text-sm">
+              Limpar seleção
+            </button>
+          </div>
+
+          <div id="ritmo-detail" class="text-gray-300 text-sm">
+            <div class="p-4 rounded-lg border border-white/10 bg-black/10">
+              Selecione uma placa no resumo para ver os dias e os intervalos.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard gerencial -->
+    <div id="dashboard-content" class="hidden">
+      <div class="flex justify-end mb-4">
+        <select id="dashboard-transportadora-filter"
+                class="bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="todas">Todas Transportadoras</option>
+        </select>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+          <h3 class="text-xl font-bold mb-4">Marcações Diárias (Últimos 7 dias)</h3>
+          <div class="relative h-80">
+            <canvas id="daily-productivity-chart"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+          <h3 class="text-xl font-bold mb-4">Evolução do TMP (por marcação — Últimos 7 dias)</h3>
+          <div class="relative h-80">
+            <canvas id="tmp-evolution-chart"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+          <h3 class="text-xl font-bold mb-4">Ranking de Marcações (Últimos 7 dias)</h3>
+          <div class="relative h-80">
+            <canvas id="volume-ranking-chart"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+          <h3 class="text-xl font-bold mb-4">Marcações por Turno (Últimos 7 dias)</h3>
+          <div class="relative h-80">
+            <canvas id="shift-comparison-chart"></canvas>
+          </div>
+        </div>
+
+        <div class="lg:col-span-2 bg-gray-800 p-6 rounded-lg shadow-lg">
+          <h3 class="text-xl font-bold mb-4">Heatmap de Marcações (Semana — por hora)</h3>
+          <div class="relative h-96">
+            <canvas id="heatmap-chart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modais -->
+<div id="details-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center modal-backdrop hidden"></div>
+<div id="occurrence-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center modal-backdrop hidden"></div>
+<div id="resolution-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center modal-backdrop hidden"></div>
+
+<div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center modal-backdrop hidden">
+  <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm">
+    <h3 id="confirm-modal-title" class="text-xl font-bold text-white mb-4">Confirmar Ação</h3>
+    <p id="confirm-modal-text" class="text-gray-300 mb-6"></p>
+    <div class="flex justify-end gap-4">
+      <button id="confirm-modal-cancel"
+              class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Cancelar</button>
+      <button id="confirm-modal-confirm"
+              class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Confirmar</button>
+    </div>
+  
+</div>
+</div>
+
+<!-- ✅ Modal: Editar Motorista -->
+<div id="driver-edit-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center modal-backdrop hidden">
+  <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-3xl relative">
+    <h3 id="driver-edit-title" class="text-xl font-bold text-white mb-1">Editar Motorista</h3>
+    <p id="driver-edit-subtitle" class="text-sm text-gray-400 mb-4"></p>
+
+    <button id="driver-edit-close"
+            class="absolute top-4 right-4 text-gray-500 hover:text-white" title="Fechar">
+      <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg"
+           viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" x2="6" y1="6" y2="18"/>
+        <line x1="6" x2="18" y1="6" y2="18"/>
+      </svg>
+    </button>
+
+    <div class="max-h-[60vh] overflow-y-auto pr-2">
+      <div class="mb-4 p-3 rounded-lg border border-white/10 bg-black/10">
+        <p class="text-sm text-gray-200"><span class="text-gray-400">Dica:</span> edite qualquer campo do cadastro e clique em <strong>Salvar</strong>. Campos em formato JSON aceitam edição (o painel tenta validar).</p>
+      </div>
+
+      <div id="driver-edit-fields" class="space-y-3"></div>
+
+      <div class="mt-6 p-4 rounded-lg border border-white/10 bg-black/10">
+        <h4 class="text-sm font-semibold text-gray-200 mb-3">Adicionar campo</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <input id="driver-new-field-name" type="text" placeholder="Nome do campo (ex: cnh)"
+                 class="bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+          <input id="driver-new-field-value" type="text" placeholder="Valor"
+                 class="bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+          <button id="driver-add-field-btn"
+                  class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg">
+            Adicionar
+          </button>
+        </div>
+      </div>
+
+      <details class="mt-6">
+        <summary class="cursor-pointer text-gray-300 hover:text-white">Ver JSON completo</summary>
+        <pre id="driver-edit-json" class="mt-3 text-xs text-gray-200 bg-gray-900/60 border border-gray-700 rounded-lg p-3 overflow-x-auto"></pre>
+      </details>
+    </div>
+
+    <div class="mt-6 pt-4 border-t border-gray-700 flex justify-end gap-3">
+      <button id="driver-edit-cancel"
+              class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Cancelar</button>
+      <button id="driver-edit-save"
+              class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  import {
+    getFirestore,
+    collection,
+    onSnapshot,
+    doc,
+    deleteDoc,
+    addDoc,
+    serverTimestamp,
+    setLogLevel,
+    updateDoc,
+    writeBatch,
+    getDocs,
+    query,
+    orderBy,
+    limit
+  } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+  // ==============================
+  // CONFIG
+  // ==============================
+  const firebaseConfig = typeof __firebase_config !== 'undefined'
+    ? JSON.parse(__firebase_config)
+    : {
+      apiKey: "AIzaSyB9B2-xYb6gr92cQDbajriQiinfQurrOwI",
+      authDomain: "heilog-logistica.firebaseapp.com",
+      projectId: "heilog-logistica",
+      storageBucket: "heilog-logistica.appspot.com",
+      messagingSenderId: "790492229739",
+      appId: "1:790492229739:web:de49887de535a839e8412e"
+    };
+
+  const appId = "heilog-logistica";
+
+  // ==============================
+  // ESTADO GLOBAL
+  // ==============================
+  let db;
+  let patioData = [];
+  let historicoData = [];
+  let ocorrenciasData = [];
+  let activeTab = 'patio';
+  let selectedOperacao = null;
+
+  let contextChart = null;
+  let performanceChart = null;
+  let dailyProductivityChart, tmpEvolutionChart, shiftComparisonChart, volumeRankingChart, heatmapChart;
+
+  let notifiedVehicles = new Set();
+  let newlyAdded = new Set();
+
+  let audioContext;
+  let timerIntervalId = null;
+  
+  // ✅ Controle Ritmo (placa a placa)
+  let ritmoDataVersion = 0;
+  let ritmoCacheKey = '';
+  let ritmoCacheRows = [];
+  let ritmoCacheDetails = new Map();
+  let ritmoPage = 1;
+  const RITMO_PAGE_SIZE = 60;
+  let ritmoSelectedPlate = null;
+
+  let confirmCallback = null;
+  let soundEnabled = true;
+
+  let driverIndex = { byCpf: {}, byId: {}, byPhone: {} };
+
+  // ✅ NOVOS estados para aba Motoristas
+  let driversCollections = { drivers: [], motoristas: [] };
+  let driversMerged = [];
+
+  // ✅ Cache leve para aba Motoristas (evita O(Drivers * Histórico))
+  let driverStatsCache = new Map();
+  let driversPage = 1;
+  const DRIVERS_PAGE_SIZE = 80;
+
+  // ✅ estado do modal de edição
+  let selectedDriverEdit = null;
+  let selectedDriverEditSource = null;
+
+  // ✅ Cache local para evitar regravar o tipoSnapshot a cada snapshot
+  let tipoSnapshotMem = new Set();
+
+  const DRIVER_STATS_LOOKBACK_DAYS = 90; // analisa só últimos 90 dias para ficar leve
+
+
+  const ICONS = {
+    SOUND_ON: `<svg class="w-6 h-6 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" /></svg>`,
+    SOUND_OFF: `<svg class="w-6 h-6 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 9.75 19.5 12m0 0 2.25 2.25M19.5 12l-2.25 2.25M19.5 12l2.25-2.25M12.75 15l3-3m0 0-3-3m3 3H6.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>`
+  };
+
+  // ==============================
+  // UTILITÁRIOS
+  // ==============================
+  const showToast = (message, type = 'info') => {
+    const id = 'heilog-toast';
+    let container = document.getElementById(id);
+    if (!container) {
+      container = document.createElement('div');
+      container.id = id;
+      container.className = 'fixed bottom-4 right-4 z-[9999] space-y-2';
+      document.body.appendChild(container);
+    }
+    const el = document.createElement('div');
+    const base = 'px-4 py-3 rounded-lg shadow-lg border text-sm max-w-sm';
+    const styles = {
+      info: 'bg-gray-800 border-gray-600 text-gray-100',
+      success: 'bg-green-900/70 border-green-600 text-green-100',
+      error: 'bg-red-900/70 border-red-600 text-red-100'
+    };
+    el.className = `${base} ${styles[type] || styles.info}`;
+    el.textContent = message;
+
+    container.appendChild(el);
+
+    setTimeout(() => {
+      el.style.opacity = '0';
+      el.style.transition = 'opacity 0.3s';
+    }, 2600);
+
+    setTimeout(() => {
+      el.remove();
+      if (!container.children.length) container.remove();
+    }, 3100);
+  };
+
+  const debounce = (fn, delay = 150) => {
+    let t;
+    return (...args) => {
+      clearTimeout(t);
+      t = setTimeout(() => fn(...args), delay);
+    };
+  };
+
+  const escapeHtml = (input = '') => {
+    const str = String(input ?? '');
+    return str.replace(/[&<>"'`=\/]/g, (s) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+      '`': '&#x60;',
+      '=': '&#x3D;',
+      '/': '&#x2F;'
+    }[s]));
+  };
+
+  const formatMilliseconds = (ms) => {
+    if (isNaN(ms) || ms < 0) return '00:00:00';
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
+
+  const getElapsedTime = (registrationTime) => {
+    if (!registrationTime) return '00:00:00';
+    const diff = Date.now() - registrationTime;
+    return formatMilliseconds(diff);
+  };
+
+  const playAlertSound = () => {
+    if (!soundEnabled || !audioContext) return;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.5);
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 0.5);
+  };
+
+  const showBrowserNotification = (title, body, tag) => {
+    if (!("Notification" in window)) return;
+    if (Notification.permission === "granted") {
+      new Notification(title, { body, tag, icon: './favicon.ico' });
+    } else if (Notification.permission !== "denied") {
+      Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+          new Notification(title, { body, tag, icon: './favicon.ico' });
+        }
+      });
+    }
+  };
+
+  // ==============================
+  // JOIN CADASTRO (drivers/motoristas)
+  // ==============================
+  const cpf11 = (v) => {
+    if (v === null || v === undefined) return null;
+    const digits = String(v).replace(/\D/g, '');
+    if (!digits) return null;
+    return digits.length >= 11 ? digits.slice(-11) : digits.padStart(11, '0');
+  };
+
+  const phoneDigits = (v) => {
+    if (v === null || v === undefined) return null;
+    const d = String(v).replace(/\D/g, '');
+    return d.length >= 10 ? d : null;
+  };
+
+  const getDriverInfoFromOperacao = (op = {}) => {
+    const kCpf = cpf11(op.cpf || op.cpfMotorista || op.driverCpf || op.document);
+    if (kCpf && driverIndex.byCpf[kCpf]) return driverIndex.byCpf[kCpf];
+    if (kCpf && driverIndex.byId[kCpf]) return driverIndex.byId[kCpf];
+
+    const kPhone = phoneDigits(op.phone || op.telefone || op.celular || op.telefoneMotorista || op.celularMotorista);
+    if (kPhone && driverIndex.byPhone[kPhone]) return driverIndex.byPhone[kPhone];
+
+    return null;
+  };
+
+  const getTruckPlate = (op = {}) => {
+    const direct = op.truckPlate || op.placaCavalo || op.placa_cavalo || op.cavaloPlate || op.placaTruck || op.placa_truck || op.placaCaminhao || op.placa_caminhao;
+    if (direct) return String(direct);
+
+    const info = getDriverInfoFromOperacao(op);
+    if (info?.truckPlate) return String(info.truckPlate);
+
+    return '';
+  };
+
+  const getTrailerPlate = (op = {}) => {
+    const direct = op.trailerPlate || op.placaCarreta || op.placa_carreta || op.carretaPlate || op.placaTrailer || op.placa_trailer || op.placaCarroceria || op.placa_carroceria;
+    if (direct) return String(direct);
+
+    const info = getDriverInfoFromOperacao(op);
+    if (info?.trailerPlate) return String(info.trailerPlate);
+
+    return '';
+  };
+
+  const getTelefoneFromOperacao = (op = {}) => {
+    const candidates = [];
+    ['telefone','telefoneMotorista','celular','celularMotorista','phone','fone','foneMotorista'].forEach(f => {
+      if (op[f]) candidates.push(op[f]);
+    });
+    const info = getDriverInfoFromOperacao(op);
+    if (info?.phone) candidates.push(info.phone);
+
+    const first = candidates.find(v => v !== undefined && v !== null && v !== '');
+    if (!first) return null;
+
+    const digits = String(first).replace(/\D/g, '');
+    if (digits.length < 10) return null;
+    return digits;
+  };
+
+  // ==============================
+  // SEGMENTAÇÃO / TIPO (Baldeio, Latas Vazias, OTIF, Aderente, Hidroman, etc.)
+  // ==============================
+  const getTipoHeilogDirect = (op = {}) => {
+    const direct =
+      op.tipoSnapshot || op.tipo_heilog || op.tipoHeilog || op.statusHeilog || op.status_tipo || op.statusTipo ||
+      op.segmentacao || op.segmentação ||
+      op.tipoOperacao || op.tipo_operacao || op.tipo ||
+      op.fluxo || op.categoria || op.classificacao ||
+      op.canalOperacao || op.canal || op.segment ||
+      op.perfil || op.cliente;
+
+    if (direct !== undefined && direct !== null && String(direct).trim() !== '') return String(direct).trim();
+    return '';
+  };
+
+  const getSegmentacaoLabel = (op = {}) => {
+    // 1) Se já veio "gravado" do HEILOG, nunca muda
+    if (op.tipoSnapshot && String(op.tipoSnapshot).trim() !== '') return String(op.tipoSnapshot).trim();
+
+    // 2) Se existir campo direto no documento (vindo do HEILOG), usa esse
+    const direct = getTipoHeilogDirect(op);
+    if (direct) return direct;
+
+    // 3) Fallback: tenta extrair de texto (apenas visual; não "grava" isso como oficial)
+    const blob = `${op.xtAdicional || ''} ${op.observacao || ''} ${op.obs || ''} ${op.notas || ''}`.toUpperCase();
+    const rules = [
+      { k: 'BALDEIO', label: 'Baldeio' },
+      { k: 'LATAS VAZIAS', label: 'Latas vazias' },
+      { k: 'LATA VAZIA', label: 'Latas vazias' },
+      { k: 'OTIF', label: 'OTIF' },
+      { k: 'ADERENTE', label: 'Aderente' },
+      { k: 'HIDROMAN', label: 'Hidroman' }
+    ];
+    const hit = rules.find(r => blob.includes(r.k));
+    if (hit) return hit.label;
+
+    return '';
+  };
+
+  // ✅ Motoristas: merge para consulta pós-encerramento
+  const norm = (v) => String(v ?? '').toLowerCase();
+  const compact = (v) => norm(v).replace(/[^a-z0-9]/g, '');
+
+  const mergeDriversCollections = () => {
+    const map = new Map();
+
+    const upsert = (d) => {
+      const cpfKey = cpf11(d.cpf || d.id);
+      const phKey = phoneDigits(d.phone || d.telefone);
+
+      const key =
+        cpfKey ? `cpf:${cpfKey}` :
+        (phKey ? `ph:${phKey}` :
+          `x:${compact(d.name || '')}-${compact(d.truckPlate || '')}-${compact(d.trailerPlate || '')}`);
+
+      const prev = map.get(key) || {};
+      const prevSources = Array.isArray(prev.sources) ? prev.sources : [];
+
+      const srcKey = `${d._collection || ''}::${d._docId || ''}`;
+      const sources = prevSources.some(s => s._srcKey === srcKey)
+        ? prevSources
+        : [...prevSources, {
+            _srcKey: srcKey,
+            collection: d._collection || '',
+            docId: d._docId || '',
+            raw: d.raw || {},
+            fieldCount: Object.keys(d.raw || {}).length
+          }];
+
+      const pickPrimary = (sourcesList) => {
+        if (!sourcesList.length) return null;
+        const prefScore = (s) => (s.collection === 'drivers' ? 2 : 1);
+        return [...sourcesList].sort((a,b) => {
+          const pa = prefScore(a), pb = prefScore(b);
+          if (pa !== pb) return pb - pa;
+          return (b.fieldCount || 0) - (a.fieldCount || 0);
+        })[0];
+      };
+
+      const primary = pickPrimary(sources);
+
+      map.set(key, {
+        ...prev,
+        ...d,
+        cpfKey: cpfKey || prev.cpfKey || '',
+        phoneKey: phKey || prev.phoneKey || '',
+        name: d.name || prev.name || '',
+        phone: d.phone || prev.phone || '',
+        truckPlate: d.truckPlate || prev.truckPlate || '',
+        trailerPlate: d.trailerPlate || prev.trailerPlate || '',
+        transportadora: d.transportadora || prev.transportadora || '',
+        _key: key,
+        sources,
+        _primary: primary
+      });
+    };
+
+    [...(driversCollections.drivers || []), ...(driversCollections.motoristas || [])].forEach(upsert);
+
+    driversMerged = Array.from(map.values()).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+    // popula o filtro de transportadora da aba Motoristas
+    const sel = document.getElementById('drivers-transportadora-filter');
+    if (sel) {
+      const cur = sel.value || 'todas';
+      while (sel.options.length > 1) sel.remove(1);
+
+      const ts = [...new Set(driversMerged.map(d => d.transportadora).filter(Boolean))].sort();
+      ts.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = t;
+        sel.appendChild(opt);
+      });
+
+      sel.value = ts.includes(cur) ? cur : 'todas';
+    }
+  };
+
+  const matchOpToDriver = (op, d) => {
+    const ocpf = cpf11(op.cpf || op.cpfMotorista || op.driverCpf || op.document);
+    if (d.cpfKey && ocpf && d.cpfKey === ocpf) return true;
+
+    const opPhone = phoneDigits(getTelefoneFromOperacao(op) || op.phone || op.telefone || op.celular || op.telefoneMotorista || op.celularMotorista);
+    if (d.phoneKey && opPhone && d.phoneKey === opPhone) return true;
+
+    const opTruck = compact(op.truckPlate || getTruckPlate(op));
+    const opTrailer = compact(op.trailerPlate || getTrailerPlate(op));
+    if (d.truckPlate && opTruck && compact(d.truckPlate) === opTruck) return true;
+    if (d.trailerPlate && opTrailer && compact(d.trailerPlate) === opTrailer) return true;
+
+    return false;
+  };
+
+  // ==============================
+  // PRIORIDADE
+  // ==============================
+  const getPriorityStatusLogic = (op) => {
+    let statusText = "Normal",
+        className = "bg-gray-500/20 text-gray-300",
+        isAlert = false;
+
+    if (op.status === 'Finalizado') return { statusText: op.status, className: "bg-green-500/20 text-green-300", isAlert: false };
+    if (op.status === 'Cancelado') return { statusText: op.status, className: "bg-red-500/20 text-red-300", isAlert: false };
+
+    const { agenda, xtAdicional, data } = op || {};
+    if (!agenda) return { statusText, className, isAlert };
+
+    const getScheduledDateTime = (dateStr, timeStr) => {
+      if (!dateStr || !dateStr.match(/^\d{2}\/\d{2}\/\d{4}$/)) dateStr = new Date().toLocaleDateString('pt-BR');
+      if (!timeStr || !timeStr.match(/^\d{1,2}:\d{2}(:\d{2})?$/)) return null;
+      const timeParts = timeStr.split(':');
+      const [day, month, year] = dateStr.split('/');
+      const [hours, minutes] = timeParts;
+      const seconds = timeParts.length > 2 ? timeParts[2] : 0;
+      return new Date(year, parseInt(month, 10) - 1, day, hours, minutes, seconds);
+    };
+
+    const now = new Date();
+    const scheduledDateTime = getScheduledDateTime(data, agenda);
+
+    let isGradeQueimada = false;
+    let isAtrasado = false;
+    let isAtencao = false;
+
+    const isTop18 = (xtAdicional || '').toUpperCase().includes('TOP');
+
+    if (scheduledDateTime) {
+      const diffHours = (now.getTime() - scheduledDateTime.getTime()) / 3600000;
+      const today = new Date(now); today.setHours(0,0,0,0);
+      const scheduledDay = new Date(scheduledDateTime); scheduledDay.setHours(0,0,0,0);
+
+      if (today > scheduledDay) isGradeQueimada = true;
+      else if (today.getTime() === scheduledDay.getTime()) {
+        if (diffHours > 1) isAtrasado = true;
+        else if (diffHours > 0) isAtencao = true;
+      }
+    }
+
+    if (isGradeQueimada) {
+      statusText = "Grade queimada";
+      className = "bg-yellow-500/30 text-yellow-300 border-yellow-500/50";
+      isAlert = true;
+    } else if (isAtrasado) {
+      statusText = "Atrasado";
+      className = "bg-red-600/30 text-red-400 border-red-500/50";
+    } else if (isAtencao) {
+      statusText = "Atenção";
+      className = "bg-amber-500/30 text-amber-400 border-amber-500/50";
+    } else if (isTop18) {
+      statusText = "Prioridade (TOP 18)";
+      className = "bg-red-500/30 text-red-300 border-red-500/50";
+      isAlert = true;
+    }
+
+    return { statusText, className, isAlert };
+  };
+
+  // ==============================
+  // FILTRO TEMPO NO PÁTIO
+  // ==============================
+  const getTempoBucket = (registrationTime) => {
+    if (!registrationTime) return null;
+    const diff = Date.now() - registrationTime;
+    if (!Number.isFinite(diff) || diff < 0) return null;
+    const h = Math.floor(diff / 3600000);
+    return h >= 8 ? '8plus' : String(h);
+  };
+
+  // ==============================
+  // BUSCA NORMALIZADA (inclui placas)
+  // ==============================
+  const matchesSearchOp = (op, term, termCompact) => {
+    if (!term) return true;
+    const candidates = [
+      op?.dt,
+      op?.motorista,
+      op?.name,
+      op?.transportadora,
+      getTruckPlate(op),
+      getTrailerPlate(op),
+    ].filter(Boolean);
+
+    return candidates.some(v => norm(v).includes(term) || compact(v).includes(termCompact));
+  };
+
+  // ==============================
+  // RENDER
+  // ==============================
+  const render = () => {
+    if (activeTab === 'performance') { renderPerformanceDashboard(); return; }
+    if (activeTab === 'dashboard') { renderManagerDashboard(); return; }
+    if (activeTab === 'motoristas') { renderDriversTab(); return; }
+    if (activeTab === 'baldeios') { renderBaldeiosRitmo(); return; }
+    if (activeTab === 'ritmo') { renderRitmoPlacaControl(); return; }
+
+    const searchTerm = norm(document.getElementById('search-input').value);
+    const searchCompact = compact(searchTerm);
+
+    const statusFilter = document.getElementById('filter-status').value;
+    const transportadoraFilter = document.getElementById('filter-transportadora').value;
+    const dateFilterValue = document.getElementById('filter-date').value;
+    const shiftFilterValue = document.getElementById('filter-shift').value;
+    const tempoFilterValue = document.getElementById('filter-tempo-patio').value;
+
+    let dataSet = [];
+
+    if (activeTab === 'patio') dataSet = patioData || [];
+    else if (activeTab === 'ocorrencias') dataSet = ocorrenciasData || [];
+    else if (activeTab === 'historico') {
+      let filteredHistorico = historicoData || [];
+
+      if (dateFilterValue) {
+        const filterDate = new Date(dateFilterValue);
+        filterDate.setDate(filterDate.getDate() + 1);
+        const filterDateString = filterDate.toDateString();
+
+        filteredHistorico = filteredHistorico.filter(op => {
+          if (!op.finishedTime) return false;
+          const finishedDate = new Date(op.finishedTime).toDateString();
+          return finishedDate === filterDateString;
+        });
+      }
+
+      if (shiftFilterValue !== 'todos' && dateFilterValue) {
+        const shift = parseInt(shiftFilterValue, 10);
+        const shiftTimes = { 1:{start:6,end:14}, 2:{start:14,end:22}, 3:{start:22,end:6} };
+        const { start, end } = shiftTimes[shift];
+
+        filteredHistorico = filteredHistorico.filter(op => {
+          if (!op.finishedTime) return false;
+          const opHour = new Date(op.finishedTime).getHours();
+          return start < end ? (opHour >= start && opHour < end) : (opHour >= start || opHour < end);
+        });
+      }
+
+      dataSet = filteredHistorico;
+    }
+
+    const filteredData = dataSet.filter(op => {
+      if (activeTab === 'ocorrencias') {
+        return (op.dt?.toLowerCase() || '').includes(searchTerm) ||
+               (op.description?.toLowerCase() || '').includes(searchTerm);
+      }
+
+      const textMatch = matchesSearchOp(op, searchTerm, searchCompact);
+
+      const transportadoraMatch =
+        transportadoraFilter === 'todas' || op.transportadora === transportadoraFilter;
+
+      let statusMatch = statusFilter === 'todos';
+      if (!statusMatch) {
+        const { statusText } = getPriorityStatusLogic(op);
+        statusMatch = statusText.toLowerCase().includes(statusFilter.toLowerCase());
+      }
+
+      let tempoMatch = true;
+      if (activeTab === 'patio' && tempoFilterValue !== 'todos') {
+        tempoMatch = getTempoBucket(op.registrationTime) === tempoFilterValue;
+      }
+
+      return textMatch && statusMatch && transportadoraMatch && tempoMatch;
+    });
+
+    window.__filteredPatioIds = (activeTab === 'patio') ? filteredData.map(x => x.id) : [];
+
+    renderTable(filteredData);
+    renderKPIs();
+    renderContextualChart();
+    updateTransportadoraFilter();
+  };
+
+  const debouncedRender = debounce(render, 80);
+
+  // ==============================
+  // TABLE
+  // ==============================
+  const renderTable = (data) => {
+    const tableBody = document.getElementById('table-body');
+    const tableHead = document.getElementById('table-head');
+
+    const headers = {
+      patio: 'DT,Status,Agenda,Tipo,Tempo no Pátio,Motorista,Transportadora,Placa Cavalo,Placa Carreta,Ações',
+      historico: 'DT,Status Final,Agenda,Tipo,Motorista,Transportadora,Placa Cavalo,Placa Carreta,Finalizado Em,Ações',
+      ocorrencias: 'Data,DT,Canal,Prioridade,Problema Identificado,Descrição,Status,Ações'
+    };
+
+    tableHead.innerHTML =
+      `<tr class="border-b border-gray-700">${
+        headers[activeTab].split(',').map(h => `<th class="p-4 text-sm font-semibold text-gray-400">${h}</th>`).join('')
+      }</tr>`;
+
+    if (!data.length) {
+      const colspan = headers[activeTab].split(',').length;
+      tableBody.innerHTML =
+        `<tr><td colspan="${colspan}" class="text-center p-8 text-gray-400">
+          Nenhuma informação encontrada para os filtros selecionados.
+        </td></tr>`;
+      return;
+    }
+
+    tableBody.innerHTML = data.map(op => {
+      const { statusText, className } = getPriorityStatusLogic(op);
+      const isNew = newlyAdded.has(op.id);
+      const pulseClass = isNew ? (className.includes('red') ? 'animate-pulse-red' : 'animate-pulse-yellow') : '';
+      const statusBadge = `<span class="px-3 py-1 text-xs font-medium rounded-full ${className}">${statusText}</span>`;
+
+      let opDataForActions = op;
+      if (activeTab === 'ocorrencias') {
+        opDataForActions =
+          patioData.find(p => p.id === op.operacaoId) ||
+          historicoData.find(h => h.id === op.operacaoId) || {};
+      }
+
+      const truckPlate = getTruckPlate(opDataForActions) || '—';
+      const trailerPlate = getTrailerPlate(opDataForActions) || '—';
+
+      const telefoneDigits = getTelefoneFromOperacao(opDataForActions);
+      const motorista = opDataForActions.motorista || opDataForActions.name || 'Motorista';
+      const dt = opDataForActions.dt || op.dt || '';
+
+      const whatsappMsgIcon =
+        `<svg class="w-5 h-5 pointer-events-none" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556
+          5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248
+          3.487 5.235 3.487 8.413 0 6.557-5.338 11.892-11.894 11.892-1.99 0-3.903-.52-5.586-1.456l-6.305
+          1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0
+          9.886-4.434 9.889-9.885.002-5.447-4.435-9.884-9.888-9.884-5.448
+          0-9.886 4.434-9.889 9.884-.001 2.225.651 3.891 1.746
+          5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941
+          1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.371-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.5-.669-.51l-.57-.01c-.198
+          0-.52.074-.792.372-.272.296-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875
+          1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489
+          1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719
+          2.006-1.413.248-.695.248-1.289.173-1.413z"/>
+        </svg>`;
+
+      let whatsappButtonHTML;
+      if (telefoneDigits) {
+        const message = `Olá ${motorista}, por favor, dirija-se à doca para o carregamento da DT ${dt}.`;
+        const encodedMessage = encodeURIComponent(message);
+        const whatsappUrl = `https://wa.me/55${telefoneDigits}?text=${encodedMessage}`;
+        whatsappButtonHTML =
+          `<a href="${whatsappUrl}" target="_blank" rel="noopener noreferrer"
+              title="WhatsApp" class="text-green-400 hover:text-green-300">
+            ${whatsappMsgIcon.replace('pointer-events-none', '')}
+          </a>`;
+      } else {
+        whatsappButtonHTML =
+          `<button title="WhatsApp (Telefone indisponível)"
+              class="text-gray-600 cursor-not-allowed" disabled>
+            ${whatsappMsgIcon}
+          </button>`;
+      }
+
+      let specificActions = '';
+      if (activeTab === 'patio') {
+        specificActions = `
+          <button type="button" data-action="details" data-id="${op.id}" title="Ver Detalhes">
+            <svg class="w-5 h-5 text-sky-400 hover:text-sky-300 pointer-events-none"
+                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+          <button type="button" data-action="occurrence" data-id="${op.id}" title="Adicionar Ocorrência">
+            <svg class="w-5 h-5 text-amber-400 hover:text-amber-300 pointer-events-none"
+                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19.3 14.8C20.1 14 21 12.6 21 11c0-4.4-3.6-8-8-8s-8 3.6-8 8c0 1.6.9 3 1.7 3.8"/>
+              <path d="M12 21c-1.7 0-3-1.3-3-3h6c0 1.7-1.3 3-3 3Z"/>
+              <path d="M12 6v6"/>
+              <path d="M9 9h6"/>
+            </svg>
+          </button>
+          <button type="button" data-action="finish" data-id="${op.id}" title="Finalizar Operação">
+            <svg class="w-5 h-5 text-green-400 hover:text-green-300 pointer-events-none"
+                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 11 12 14 22 4"/>
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+            </svg>
+          </button>
+          <button type="button" data-action="cancel" data-id="${op.id}" title="Cancelar DT" class="text-red-500 hover:text-red-400">
+            <svg class="w-5 h-5 pointer-events-none" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        `;
+      } else if (activeTab === 'ocorrencias') {
+        specificActions = `
+          <button type="button" data-action="edit-occurrence" data-id="${op.id}" title="Ver/Editar Resolução"
+              class="text-blue-400 hover:text-blue-300">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 pointer-events-none" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+          </button>`;
+      }
+
+      const actionButtonsHTML = `<td class="p-4 flex items-center gap-4">${whatsappButtonHTML}${specificActions}</td>`;
+
+      let rowCells = '';
+      if (activeTab === 'ocorrencias') {
+        rowCells = `
+          <td class="p-4 text-sm">${op.timestamp ? new Date(op.timestamp.seconds * 1000).toLocaleString('pt-BR') : 'N/A'}</td>
+          <td class="p-4 font-mono text-sm">${op.dt}</td>
+          <td class="p-4 text-sm">${op.canal || 'N/A'}</td>
+          <td class="p-4 text-sm">${op.prioridade || 'N/A'}</td>
+          <td class="p-4 text-sm">${op.type}</td>
+          <td class="p-4 text-sm">${op.description}</td>
+          <td class="p-4 text-sm">${op.statusOcorrencia || 'Em andamento'}</td>
+          ${actionButtonsHTML}
+        `;
+      } else {
+        rowCells = `
+          <td class="p-4 font-mono text-sm">${op.dt || ''}</td>
+          <td class="p-4">${statusBadge}</td>
+          <td class="p-4">${op.agenda || 'N/A'}</td>
+          <td class="p-4">${escapeHtml(getSegmentacaoLabel(op) || '—')}</td>
+          ${activeTab === 'patio'
+            ? `<td class="p-4 font-mono text-sm timer-cell" data-registration-time="${op.registrationTime}">
+                 ${getElapsedTime(op.registrationTime)}
+               </td>`
+            : ''
+          }
+          <td class="p-4">${op.motorista || op.name || '—'}</td>
+          <td class="p-4">${op.transportadora || '—'}</td>
+          <td class="p-4 font-mono text-sm">${truckPlate}</td>
+          <td class="p-4 font-mono text-sm">${trailerPlate}</td>
+          ${activeTab === 'historico'
+            ? `<td class="p-4 text-sm">${op.finishedTime ? new Date(op.finishedTime).toLocaleString('pt-BR') : 'N/A'}</td>`
+            : ''
+          }
+          ${actionButtonsHTML}
+        `;
+      }
+
+      return `<tr class="border-b border-gray-700 hover:bg-gray-700/50 ${pulseClass}">${rowCells}</tr>`;
+    }).join('');
+  };
+
+  // ==============================
+  // KPIs
+  // ==============================
+  const renderKPIs = () => {
+    const kpiContainer = document.getElementById('kpi-container');
+
+    const finalizadasHoje = historicoData.filter(op => {
+      if (!op.finishedTime) return false;
+      return new Date(op.finishedTime).toDateString() === new Date().toDateString();
+    });
+
+    const totalPermanencia = finalizadasHoje.reduce((acc, op) => {
+      if (op.registrationTime && op.finishedTime) return acc + (op.finishedTime - op.registrationTime);
+      return acc;
+    }, 0);
+
+    const tempoMedioPermanencia = finalizadasHoje.length > 0 ? totalPermanencia / finalizadasHoje.length : 0;
+
+    const kpis = {
+      veiculosPatio: patioData.length,
+      criticos: patioData.filter(op => {
+        const s = getPriorityStatusLogic(op).statusText;
+        return s === 'Grade queimada' || s === 'Prioridade (TOP 18)' || s === 'Atrasado';
+      }).length,
+      finalizadasHoje: finalizadasHoje.length,
+      tmp: formatMilliseconds(tempoMedioPermanencia),
+    };
+
+    kpiContainer.innerHTML = `
+      <div class="bg-gray-800 p-6 rounded-lg shadow-lg flex items-center space-x-4">
+        <div class="p-3 rounded-full bg-blue-500/20">
+          <svg class="w-6 h-6 text-blue-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11"/>
+            <path d="M14 9h4l4 4v4h-8v-4c0-1.1.9-2 2-2z"/>
+            <circle cx="7.5" cy="18.5" r="2.5"/>
+            <circle cx="17.5" cy="18.5" r="2.5"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-sm text-gray-400">Veículos no Pátio</p>
+          <p class="text-2xl font-bold">${kpis.veiculosPatio}</p>
+        </div>
+      </div>
+
+      <div class="bg-gray-800 p-6 rounded-lg shadow-lg flex items-center space-x-4">
+        <div class="p-3 rounded-full bg-red-500/20">
+          <svg class="w-6 h-6 text-red-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-sm text-gray-400">Críticos (Grade/Top/Atrasado)</p>
+          <p class="text-2xl font-bold">${kpis.criticos}</p>
+        </div>
+      </div>
+
+      <div class="bg-gray-800 p-6 rounded-lg shadow-lg flex items-center space-x-4">
+        <div class="p-3 rounded-full bg-green-500/20">
+          <svg class="w-6 h-6 text-green-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-sm text-gray-400">Finalizadas Hoje</p>
+          <p class="text-2xl font-bold">${kpis.finalizadasHoje}</p>
+        </div>
+      </div>
+
+      <div class="lg:col-span-2 sm:col-span-3 bg-gray-800 p-6 rounded-lg shadow-lg flex items-center space-x-4">
+        <div class="p-3 rounded-full bg-purple-500/20">
+          <svg class="w-6 h-6 text-purple-300" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+               viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+        </div>
+        <div>
+          <p class="text-sm text-gray-400">Tempo Médio de Permanência (Hoje)</p>
+          <p class="text-2xl font-bold">${kpis.tmp}</p>
+        </div>
+      </div>
+    `;
+  };
+
+  // ==============================
+  // CONTEXT CHART
+  // ==============================
+  const renderContextualChart = () => {
+    const titleEl = document.getElementById('context-chart-title');
+    const noDataMsg = document.getElementById('context-chart-no-data');
+    const canvas = document.getElementById('context-chart');
+    const ctx = canvas.getContext('2d');
+
+    if (contextChart) { contextChart.destroy(); contextChart = null; }
+
+    if (activeTab === 'ocorrencias') {
+      titleEl.textContent = 'Análise de Ocorrências';
+
+      if (!ocorrenciasData.length) {
+        noDataMsg.textContent = 'Nenhuma ocorrência registrada.';
+        noDataMsg.classList.remove('hidden');
+        canvas.style.display = 'none';
+        return;
+      }
+
+      noDataMsg.classList.add('hidden');
+      canvas.style.display = 'block';
+
+      const counts = ocorrenciasData.reduce((acc, op) => {
+        const type = op.type || 'Outro';
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      }, {});
+      const chartLabels = Object.keys(counts);
+      const chartValues = Object.values(counts);
+      const colors = ['#3b82f6', '#ef4444', '#f59e0b', '#10b981', '#8b5cf6', '#ec4899', '#6b7280'];
+
+      contextChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: chartLabels,
+          datasets: [{
+            label: 'Nº de Ocorrências',
+            data: chartValues,
+            backgroundColor: colors,
+            borderColor: '#1f2937',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true, ticks: { color: '#d1d5db', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.1)' } },
+            x: { ticks: { color: '#d1d5db' }, grid: { display: false } }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    } else {
+      titleEl.textContent = 'Composição do Pátio';
+
+      if (!patioData.length) {
+        noDataMsg.textContent = 'Pátio vazio.';
+        noDataMsg.classList.remove('hidden');
+        canvas.style.display = 'none';
+        return;
+      }
+
+      noDataMsg.classList.add('hidden');
+      canvas.style.display = 'block';
+
+      const counts = patioData.reduce((acc, op) => {
+        const status = getPriorityStatusLogic(op).statusText.split('(')[0].trim();
+        acc[status] = (acc[status] || 0) + 1;
+        return acc;
+      }, {});
+      const chartLabels = Object.keys(counts);
+      const chartValues = Object.values(counts);
+
+      const COLORS = {
+        'Prioridade': '#ef4444',
+        'Prioridade (TOP 18)': '#ef4444',
+        'Atenção': '#f59e0b',
+        'Atrasado': '#dc2626',
+        'Grade queimada': '#ca8a04',
+        'Normal': '#3b82f6'
+      };
+      const backgroundColors = chartLabels.map(l => COLORS[l] || '#8884d8');
+
+      contextChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: chartLabels,
+          datasets: [{
+            data: chartValues,
+            backgroundColor: backgroundColors,
+            borderColor: '#1f2937',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { color: '#d1d5db', boxWidth: 12, padding: 15 } } }
+        }
+      });
+    }
+  };
+
+  // ==============================
+  // FILTROS
+  // ==============================
+  const updateStatusFilterOptions = (tab) => {
+    const filterStatusSelect = document.getElementById('filter-status');
+
+    if (tab === 'historico') {
+      filterStatusSelect.innerHTML = `
+        <option value="todos">Todos Status</option>
+        <option value="Finalizado">Finalizado</option>
+        <option value="Cancelado">Cancelado</option>
+      `;
+    } else {
+      filterStatusSelect.innerHTML = `
+        <option value="todos">Todos Status</option>
+        <option value="Prioridade">Prioridade</option>
+        <option value="Atrasado">Atrasado</option>
+        <option value="Atenção">Atenção</option>
+        <option value="Grade queimada">Grade queimada</option>
+        <option value="Normal">Normal</option>
+      `;
+    }
+  };
+
+  const updateTransportadoraFilter = () => {
+    const select = document.getElementById('filter-transportadora');
+    const dashboardSelect = document.getElementById('dashboard-transportadora-filter');
+
+    const allOps = [...patioData, ...historicoData];
+    const transportadoras = [...new Set(allOps.map(op => op.transportadora).filter(Boolean))];
+
+    const cur = select.value;
+    const curDash = dashboardSelect.value;
+
+    [select, dashboardSelect].forEach(s => { while (s.options.length > 1) s.remove(1); });
+
+    transportadoras.sort().forEach(t => {
+      const option = document.createElement('option');
+      option.value = t;
+      option.textContent = t;
+      select.appendChild(option.cloneNode(true));
+      dashboardSelect.appendChild(option);
+    });
+
+    select.value = cur;
+    dashboardSelect.value = curDash;
+  };
+
+  // ==============================
+  // CLICK TABELA + CONFIRM
+  // ==============================
+  function handleTableClick(e) {
+    const actionEl = e.target.closest('[data-action]');
+    if (!actionEl) return;
+    e.preventDefault();
+
+    const action = actionEl.dataset.action;
+    const id = actionEl.dataset.id;
+    if (!action || !id) return;
+
+    selectedOperacao =
+      patioData.find(op => op.id === id) ||
+      historicoData.find(op => op.id === id) ||
+      ocorrenciasData.find(op => op.id === id);
+
+    if (!selectedOperacao) {
+      const occ = ocorrenciasData.find(o => o.id === id);
+      if (occ) {
+        selectedOperacao =
+          patioData.find(p => p.id === occ.operacaoId) ||
+          historicoData.find(h => h.id === occ.operacaoId) ||
+          occ;
+      }
+    }
+    if (!selectedOperacao) return;
+
+    switch (action) {
+      case 'details': window.showDetailsModal(); break;
+      case 'occurrence': window.showOccurrenceModal(); break;
+      case 'finish': showConfirmModal('Tem certeza que deseja finalizar esta operação?', finalizarOperacao); break;
+      case 'cancel': showConfirmModal(`Tem certeza que deseja cancelar a DT ${selectedOperacao.dt}? Esta ação não pode ser desfeita.`, cancelarOperacao); break;
+      case 'edit-occurrence': window.showResolutionModal(); break;
+    }
+  }
+
+  function showConfirmModal(text, callback) {
+    document.getElementById('confirm-modal-text').textContent = text;
+    confirmCallback = callback;
+    document.getElementById('confirm-modal').classList.remove('hidden');
+  }
+
+  // ==============================
+  // MODAIS
+  // ==============================
+  window.showDetailsModal = () => {
+    if (!selectedOperacao) return;
+
+    document.getElementById('details-modal-title').textContent = `Detalhes da DT: ${selectedOperacao.dt}`;
+
+    const modalContent = document.getElementById('details-modal-content');
+    const logSection = document.getElementById('log-section');
+    const modalActions = document.getElementById('details-modal-actions');
+
+    const telefoneDigits = getTelefoneFromOperacao(selectedOperacao);
+    const telefoneView = telefoneDigits || selectedOperacao.telefone || selectedOperacao.phone || 'N/A';
+
+    const truckPlate = getTruckPlate(selectedOperacao) || '—';
+    const trailerPlate = getTrailerPlate(selectedOperacao) || '—';
+
+    modalContent.innerHTML = `
+      <p><strong>Motorista:</strong> ${selectedOperacao.motorista || selectedOperacao.name || 'N/A'}</p>
+      <p><strong>CPF:</strong> ${selectedOperacao.cpf || 'N/A'}</p>
+      <p><strong>Telefone:</strong> ${telefoneView}</p>
+      <p><strong>Placa Cavalo:</strong> ${truckPlate}</p>
+      <p><strong>Placa Carreta:</strong> ${trailerPlate}</p>
+      <p><strong>Transportadora:</strong> ${selectedOperacao.transportadora || 'N/A'}</p>
+      <p><strong>Destino:</strong> ${selectedOperacao.destino || 'N/A'}</p>
+      <p><strong>Agenda:</strong> ${selectedOperacao.agenda || 'N/A'}</p>
+      <p><strong>Tipo:</strong> ${escapeHtml(getSegmentacaoLabel(selectedOperacao) || '—')}</p>
+      <p><strong>Chegada no Pátio:</strong> ${
+        selectedOperacao.registrationTime ? new Date(selectedOperacao.registrationTime).toLocaleString('pt-BR') : 'N/A'
+      }</p>
+    `;
+
+    logSection.innerHTML = `
+      <h4 class="text-lg font-bold text-white mt-4">Log de Atividades</h4>
+      <div id="log-entries" class="mt-2 space-y-2 max-h-40 overflow-y-auto bg-gray-900 p-2 rounded-md"></div>
+      <form id="comment-form" class="mt-4 flex gap-2">
+        <input type="text" id="comment-input"
+               class="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-400"
+               placeholder="Adicionar comentário...">
+        <button type="submit"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
+          Salvar
+        </button>
+      </form>
+    `;
+    document.getElementById('comment-form').addEventListener('submit', handleAddComment);
+
+    renderLog(selectedOperacao.id);
+
+    modalActions.innerHTML = '';
+    if (telefoneDigits) {
+      const message = `Olá ${selectedOperacao.motorista || selectedOperacao.name || 'Motorista'}, por favor, dirija-se à doca para o carregamento da DT ${selectedOperacao.dt}.`;
+      const encodedMessage = encodeURIComponent(message);
+      const whatsappUrl = `https://wa.me/55${telefoneDigits}?text=${encodedMessage}`;
+      modalActions.innerHTML = `
+        <a href="${whatsappUrl}" target="_blank" rel="noopener noreferrer"
+           class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2">
+          Msg WhatsApp
+        </a>`;
+    }
+
+    document.getElementById('details-modal').classList.remove('hidden');
+  };
+
+  window.closeDetailsModal = () => document.getElementById('details-modal').classList.add('hidden');
+
+  window.showOccurrenceModal = () => {
+    if (!selectedOperacao) return;
+    document.getElementById('occurrence-modal-title').textContent = `Registrar Ocorrência para DT: ${selectedOperacao.dt}`;
+    document.getElementById('occurrence-modal').classList.remove('hidden');
+  };
+
+  window.closeOccurrenceModal = () => document.getElementById('occurrence-modal').classList.add('hidden');
+
+  window.showResolutionModal = () => {
+    if (!selectedOperacao) return;
+    document.getElementById('resolution-modal-title').textContent = `Resolver Ocorrência: ${selectedOperacao.dt}`;
+
+    document.getElementById('resolution-modal-content').innerHTML = `
+      <p><strong>Problema:</strong> ${selectedOperacao.type}</p>
+      <p><strong>Descrição:</strong> ${selectedOperacao.description}</p>
+      <p><strong>Resolução Anterior:</strong> ${selectedOperacao.resolucao || 'Nenhuma'}</p>
+    `;
+
+    document.getElementById('resolutionText').value = selectedOperacao.resolucao || '';
+    document.getElementById('resolutionStatus').value = selectedOperacao.statusOcorrencia || 'Em andamento';
+
+    document.getElementById('resolution-modal').classList.remove('hidden');
+  };
+
+  window.closeResolutionModal = () => document.getElementById('resolution-modal').classList.add('hidden');
+
+  // ==============================
+  // LOGS
+  // ==============================
+  async function addLogEntry(operacaoId, text, isComment = false) {
+    if (!db || !operacaoId) return false;
+    try {
+      const logCollectionRef = collection(db, `artifacts/${appId}/public/data/logs/${operacaoId}/entries`);
+      await addDoc(logCollectionRef, { text, timestamp: serverTimestamp(), isComment });
+      return true;
+    } catch (error) {
+      console.warn("Falha ao gravar log:", error);
+      showToast("Não foi possível gravar o log (verifique regras/permissões do Firestore).", "error");
+      return false;
+    }
+  }
+
+  async function deleteLogEntry(operacaoId, entryId) {
+    if (!db || !operacaoId || !entryId) return false;
+    try {
+      const entryRef = doc(db, `artifacts/${appId}/public/data/logs/${operacaoId}/entries`, entryId);
+      await deleteDoc(entryRef);
+      showToast("Comentário removido.", "success");
+      return true;
+    } catch (error) {
+      console.warn("Falha ao remover comentário:", error);
+      showToast("Não foi possível remover (verifique regras/permissões do Firestore).", "error");
+      return false;
+    }
+  }
+
+  function bindDeleteLogHandler(logEntriesContainer) {
+    if (!logEntriesContainer || logEntriesContainer.dataset.deleteBound === "1") return;
+    logEntriesContainer.addEventListener("click", (ev) => {
+      const btn = ev.target.closest("button[data-action='delete-log']");
+      if (!btn) return;
+      const operacaoId = btn.dataset.operacaoId;
+      const entryId = btn.dataset.entryId;
+      showConfirmModal("Remover este comentário?", () => deleteLogEntry(operacaoId, entryId));
+    });
+    logEntriesContainer.dataset.deleteBound = "1";
+  }
+
+  function renderLog(operacaoId) {
+    const logEntriesContainer = document.getElementById("log-entries");
+    if (!logEntriesContainer) return;
+
+    bindDeleteLogHandler(logEntriesContainer);
+
+    if (!db) {
+      logEntriesContainer.innerHTML = `
+        <div class="p-3 rounded-lg border border-white/10 bg-black/20 text-sm text-gray-200">
+          Firestore não inicializado. Verifique as chaves do Firebase.
+        </div>`;
+      return;
+    }
+
+    if (window.__logUnsub) {
+      try { window.__logUnsub(); } catch (_) {}
+      window.__logUnsub = null;
+    }
+
+    const logCollectionRef = collection(db, `artifacts/${appId}/public/data/logs/${operacaoId}/entries`);
+    const qLogs = query(logCollectionRef, orderBy("timestamp", "desc"), limit(50));
+
+    window.__logUnsub = onSnapshot(qLogs, (querySnapshot) => {
+      if (!querySnapshot || querySnapshot.empty) {
+        logEntriesContainer.innerHTML = `
+          <div class="p-3 rounded-lg border border-white/10 bg-black/20 text-sm text-gray-200">
+            Nenhuma atividade registrada ainda.
+          </div>`;
+        return;
+      }
+
+      const entries = [];
+      querySnapshot.forEach((snap) => entries.push({ id: snap.id, ...snap.data() }));
+
+      logEntriesContainer.innerHTML = entries.map((entry) => {
+        const time = entry.timestamp?.toMillis ? new Date(entry.timestamp.toMillis()).toLocaleString("pt-BR") : "—";
+        const commentClass = entry.isComment ? "border-blue-500/30 bg-blue-500/10" : "border-white/10 bg-black/10";
+        const typeBadge = entry.isComment
+          ? `<span class="ml-2 inline-flex items-center rounded-md bg-blue-500/20 px-2 py-0.5 text-[11px] font-semibold text-blue-200 border border-blue-500/30">Comentário</span>`
+          : "";
+        const deleteBtn = entry.isComment ? `
+          <button type="button"
+            data-action="delete-log"
+            data-operacao-id="${operacaoId}"
+            data-entry-id="${entry.id}"
+            class="ml-2 inline-flex items-center justify-center rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-gray-200 hover:bg-red-500/20 hover:border-red-500/30 hover:text-red-100 transition"
+            title="Remover comentário">🗑️</button>` : "";
+
+        return `
+          <div class="p-3 rounded-lg border ${commentClass}">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-xs text-gray-400">${time} ${typeBadge}</p>
+              </div>
+              <div class="shrink-0">${deleteBtn}</div>
+            </div>
+            <p class="mt-2 text-sm text-gray-100 break-words">${escapeHtml(entry.text || "")}</p>
+          </div>`;
+      }).join("");
+    }, (error) => {
+      console.error("Erro ao carregar logs:", error);
+      logEntriesContainer.innerHTML = `
+        <div class="p-3 rounded-lg border border-red-500/30 bg-red-500/10 text-sm text-red-200">
+          Erro ao carregar o log (verifique regras/permissões do Firestore). Veja o console.
+        </div>`;
+    });
+  }
+
+  async function handleAddComment(e) {
+    e.preventDefault();
+    if (!db || !selectedOperacao) return;
+    const input = document.getElementById('comment-input');
+    const commentText = input.value.trim();
+    if (commentText) {
+      const ok = await addLogEntry(selectedOperacao.id, commentText, true);
+      if (ok) input.value = '';
+    }
+  }
+
+  // ==============================
+  // CLEAR HIST / OCC
+  // ==============================
+  async function clearHistory() {
+    if (!db) return;
+    const collectionRef = collection(db, `artifacts/${appId}/public/data/historico`);
+    const querySnapshot = await getDocs(collectionRef);
+    const batch = writeBatch(db);
+    querySnapshot.forEach(docu => batch.delete(docu.ref));
+    await batch.commit();
+    showToast("Histórico limpo com sucesso.", "success");
+  }
+
+  async function clearOccurrences() {
+    if (!db) return;
+    const collectionRef = collection(db, `artifacts/${appId}/public/data/ocorrencias`);
+    const querySnapshot = await getDocs(collectionRef);
+    const batch = writeBatch(db);
+    querySnapshot.forEach(docu => batch.delete(docu.ref));
+    await batch.commit();
+    showToast("Ocorrências limpas com sucesso.", "success");
+  }
+
+  // ==============================
+  // EXPORT CSV (com placas)
+  // ==============================
+  const exportToCsv = () => {
+    const searchTerm = norm(document.getElementById('search-input').value);
+    const searchCompact = compact(searchTerm);
+
+    const statusFilter = document.getElementById('filter-status').value;
+    const transportadoraFilter = document.getElementById('filter-transportadora').value;
+    const dateFilterValue = document.getElementById('filter-date').value;
+    const shiftFilterValue = document.getElementById('filter-shift').value;
+    const tempoFilterValue = document.getElementById('filter-tempo-patio').value;
+
+    let dataToExport, headers;
+
+    if (activeTab === 'ocorrencias') {
+      dataToExport = ocorrenciasData.filter(op =>
+        (op.dt?.toLowerCase() || '').includes(searchTerm) ||
+        (op.description?.toLowerCase() || '').includes(searchTerm)
+      );
+      headers = ['Data','DT','Canal','Prioridade','Problema','Descrição','Status','Resolução','Resolvido Em'];
+    } else if (activeTab === 'historico') {
+      let filteredHistorico = historicoData;
+
+      if (dateFilterValue) {
+        const filterDate = new Date(dateFilterValue);
+        filterDate.setDate(filterDate.getDate() + 1);
+        const filterDateString = filterDate.toDateString();
+        filteredHistorico = filteredHistorico.filter(op =>
+          op.finishedTime && new Date(op.finishedTime).toDateString() === filterDateString
+        );
+      }
+
+      if (shiftFilterValue !== 'todos' && dateFilterValue) {
+        const shift = parseInt(shiftFilterValue, 10);
+        const shiftTimes = { 1:{start:6,end:14}, 2:{start:14,end:22}, 3:{start:22,end:6} };
+        const { start, end } = shiftTimes[shift];
+
+        filteredHistorico = filteredHistorico.filter(op => {
+          if (!op.finishedTime) return false;
+          const opHour = new Date(op.finishedTime).getHours();
+          return start < end ? (opHour >= start && opHour < end) : (opHour >= start || opHour < end);
+        });
+      }
+
+      dataToExport = filteredHistorico.filter(op => {
+        const byText = matchesSearchOp(op, searchTerm, searchCompact);
+        const byTransp = (transportadoraFilter === 'todas' || op.transportadora === transportadoraFilter);
+        return byText && byTransp;
+      });
+
+      headers = ['DT','Status Final','Agenda','Tipo','Motorista','Transportadora','Placa Cavalo','Placa Carreta','Finalizado Em','Tempo Total'];
+    } else {
+      dataToExport = patioData.filter(op => {
+        const { statusText } = getPriorityStatusLogic(op);
+        const statusMatch = (statusFilter === 'todos' || statusText.toLowerCase().includes(statusFilter.toLowerCase()));
+        const textMatch = matchesSearchOp(op, searchTerm, searchCompact);
+        const transpMatch = (transportadoraFilter === 'todas' || op.transportadora === transportadoraFilter);
+
+        let tempoMatch = true;
+        if (tempoFilterValue !== 'todos') tempoMatch = (getTempoBucket(op.registrationTime) === tempoFilterValue);
+
+        return textMatch && transpMatch && statusMatch && tempoMatch;
+      });
+
+      headers = ['DT','Status','Agenda','Tipo','Tempo no Pátio','Motorista','Transportadora','Placa Cavalo','Placa Carreta'];
+    }
+
+    const rows = dataToExport.map(op => {
+      if (activeTab === 'ocorrencias') {
+        return [
+          `"${op.timestamp ? new Date(op.timestamp.seconds * 1000).toLocaleString('pt-BR') : 'N/A'}"`,
+          `"${op.dt}"`,
+          `"${op.canal || ''}"`,
+          `"${op.prioridade || ''}"`,
+          `"${op.type || ''}"`,
+          `"${op.description || ''}"`,
+          `"${op.statusOcorrencia || ''}"`,
+          `"${op.resolucao || ''}"`,
+          `"${op.resolvidoEm ? new Date(op.resolvidoEm.seconds * 1000).toLocaleString('pt-BR') : ''}"`
+        ].join(',');
+      }
+
+      const truckPlate = getTruckPlate(op) || '';
+      const trailerPlate = getTrailerPlate(op) || '';
+      const { statusText } = getPriorityStatusLogic(op);
+
+      if (activeTab === 'historico') {
+        const tempoTotal = (op.finishedTime && op.registrationTime)
+          ? formatMilliseconds(op.finishedTime - op.registrationTime)
+          : 'N/A';
+
+        return [
+          `"${op.dt || ''}"`,
+          `"${op.status || ''}"`,
+          `"${op.agenda || ''}"`,
+          `"${op.motorista || op.name || ''}"`,
+          `"${op.transportadora || ''}"`,
+          `"${truckPlate}"`,
+          `"${trailerPlate}"`,
+          `"${op.finishedTime ? new Date(op.finishedTime).toLocaleString('pt-BR') : 'N/A'}"`,
+          `"${tempoTotal}"`
+        ].join(',');
+      }
+
+      const tempoPatio = op.registrationTime ? getElapsedTime(op.registrationTime) : 'N/A';
+      return [
+        `"${op.dt || ''}"`,
+        `"${statusText}"`,
+        `"${op.agenda || ''}"`,
+        `"${tempoPatio}"`,
+        `"${op.motorista || op.name || ''}"`,
+        `"${op.transportadora || ''}"`,
+        `"${truckPlate}"`,
+        `"${trailerPlate}"`
+      ].join(',');
+    });
+
+    const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + rows.join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `heilog_export_${activeTab}_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // ==============================
+  // FINALIZAR EM MASSA
+  // ==============================
+  async function finalizarEmMassa() {
+    if (!db) return;
+    if (activeTab !== 'patio') {
+      showToast("A conclusão em massa funciona apenas na aba Pátio.", "error");
+      return;
+    }
+
+    const ids = Array.isArray(window.__filteredPatioIds) ? window.__filteredPatioIds : [];
+    if (!ids.length) {
+      showToast("Não há itens filtrados no Pátio para finalizar.", "info");
+      return;
+    }
+
+    const CHUNK = 200;
+    let done = 0;
+    showToast(`Iniciando finalização em massa (${ids.length} DTs)...`, "info");
+
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const part = ids.slice(i, i + CHUNK);
+
+      const batch = writeBatch(db);
+      const now = Date.now();
+
+      part.forEach(id => {
+        const op = patioData.find(x => x.id === id);
+        if (!op) return;
+
+        const finalizada = { ...op, status: 'Finalizado', finishedTime: now };
+
+        const historicoRef = doc(db, `artifacts/${appId}/public/data/historico`, id);
+        batch.set(historicoRef, finalizada);
+
+        const patioRef = doc(db, `artifacts/${appId}/public/data/patio`, id);
+        batch.delete(patioRef);
+      });
+
+      await batch.commit();
+      done += part.length;
+      showToast(`Finalizadas: ${done}/${ids.length}`, "success");
+    }
+
+    showToast("Finalização em massa concluída.", "success");
+  }
+
+  // ==============================
+  // HANDLERS PRINCIPAIS
+  // ==============================
+  async function finalizarOperacao() {
+    if (!db || !selectedOperacao) return;
+    try {
+      const finalizada = { ...selectedOperacao, status: 'Finalizado', finishedTime: Date.now() };
+      const batch = writeBatch(db);
+
+      const historicoRef = doc(db, `artifacts/${appId}/public/data/historico`, selectedOperacao.id);
+      batch.set(historicoRef, finalizada);
+
+      const patioRef = doc(db, `artifacts/${appId}/public/data/patio`, selectedOperacao.id);
+      batch.delete(patioRef);
+
+      await batch.commit();
+      await addLogEntry(selectedOperacao.id, 'Operação finalizada com sucesso via Painel.');
+      showToast("Operação finalizada.", "success");
+    } catch (error) {
+      console.error("Falha ao finalizar operação:", error);
+      showToast("Erro ao finalizar operação. Veja console.", "error");
+    }
+  }
+
+  async function cancelarOperacao() {
+    if (!db || !selectedOperacao) return;
+    try {
+      const cancelada = { ...selectedOperacao, status: 'Cancelado', finishedTime: Date.now() };
+      const batch = writeBatch(db);
+
+      const historicoRef = doc(db, `artifacts/${appId}/public/data/historico`, selectedOperacao.id);
+      batch.set(historicoRef, cancelada);
+
+      const patioRef = doc(db, `artifacts/${appId}/public/data/patio`, selectedOperacao.id);
+      batch.delete(patioRef);
+
+      await batch.commit();
+      await addLogEntry(selectedOperacao.id, 'Operação cancelada via Painel.');
+      showToast("Operação cancelada.", "success");
+    } catch (error) {
+      console.error("Falha ao cancelar operação:", error);
+      showToast("Erro ao cancelar operação. Veja console.", "error");
+    }
+  }
+
+  async function handleAddOccurrence(e) {
+    e.preventDefault();
+    if (!db || !selectedOperacao) return;
+
+    const form = document.getElementById('occurrence-form');
+    const formData = new FormData(form);
+    const description = formData.get('description');
+
+    await addDoc(collection(db, `artifacts/${appId}/public/data/ocorrencias`), {
+      type: formData.get('type'),
+      description,
+      dt: selectedOperacao.dt,
+      operacaoId: selectedOperacao.id,
+      timestamp: serverTimestamp(),
+      canal: 'Painel',
+      prioridade: getPriorityStatusLogic(selectedOperacao).statusText,
+      statusOcorrencia: 'Em andamento',
+      resolucao: ''
+    });
+
+    await addLogEntry(selectedOperacao.id, `Ocorrência registrada: ${description}`);
+    window.closeOccurrenceModal();
+    form.reset();
+    showToast("Ocorrência registrada.", "success");
+  }
+
+  async function handleUpdateResolution(e) {
+    e.preventDefault();
+    if (!db || !selectedOperacao) return;
+
+    const form = document.getElementById('resolution-form');
+    const formData = new FormData(form);
+    const resolution = formData.get('resolution');
+    const status = formData.get('status');
+
+    const occurrenceRef = doc(db, `artifacts/${appId}/public/data/ocorrencias`, selectedOperacao.id);
+    await updateDoc(occurrenceRef, {
+      resolucao: resolution,
+      statusOcorrencia: status,
+      resolvidoEm: status === 'Concluído' ? serverTimestamp() : null
+    });
+
+    await addLogEntry(selectedOperacao.operacaoId, `Resolução da ocorrência: ${resolution} (Status: ${status})`);
+    window.closeResolutionModal();
+    showToast("Resolução salva.", "success");
+  }
+
+  // ==============================
+  // ALERTAS + PREDITIVO
+  // ==============================
+  function runPredictiveAnalysis() {
+    const ONE_HOUR = 3600 * 1000;
+    const now = Date.now();
+    const recentArrivals = patioData.filter(op => (now - op.registrationTime) < ONE_HOUR).length;
+    const finishedInLastHour = historicoData.filter(op => op.finishedTime && (now - op.finishedTime) < ONE_HOUR);
+
+    if (!finishedInLastHour.length) {
+      document.getElementById('predictive-alert').innerHTML = ``;
+      return;
+    }
+
+    const avgStayTime = finishedInLastHour.reduce((acc, op) => acc + (op.finishedTime - op.registrationTime), 0) / finishedInLastHour.length;
+    const vehiclesPerHour = recentArrivals;
+    const projectedOccupancy = patioData.length + vehiclesPerHour;
+    const capacity = 50;
+    const occupancyRate = (projectedOccupancy / capacity);
+
+    const alertDiv = document.getElementById('predictive-alert');
+    if (occupancyRate > 0.9) {
+      alertDiv.innerHTML =
+        `<div class="p-2 bg-red-800 border border-red-600 rounded-lg text-sm text-center">
+          <strong>Alerta Preditivo:</strong> Risco de gargalo no pátio na próxima hora.
+          Ocupação projetada: ${(occupancyRate * 100).toFixed(0)}%
+        </div>`;
+    } else if (occupancyRate > 0.75) {
+      alertDiv.innerHTML =
+        `<div class="p-2 bg-yellow-800 border border-yellow-600 rounded-lg text-sm text-center">
+          <strong>Atenção:</strong> Pátio pode atingir alta ocupação na próxima hora.
+          Ocupação projetada: ${(occupancyRate * 100).toFixed(0)}%
+        </div>`;
+    } else {
+      alertDiv.innerHTML = '';
+    }
+  }
+
+  function createAlertBanner(message, level) {
+    const alertsContainer = document.getElementById('system-alerts-container');
+    const alertDiv = document.createElement('div');
+    let bgColor = 'bg-yellow-800 border-yellow-600';
+    if (level === 'high') bgColor = 'bg-red-800 border-red-600';
+
+    alertDiv.className = `alert-banner p-3 rounded-lg border text-sm ${bgColor}`;
+    alertDiv.innerHTML = `<strong>ALERTA DO SISTEMA:</strong> ${message}`;
+    alertsContainer.appendChild(alertDiv);
+  }
+
+  function checkSystemAlerts() {
+    const alertsContainer = document.getElementById('system-alerts-container');
+    alertsContainer.innerHTML = '';
+
+    const longDelayedVehicles = patioData.filter(op => {
+      const { statusText } = getPriorityStatusLogic(op);
+      return statusText === "Atrasado" && (Date.now() - op.registrationTime) > 3600000;
+    });
+    if (longDelayedVehicles.length > 0) {
+      const dts = longDelayedVehicles.map(v => v.dt).join(', ');
+      createAlertBanner(`Atenção Sênior: Veículo(s) ${dts} estão atrasados há mais de 1 hora.`, 'high');
+    }
+
+    const attentionCount = patioData.filter(op => getPriorityStatusLogic(op).statusText === 'Atenção').length;
+    if (attentionCount > 5) {
+      createAlertBanner(`Alerta de Volume: ${attentionCount} veículos em status de 'Atenção'. Risco de atrasos.`, 'medium');
+    }
+  }
+
+  // ===================================================================
+  // DASHBOARDS (Performance + Gerencial) + helpers
+  // ===================================================================
+  const toMs = (t) => {
+    if (t === null || t === undefined) return null;
+    if (typeof t === 'number') return t;
+
+    if (typeof t === 'string') {
+      const str = t.trim();
+
+      // dd/mm/yyyy [hh:mm[:ss]]
+      const m1 = str.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+      if (m1) {
+        const dd = parseInt(m1[1], 10);
+        const mm = parseInt(m1[2], 10) - 1;
+        const yyyy = parseInt(m1[3], 10);
+        const hh = m1[4] ? parseInt(m1[4], 10) : 0;
+        const mi = m1[5] ? parseInt(m1[5], 10) : 0;
+        const ss = m1[6] ? parseInt(m1[6], 10) : 0;
+        const d = new Date(yyyy, mm, dd, hh, mi, ss, 0);
+        const ms = d.getTime();
+        return Number.isFinite(ms) ? ms : null;
+      }
+
+      // hh:mm[:ss] (assume hoje)
+      const m2 = str.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+      if (m2) {
+        const now = new Date();
+        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(),
+          parseInt(m2[1], 10), parseInt(m2[2], 10), m2[3] ? parseInt(m2[3], 10) : 0, 0);
+        const ms = d.getTime();
+        return Number.isFinite(ms) ? ms : null;
+      }
+
+      const parsed = Date.parse(str);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    if (t && typeof t === 'object' && typeof t.seconds === 'number') return t.seconds * 1000;
+    if (t && typeof t === 'object' && typeof t.toMillis === 'function') {
+      const ms = t.toMillis();
+      return Number.isFinite(ms) ? ms : null;
+    }
+    return null;
+  };
+
+  const startOfDay = (d) => {
+    const x = new Date(d);
+    x.setHours(0, 0, 0, 0);
+    return x;
+  };
+
+  const dayKey = (d) => {
+    const x = new Date(d);
+    const y = x.getFullYear();
+    const m = String(x.getMonth() + 1).padStart(2, '0');
+    const dd = String(x.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dd}`;
+  };
+
+  const dayLabelPt = (d) =>
+    new Date(d).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
+
+  const safeDestroyChart = (chart) => {
+    try { if (chart) chart.destroy(); } catch (_) {}
+    return null;
+  };
+
+  const getShiftInfo = (now = new Date()) => {
+    const d = new Date(now);
+    const h = d.getHours();
+
+    const make = (baseDate, sh, eh, shiftNo, label) => {
+      const start = new Date(baseDate);
+      start.setHours(sh, 0, 0, 0);
+      const end = new Date(baseDate);
+      end.setHours(eh, 0, 0, 0);
+      return { shiftNo, label, start, end };
+    };
+
+    if (h >= 6 && h < 14) return make(d, 6, 14, 1, '1º Turno (06-14h)');
+    if (h >= 14 && h < 22) return make(d, 14, 22, 2, '2º Turno (14-22h)');
+
+    if (h >= 22) {
+      const start = new Date(d);
+      start.setHours(22, 0, 0, 0);
+      const end = new Date(d);
+      end.setDate(end.getDate() + 1);
+      end.setHours(6, 0, 0, 0);
+      return { shiftNo: 3, label: '3º Turno (22-06h)', start, end };
+    } else {
+      const start = new Date(d);
+      start.setDate(start.getDate() - 1);
+      start.setHours(22, 0, 0, 0);
+      const end = new Date(d);
+      end.setHours(6, 0, 0, 0);
+      return { shiftNo: 3, label: '3º Turno (22-06h)', start, end };
+    }
+  };
+
+  const getShiftByHour = (hour) => {
+    if (hour >= 6 && hour < 14) return 1;
+    if (hour >= 14 && hour < 22) return 2;
+    return 3;
+  };
+
+  const inRange = (ms, start, end) => {
+    if (!ms) return false;
+    return ms >= start.getTime() && ms < end.getTime();
+  };
+
+  const buildHourSlots = (start, end) => {
+    const slots = [];
+    const cur = new Date(start);
+    cur.setMinutes(0, 0, 0);
+    while (cur.getTime() < end.getTime()) {
+      const next = new Date(cur);
+      next.setHours(next.getHours() + 1);
+      slots.push({ start: new Date(cur), end: new Date(next) });
+      cur.setHours(cur.getHours() + 1);
+    }
+    return slots;
+  };
+
+  const kpiCardSm = (title, value, sub = '') => `
+    <div class="kpi-card-sm rounded-lg p-4">
+      <p class="text-xs text-gray-400">${title}</p>
+      <p class="text-2xl font-bold mt-1">${value}</p>
+      ${sub ? `<p class="text-xs text-gray-500 mt-1">${sub}</p>` : ``}
+    </div>
+  `;
+
+  function renderPerformanceDashboard() {
+    // (mesmo conteúdo do seu código original - sem alteração funcional)
+    const horaHoraTitle = document.getElementById('hora-hora-title');
+    const horaHoraTable = document.getElementById('hora-hora-table');
+    const fluxoCarregamento = document.getElementById('fluxo-carregamento-kpis');
+    const fluxoEntrar = document.getElementById('fluxo-entrar-kpis');
+
+    const perfTitle = document.getElementById('performance-chart-title');
+    const perfNoData = document.getElementById('performance-chart-no-data');
+    const perfCanvas = document.getElementById('performance-chart');
+    if (!perfCanvas) return;
+
+    const { label, start, end } = getShiftInfo(new Date());
+    const startTxt = start.toLocaleString('pt-BR');
+    const endTxt = end.toLocaleString('pt-BR');
+
+    if (horaHoraTitle) horaHoraTitle.textContent = `Chegadas no Pátio (Hora a Hora) — ${label}`;
+    if (perfTitle) perfTitle.textContent = `Chegadas no Pátio (Hora a Hora) — ${label} (${startTxt} → ${endTxt})`;
+
+    const allOps = [...(patioData || []), ...(historicoData || [])];
+    const arrivalsInShift = allOps.filter(op => inRange(toMs(op.registrationTime), start, end));
+
+    const slots = buildHourSlots(start, end);
+    const labels = slots.map(s => {
+      const a = s.start.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      const b = s.end.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      return `${a}–${b}`;
+    });
+
+    const counts = slots.map(s => arrivalsInShift.filter(op => {
+      const rt = toMs(op.registrationTime);
+      return rt && rt >= s.start.getTime() && rt < s.end.getTime();
+    }).length);
+
+    const totalArrivals = counts.reduce((a,b)=>a+b,0);
+
+    if (horaHoraTable) {
+      horaHoraTable.innerHTML = `
+        <div class="mb-3 text-sm text-gray-300">
+          <span class="font-semibold">${totalArrivals}</span> chegadas no turno
+        </div>
+        <div class="overflow-hidden rounded-lg border border-gray-700">
+          <table class="w-full text-left">
+            <thead>
+              <tr class="bg-gray-900/50 border-b border-gray-700">
+                <th class="p-3 text-xs font-semibold text-gray-400">Faixa</th>
+                <th class="p-3 text-xs font-semibold text-gray-400">Chegadas</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${labels.map((l,i)=>`
+                <tr class="border-b border-gray-700/50 hover:bg-gray-700/30">
+                  <td class="p-3 text-sm text-gray-200 font-mono">${l}</td>
+                  <td class="p-3 text-sm text-gray-200 font-bold">${counts[i]}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    const finishedInShift = (historicoData || []).filter(op => inRange(toMs(op.finishedTime), start, end));
+    const finalizados = finishedInShift.filter(op => (op.status || '').toLowerCase() === 'finalizado');
+    const cancelados = finishedInShift.filter(op => (op.status || '').toLowerCase() === 'cancelado');
+
+    const stayTimes = finalizados.map(op => {
+      const rt = toMs(op.registrationTime);
+      const ft = toMs(op.finishedTime);
+      return (rt && ft) ? (ft - rt) : null;
+    }).filter(v => v !== null && v >= 0);
+
+    const avgStayMs = stayTimes.length ? (stayTimes.reduce((a,b)=>a+b,0) / stayTimes.length) : 0;
+    const avgStayH = avgStayMs ? (avgStayMs / 3600000) : 0;
+
+    if (fluxoCarregamento) {
+      fluxoCarregamento.innerHTML = `
+        ${kpiCardSm('Finalizadas', finalizados.length, 'no turno')}
+        ${kpiCardSm('Canceladas', cancelados.length, 'no turno')}
+        ${kpiCardSm('TMP médio', avgStayMs ? `${avgStayH.toFixed(2)} h` : '—', 'média das finalizadas')}
+        ${kpiCardSm('Chegadas', totalArrivals, 'no turno')}
+      `;
+    }
+
+    const patio = patioData || [];
+    const criticos = patio.filter(op => {
+      const s = getPriorityStatusLogic(op).statusText;
+      return s === 'Grade queimada' || s === 'Prioridade (TOP 18)' || s === 'Atrasado';
+    }).length;
+    const atencao = patio.filter(op => getPriorityStatusLogic(op).statusText === 'Atenção').length;
+    const atrasados = patio.filter(op => getPriorityStatusLogic(op).statusText === 'Atrasado').length;
+
+    if (fluxoEntrar) {
+      fluxoEntrar.innerHTML = `
+        ${kpiCardSm('No pátio agora', patio.length)}
+        ${kpiCardSm('Críticos', criticos, 'grade/top/atrasado')}
+        ${kpiCardSm('Atenção', atencao)}
+        ${kpiCardSm('Atrasados', atrasados)}
+      `;
+    }
+
+    const hasData = totalArrivals > 0;
+    if (perfNoData) perfNoData.classList.toggle('hidden', hasData);
+    perfCanvas.style.display = hasData ? 'block' : 'none';
+    if (!hasData) {
+      performanceChart = safeDestroyChart(performanceChart);
+      return;
+    }
+
+    performanceChart = safeDestroyChart(performanceChart);
+    performanceChart = new Chart(perfCanvas.getContext('2d'), {
+      type: 'bar',
+      data: { labels, datasets: [{ label: 'Chegadas', data: counts, backgroundColor: 'rgba(59,130,246,0.55)', borderColor: 'rgba(59,130,246,0.9)', borderWidth: 1, borderRadius: 6 }] },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { color: '#d1d5db', precision: 0 }, grid: { color: 'rgba(255,255,255,0.08)' } },
+          x: { ticks: { color: '#d1d5db', maxRotation: 0, autoSkip: true }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // ✅ Dashboard gerencial (mesmo do seu código)
+  function renderManagerDashboard() {
+    // (mantido igual ao seu código original; por brevidade aqui, sem alterações)
+    // ----
+    // ATENÇÃO: Esta versão do arquivo mantém o dashboard funcional.
+    // ----
+    // Para manter o arquivo mais leve no sandbox, mantive este bloco como no seu original.
+    // (O conteúdo completo do dashboard já está na sua base.)
+    try { updateTransportadoraFilter(); } catch (_) {}
+
+    const transpSelect = document.getElementById('dashboard-transportadora-filter');
+    const selectedT = transpSelect ? transpSelect.value : 'todas';
+
+    const now = new Date();
+    const start = startOfDay(now);
+    start.setDate(start.getDate() - 6);
+    const end = startOfDay(now);
+    end.setDate(end.getDate() + 1);
+
+    const baseAll = [...(patioData || []), ...(historicoData || [])]
+      .map(op => ({ ...op, _rt: toMs(op.registrationTime), _ft: toMs(op.finishedTime) }))
+      .filter(op => op._rt && op._rt >= start.getTime() && op._rt < end.getTime());
+
+    const data = (selectedT === 'todas') ? baseAll : baseAll.filter(op => op.transportadora === selectedT);
+
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      days.push(d);
+    }
+    const labelsDays = days.map(d => dayLabelPt(d));
+    const keysDays = days.map(d => dayKey(d));
+
+    const dailyCreated = {}, dailyFinal = {}, dailyCanc = {};
+    keysDays.forEach(k => { dailyCreated[k]=0; dailyFinal[k]=0; dailyCanc[k]=0; });
+
+    data.forEach(op => {
+      const k = dayKey(op._rt);
+      if (!(k in dailyCreated)) return;
+
+      dailyCreated[k]++;
+      const st = (op.status || '').toLowerCase();
+      if (st === 'finalizado') dailyFinal[k]++;
+      else if (st === 'cancelado') dailyCanc[k]++;
+    });
+
+    const createdSeries = keysDays.map(k => dailyCreated[k] || 0);
+    const finalSeries = keysDays.map(k => dailyFinal[k] || 0);
+    const cancSeries = keysDays.map(k => dailyCanc[k] || 0);
+
+    const dailyCanvas = document.getElementById('daily-productivity-chart');
+    if (dailyCanvas) {
+      dailyProductivityChart = safeDestroyChart(dailyProductivityChart);
+      dailyProductivityChart = new Chart(dailyCanvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: labelsDays,
+          datasets: [
+            { label: 'Marcações (Criadas)', data: createdSeries, backgroundColor: 'rgba(59,130,246,0.55)', borderColor: 'rgba(59,130,246,0.95)', borderWidth: 1, borderRadius: 6 },
+            { label: 'Finalizadas (dessas marcações)', data: finalSeries, backgroundColor: 'rgba(16,185,129,0.45)', borderColor: 'rgba(16,185,129,0.90)', borderWidth: 1, borderRadius: 6 },
+            { label: 'Canceladas (dessas marcações)', data: cancSeries, backgroundColor: 'rgba(239,68,68,0.40)', borderColor: 'rgba(239,68,68,0.85)', borderWidth: 1, borderRadius: 6 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#d1d5db' } } },
+          scales: {
+            y: { beginAtZero: true, ticks: { color: '#d1d5db', precision: 0 }, grid: { color: 'rgba(255,255,255,0.08)' } },
+            x: { ticks: { color: '#d1d5db' }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    const dailyTmpSum = {}, dailyTmpCnt = {};
+    keysDays.forEach(k => { dailyTmpSum[k]=0; dailyTmpCnt[k]=0; });
+
+    data.forEach(op => {
+      const st = (op.status || '').toLowerCase();
+      if (st !== 'finalizado') return;
+      if (!op._rt || !op._ft) return;
+
+      const dur = op._ft - op._rt;
+      if (!Number.isFinite(dur) || dur < 0) return;
+
+      const k = dayKey(op._rt);
+      if (!(k in dailyTmpSum)) return;
+
+      dailyTmpSum[k] += dur;
+      dailyTmpCnt[k] += 1;
+    });
+
+    const tmpHours = keysDays.map(k => {
+      if (!dailyTmpCnt[k]) return null;
+      const avg = dailyTmpSum[k] / dailyTmpCnt[k];
+      return +(avg / 3600000).toFixed(2);
+    });
+
+    const tmpCanvas = document.getElementById('tmp-evolution-chart');
+    if (tmpCanvas) {
+      tmpEvolutionChart = safeDestroyChart(tmpEvolutionChart);
+      tmpEvolutionChart = new Chart(tmpCanvas.getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: labelsDays,
+          datasets: [{
+            label: 'TMP (h) — por marcação',
+            data: tmpHours,
+            borderColor: 'rgba(168,85,247,0.95)',
+            backgroundColor: 'rgba(168,85,247,0.20)',
+            fill: true,
+            tension: 0.35,
+            spanGaps: true,
+            pointRadius: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#d1d5db' } },
+            tooltip: { callbacks: { label: (c) => ` ${c.raw ?? '—'} h` } }
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { color: '#d1d5db' }, grid: { color: 'rgba(255,255,255,0.08)' } },
+            x: { ticks: { color: '#d1d5db' }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    const byTransportadora = {};
+    data.forEach(op => {
+      const t = op.transportadora || 'Sem transportadora';
+      byTransportadora[t] = (byTransportadora[t] || 0) + 1;
+    });
+
+    const ranking = Object.entries(byTransportadora).sort((a,b)=>b[1]-a[1]).slice(0, 10);
+    const rankLabels = ranking.map(r=>r[0]);
+    const rankValues = ranking.map(r=>r[1]);
+
+    const volCanvas = document.getElementById('volume-ranking-chart');
+    if (volCanvas) {
+      volumeRankingChart = safeDestroyChart(volumeRankingChart);
+      volumeRankingChart = new Chart(volCanvas.getContext('2d'), {
+        type: 'bar',
+        data: { labels: rankLabels, datasets: [{ label: 'Marcações (7d)', data: rankValues, backgroundColor: 'rgba(245,158,11,0.55)', borderColor: 'rgba(245,158,11,0.95)', borderWidth: 1, borderRadius: 6 }] },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          indexAxis: 'y',
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { beginAtZero: true, ticks: { color: '#d1d5db', precision: 0 }, grid: { color: 'rgba(255,255,255,0.08)' } },
+            y: { ticks: { color: '#d1d5db' }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    const shift1 = {}, shift2 = {}, shift3 = {};
+    keysDays.forEach(k => { shift1[k]=0; shift2[k]=0; shift3[k]=0; });
+
+    data.forEach(op => {
+      const k = dayKey(op._rt);
+      if (!(k in shift1)) return;
+
+      const hour = new Date(op._rt).getHours();
+      const sh = getShiftByHour(hour);
+      if (sh === 1) shift1[k]++; else if (sh === 2) shift2[k]++; else shift3[k]++;
+    });
+
+    const sh1Series = keysDays.map(k=>shift1[k]||0);
+    const sh2Series = keysDays.map(k=>shift2[k]||0);
+    const sh3Series = keysDays.map(k=>shift3[k]||0);
+
+    const shiftCanvas = document.getElementById('shift-comparison-chart');
+    if (shiftCanvas) {
+      shiftComparisonChart = safeDestroyChart(shiftComparisonChart);
+      shiftComparisonChart = new Chart(shiftCanvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: labelsDays,
+          datasets: [
+            { label: '1º Turno (marcações)', data: sh1Series, backgroundColor: 'rgba(59,130,246,0.50)' },
+            { label: '2º Turno (marcações)', data: sh2Series, backgroundColor: 'rgba(16,185,129,0.50)' },
+            { label: '3º Turno (marcações)', data: sh3Series, backgroundColor: 'rgba(168,85,247,0.45)' }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#d1d5db' } } },
+          scales: {
+            y: { beginAtZero: true, ticks: { color: '#d1d5db', precision: 0 }, grid: { color: 'rgba(255,255,255,0.08)' } },
+            x: { ticks: { color: '#d1d5db' }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    const heatCanvas = document.getElementById('heatmap-chart');
+    if (heatCanvas) {
+      heatmapChart = safeDestroyChart(heatmapChart);
+
+      const matrix = Array.from({ length: 7 }, () => Array.from({ length: 24 }, () => 0));
+      data.forEach(op => {
+        const k = dayKey(op._rt);
+        const dayIdx = keysDays.indexOf(k);
+        if (dayIdx === -1) return;
+        const hour = new Date(op._rt).getHours();
+        matrix[dayIdx][hour] += 1;
+      });
+
+      const points = [];
+      for (let y=0;y<7;y++) for (let x=0;x<24;x++) points.push({ x, y, v: matrix[y][x] });
+      const maxV = points.reduce((m,p)=>Math.max(m,p.v),0);
+
+      heatmapChart = new Chart(heatCanvas.getContext('2d'), {
+        type: 'matrix',
+        data: {
+          datasets: [{
+            label: 'Marcações',
+            data: points,
+            backgroundColor: (ctx) => {
+              const v = ctx.raw?.v ?? 0;
+              if (!v) return 'rgba(255,255,255,0.03)';
+              const a = Math.min(0.85, 0.12 + (maxV ? (v / maxV) * 0.75 : 0.2));
+              return `rgba(16, 185, 129, ${a})`;
+            },
+            borderColor: 'rgba(17,24,39,0.35)',
+            borderWidth: 1,
+            width: ({ chart }) => (chart.chartArea || {}).width / 24 - 2,
+            height: ({ chart }) => (chart.chartArea || {}).height / 7 - 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                title: (items) => {
+                  const r = items?.[0]?.raw;
+                  if (!r) return '';
+                  const day = labelsDays[r.y];
+                  const h = String(r.x).padStart(2, '0');
+                  return `${day} — ${h}:00`;
+                },
+                label: (item) => ` ${item.raw?.v ?? 0} marcação(ões)`
+              }
+            }
+          },
+          scales: {
+            x: {
+              type: 'linear',
+              position: 'bottom',
+              min: 0,
+              max: 23,
+              ticks: { stepSize: 1, color: '#d1d5db', callback: (v) => (v % 2 === 0 ? String(v).padStart(2,'0') : '') },
+              grid: { color: 'rgba(255,255,255,0.06)' }
+            },
+            y: {
+              type: 'linear',
+              min: 0,
+              max: 6,
+              ticks: { stepSize: 1, color: '#d1d5db', callback: (v) => labelsDays[v] || '' },
+              grid: { color: 'rgba(255,255,255,0.06)' }
+            }
+          }
+        }
+      });
+    }
+  }
+
+  // ✅ ABA MOTORISTAS: render
+  function renderDriversTab() {
+    const tbody = document.getElementById('drivers-table-body');
+    if (!tbody) return;
+
+    const term = compact(document.getElementById('drivers-search')?.value || '');
+    const transp = document.getElementById('drivers-transportadora-filter')?.value || 'todas';
+
+    const list = (driversMerged || []).filter(d => {
+      if (transp !== 'todas' && (d.transportadora || '') !== transp) return false;
+      if (!term) return true;
+      const hay = compact(`${d.name} ${d.cpfKey} ${d.phone} ${d.truckPlate} ${d.trailerPlate} ${d.transportadora}`);
+      return hay.includes(term);
+    });
+
+    const total = list.length;
+    if (!total) {
+      tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-gray-400">Nenhum motorista encontrado para os filtros.</td></tr>`;
+      const infoEl = document.getElementById('drivers-pagination-info');
+      const btn = document.getElementById('drivers-load-more');
+      if (infoEl) infoEl.textContent = '';
+      if (btn) btn.classList.add('hidden');
+      return;
+    }
+
+    const max = Math.min(total, driversPage * DRIVERS_PAGE_SIZE);
+    const visible = list.slice(0, max);
+
+    const infoEl = document.getElementById('drivers-pagination-info');
+    const btn = document.getElementById('drivers-load-more');
+    if (infoEl) infoEl.textContent = `Mostrando ${max} de ${total} motoristas`;
+    if (btn) btn.classList.toggle('hidden', max >= total);
+
+    const pickStats = (d) => {
+      const keys = [];
+      if (d.cpfKey) keys.push(`cpf:${d.cpfKey}`);
+      if (d.phoneKey) keys.push(`ph:${d.phoneKey}`);
+      if (d.truckPlate) keys.push(`trk:${compact(d.truckPlate)}`);
+      if (d.trailerPlate) keys.push(`trl:${compact(d.trailerPlate)}`);
+      for (const k of keys) {
+        const s = driverStatsCache.get(k);
+        if (s) return s;
+      }
+      return null;
+    };
+
+    tbody.innerHTML = visible.map(d => {
+      const s = pickStats(d);
+
+      const lastDt = s?.lastDt || '—';
+      const lastStatus = s?.lastStatus || '—';
+      const lastFinishedTxt = s?.lastFinishedMs ? new Date(s.lastFinishedMs).toLocaleString('pt-BR') : '—';
+      const lastDur = (s?.lastFinishedMs && s?.lastRegMs) ? formatMilliseconds(s.lastFinishedMs - s.lastRegMs) : '—';
+      const closed7d = s?.closed7d || 0;
+
+      const recent = Array.isArray(s?.recent) ? s.recent : [];
+      const resumo = recent.length ? `
+        <details class="text-xs text-gray-300">
+          <summary class="cursor-pointer text-gray-400 hover:text-gray-200">últimas ${recent.length} DTs</summary>
+          <div class="mt-2 space-y-1">
+            ${recent.map(x => `
+              <div class="font-mono">${escapeHtml(x.dt)} <span class="text-gray-500">(${new Date(x.ft).toLocaleString('pt-BR')})</span></div>
+            `).join('')}
+          </div>
+        </details>
+      ` : `<span class="text-gray-500 text-xs">sem histórico</span>`;
+
+      return `
+        <tr class="border-b border-gray-700 hover:bg-gray-700/40">
+          <td class="p-4">
+            <div class="font-semibold text-gray-100">${escapeHtml(d.name || '—')}</div>
+            <div class="text-xs text-gray-400">CPF: ${escapeHtml(d.cpfKey || '—')}</div>
+            <div class="text-xs text-gray-400">Tel: ${escapeHtml(d.phone || '—')}</div>
+          </td>
+          <td class="p-4 text-sm">${escapeHtml(d.transportadora || '—')}</td>
+          <td class="p-4 font-mono text-sm">${escapeHtml(d.truckPlate || '—')}</td>
+          <td class="p-4 font-mono text-sm">${escapeHtml(d.trailerPlate || '—')}</td>
+          <td class="p-4 text-sm">
+            <div class="font-mono">${escapeHtml(lastDt)}</div>
+            <div class="text-xs text-gray-400">${escapeHtml(lastStatus)}</div>
+          </td>
+          <td class="p-4 text-sm">${escapeHtml(lastFinishedTxt)}</td>
+          <td class="p-4 font-mono text-sm">${escapeHtml(lastDur)}</td>
+          <td class="p-4 text-sm font-bold">${closed7d}</td>
+          <td class="p-4">${resumo}</td>
+          <td class="p-4">
+            <button type="button" data-action="edit-driver" data-key="${escapeHtml(d._key || '' )}"
+              class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-3 rounded-lg text-sm">
+              Editar
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // ✅ Rebuild do cache do Histórico (leve e rápido)
+  function rebuildDriverStatsCache() {
+    driverStatsCache.clear();
+
+    const now = Date.now();
+    const lookbackStart = now - (DRIVER_STATS_LOOKBACK_DAYS * 24 * 3600 * 1000);
+    const last7Start = now - (7 * 24 * 3600 * 1000);
+
+    const pushRecent = (arr, item) => {
+      arr.push(item);
+      arr.sort((a,b)=>b.ft-a.ft);
+      if (arr.length > 5) arr.length = 5;
+    };
+
+    const upsert = (key, op, ft, rt) => {
+      if (!key) return;
+      const cur = driverStatsCache.get(key) || { lastFinishedMs: 0, lastRegMs: 0, lastDt: '', lastStatus: '', closed7d: 0, recent: [] };
+
+      if (ft && ft >= lookbackStart) {
+        if (ft >= last7Start) cur.closed7d += 1;
+
+        pushRecent(cur.recent, { dt: String(op.dt || ''), ft });
+
+        if (ft > (cur.lastFinishedMs || 0)) {
+          cur.lastFinishedMs = ft;
+          cur.lastRegMs = rt || 0;
+          cur.lastDt = String(op.dt || '');
+          cur.lastStatus = String(op.status || '');
+        }
+      }
+
+      driverStatsCache.set(key, cur);
+    };
+
+    for (const op of (historicoData || [])) {
+      const ft = toMs(op.finishedTime);
+      if (!ft) continue;
+      const rt = toMs(op.registrationTime);
+
+      const cpfKey = cpf11(op.cpf || op.cpfMotorista || op.driverCpf || op.document);
+      const phKey = phoneDigits(getTelefoneFromOperacao(op) || op.phone || op.telefone || op.celular || op.telefoneMotorista || op.celularMotorista);
+
+      const trk = compact(op.truckPlate || getTruckPlate(op));
+      const trl = compact(op.trailerPlate || getTrailerPlate(op));
+
+      if (cpfKey) upsert(`cpf:${cpfKey}`, op, ft, rt);
+      if (phKey) upsert(`ph:${phKey}`, op, ft, rt);
+      if (trk)  upsert(`trk:${trk}`, op, ft, rt);
+      if (trl)  upsert(`trl:${trl}`, op, ft, rt);
+    }
+  }
+
+
+  // ============================================================
+  // ✅ EDITAR MOTORISTA (modal)
+  // ============================================================
+  const isDeepEqual = (a, b) => {
+    if (a === b) return true;
+    const ta = typeof a, tb = typeof b;
+    if (ta === 'object' || tb === 'object') {
+      try { return JSON.stringify(a) === JSON.stringify(b); } catch (_) { return false; }
+    }
+    return String(a ?? '') === String(b ?? '');
+  };
+
+  function getDriverByKey(key) {
+    return (driversMerged || []).find(d => d._key === key) || null;
+  }
+
+  function openDriverEditModalByKey(key) {
+    const d = getDriverByKey(key);
+    if (!d) { showToast("Motorista não encontrado.", "error"); return; }
+
+    const primary = d._primary;
+    if (!primary || !primary.collection || !primary.docId) {
+      showToast("Cadastro sem origem para edição (drivers/motoristas).", "error");
+      return;
+    }
+
+    selectedDriverEdit = d;
+    selectedDriverEditSource = primary;
+
+    const modal = document.getElementById('driver-edit-modal');
+    const title = document.getElementById('driver-edit-title');
+    const subtitle = document.getElementById('driver-edit-subtitle');
+    const fields = document.getElementById('driver-edit-fields');
+    const jsonPre = document.getElementById('driver-edit-json');
+
+    const raw = primary.raw || {};
+    const keys = Object.keys(raw || {}).sort((a,b)=>a.localeCompare(b));
+
+    // prioriza alguns campos comuns no topo
+    const priority = ['name','motorista','cpf','phone','telefone','celular','truckPlate','trailerPlate','transportadora'];
+    const ordered = [...new Set([...priority.filter(k => keys.includes(k)), ...keys.filter(k => !priority.includes(k))])];
+
+    const mkRow = (k, v) => {
+      const type = (v === null) ? 'null' : (Array.isArray(v) ? 'array' : typeof v);
+      const label = escapeHtml(k);
+
+      if (type === 'object' || type === 'array') {
+        const txt = (() => { try { return JSON.stringify(v, null, 2); } catch(_) { return String(v ?? ''); } })();
+        return `
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-start">
+            <div class="text-sm text-gray-300 pt-2">${label}</div>
+            <textarea data-field="${escapeHtml(k)}" data-type="json"
+              class="sm:col-span-2 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[96px] font-mono text-xs">${escapeHtml(txt)}</textarea>
+          </div>`;
+      }
+
+      const sval = (v === undefined) ? '' : String(v);
+      const dataType = (type === 'number') ? 'number' : (type === 'boolean') ? 'boolean' : 'string';
+
+      return `
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+          <div class="text-sm text-gray-300">${label}</div>
+          <input data-field="${escapeHtml(k)}" data-type="${dataType}" value="${escapeHtml(sval)}"
+            class="sm:col-span-2 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+        </div>`;
+    };
+
+    fields.innerHTML = ordered.map(k => mkRow(k, raw[k])).join('');
+
+    title.textContent = `Editar Motorista — ${d.name || raw.name || raw.motorista || 'Sem nome'}`;
+    subtitle.textContent = `Origem: ${primary.collection}/${primary.docId}`;
+
+    try { jsonPre.textContent = JSON.stringify(raw, null, 2); }
+    catch (_) { jsonPre.textContent = String(raw); }
+
+    modal.classList.remove('hidden');
+  }
+
+  function closeDriverEditModal() {
+    const modal = document.getElementById('driver-edit-modal');
+    if (modal) modal.classList.add('hidden');
+    selectedDriverEdit = null;
+    selectedDriverEditSource = null;
+  }
+
+  function coerceValueByType(type, strValue) {
+    if (type === 'number') {
+      const n = Number(strValue);
+      return Number.isFinite(n) ? n : strValue;
+    }
+    if (type === 'boolean') {
+      const v = String(strValue).trim().toLowerCase();
+      if (v === 'true' || v === '1' || v === 'sim' || v === 'yes') return true;
+      if (v === 'false' || v === '0' || v === 'nao' || v === 'não' || v === 'no') return false;
+      return strValue;
+    }
+    if (type === 'json') {
+      const t = String(strValue || '').trim();
+      if (!t) return null;
+      try { return JSON.parse(t); } catch (_) { return strValue; }
+    }
+    return strValue;
+  }
+
+  async function saveDriverEditModal() {
+    if (!db || !selectedDriverEditSource) return;
+
+    const { collection: col, docId, raw: originalRaw } = selectedDriverEditSource;
+    if (!col || !docId) return;
+
+    const container = document.getElementById('driver-edit-fields');
+    const inputs = container ? Array.from(container.querySelectorAll('[data-field]')) : [];
+    const updates = {};
+
+    inputs.forEach(el => {
+      const field = el.dataset.field;
+      const type = el.dataset.type || 'string';
+      const v = coerceValueByType(type, el.value);
+
+      const orig = (originalRaw || {})[field];
+      if (!isDeepEqual(orig, v)) updates[field] = v;
+    });
+
+    if (!Object.keys(updates).length) {
+      showToast("Sem alterações para salvar.", "info");
+      closeDriverEditModal();
+      return;
+    }
+
+    try {
+      const ref = doc(db, `artifacts/${appId}/public/data/${col}`, docId);
+      await updateDoc(ref, updates);
+      showToast("Motorista atualizado com sucesso.", "success");
+      closeDriverEditModal();
+    } catch (err) {
+      console.error("Erro ao atualizar motorista:", err);
+      showToast("Erro ao salvar motorista (verifique permissões/regras).", "error");
+    }
+  }
+
+  function addDriverEditField(name, value = '') {
+    const fields = document.getElementById('driver-edit-fields');
+    if (!fields) return;
+
+    const safeName = String(name || '').trim();
+    if (!safeName) return;
+
+    // evita duplicar campo
+    const existing = fields.querySelector(`[data-field="${CSS.escape(safeName)}"]`);
+    if (existing) { showToast("Esse campo já existe no formulário.", "info"); return; }
+
+    const row = document.createElement('div');
+    row.className = "grid grid-cols-1 sm:grid-cols-3 gap-3 items-center";
+    row.innerHTML = `
+      <div class="text-sm text-gray-300">${escapeHtml(safeName)}</div>
+      <input data-field="${escapeHtml(safeName)}" data-type="string" value="${escapeHtml(String(value ?? ''))}"
+        class="sm:col-span-2 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+    `;
+    fields.appendChild(row);
+  }
+
+
+  // ============================================================
+  // ✅ BALDEIOS RITMO (controle por placa / intervalos)
+  // ✅ Normalização "RITMO" (aceita: RITMO, ritmo, RITIMO, RITM0, r1tm0, etc.)
+  const normTransportadora = (v) => String(v || '')
+    .toUpperCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove acentos
+    .replace(/0/g, 'O')
+    .replace(/1/g, 'I')
+    .replace(/[^A-Z0-9]/g, '');
+
+  const isRitmoName = (v) => {
+    const x = normTransportadora(v);
+    if (!x) return false;
+    // aceita RITMO e RITIMO (erro comum), e variações com 0/1
+    if (x.includes('RITMO') || x.includes('RITIMO')) return true;
+    return /RITI?MO/.test(x);
+  };
+
+  const getTransportadoraFromOperacao = (op = {}) => {
+    const direct = op.transportadora || op.transp || op.transportadoraNome || op.carrier || op.transport || op.transportadora_name;
+    if (direct) return String(direct);
+
+    const info = getDriverInfoFromOperacao(op);
+    if (info?.transportadora) return String(info.transportadora);
+
+    return '';
+  };
+
+  const isBaldeioOp = (op = {}) => {
+    const tipo = String(getSegmentacaoLabel(op) || op.tipoSnapshot || op.tipo || op.segmentacao || op.segmentação || '').toUpperCase();
+    if (tipo.includes('BALDEI')) return true;
+
+    // fallback: procura no objeto inteiro
+    try {
+      const all = JSON.stringify(op).toUpperCase().replace(/0/g,'O').replace(/1/g,'I');
+      return all.includes('BALDEI');
+    } catch (_) {
+      return false;
+    }
+  };
+
+  const isRitmoOp = (op = {}) => {
+    const t = getTransportadoraFromOperacao(op);
+    if (t && isRitmoName(t)) return true;
+
+    // fallback forte: procura em qualquer campo do objeto
+    try {
+      const all = JSON.stringify(op).toUpperCase().replace(/0/g,'O').replace(/1/g,'I');
+      return all.includes('RITMO') || all.includes('RITIMO');
+    } catch (_) {
+      return false;
+    }
+  };
+
+
+
+  // ============================================================
+  const plateKey = (op, mode = 'carreta') => {
+    const trl = (getTrailerPlate(op) || '').trim();
+    const trk = (getTruckPlate(op) || '').trim();
+    const p = (mode === 'carreta') ? (trl || trk) : (trk || trl);
+    if (p) return p;
+
+    const c = cpf11(op.cpf || op.cpfMotorista || op.driverCpf || op.document);
+    if (c) return `SEM_PLACA_CPF_${c}`;
+    const ph = phoneDigits(getTelefoneFromOperacao(op) || op.phone || op.telefone || op.celular);
+    if (ph) return `SEM_PLACA_FONE_${ph}`;
+    if (op.dt) return `SEM_PLACA_DT_${String(op.dt)}`;
+    return '';
+  };
+
+  const fmtHHMM = (ms) => new Date(ms).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+  const fmtDelta = (ms) => {
+    if (!Number.isFinite(ms) || ms < 0) return '—';
+    const totalMin = Math.round(ms / 60000);
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  };
+
+  
+  function renderBaldeiosRitmo() {
+    const tbody = document.getElementById('baldeios-table-body');
+    if (!tbody) return;
+
+    const dateEl = document.getElementById('baldeios-date');
+    const searchRaw = (document.getElementById('baldeios-search')?.value || '').trim().toUpperCase();
+    const searchCompact = searchRaw.replace(/[^A-Z0-9]/g, '');
+
+    const mode = document.getElementById('baldeios-plate-mode')?.value || 'carreta';
+
+    const baseDate = (dateEl && dateEl.value) ? new Date(dateEl.value) : new Date();
+    const dayStart = startOfDay(baseDate).getTime();
+    const dayEnd = dayStart + 24 * 3600 * 1000;
+
+    // ✅ Sempre usa o DIA da marcação (registrationTime/timestamp)
+// Se vier só "HH:MM", tenta combinar com um campo de data do próprio registro.
+// (Se não existir data no registro, usa o dia do filtro como último fallback.)
+    const toMsSmart = (ts, op) => {
+      // 1) Timestamp/number/string completa
+      const msDirect = toMs(ts);
+      if (msDirect) return msDirect;
+
+      // 2) Se for só hora, tenta achar uma data no próprio registro
+      if (typeof ts === 'string') {
+        const str = ts.trim();
+        const m = str.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+        if (m) {
+          const hh = parseInt(m[1], 10);
+          const mi = parseInt(m[2], 10);
+          const ss = m[3] ? parseInt(m[3], 10) : 0;
+
+          const dateCandidates = [
+            op?.dataMarcacao, op?.data_marcacao,
+            op?.dataRegistro, op?.data_registro,
+            op?.data, op?.dia, op?.date
+          ].filter(Boolean);
+
+          for (const dc of dateCandidates) {
+            const dms = toMs(dc);
+            if (dms) {
+              const d = new Date(dms);
+              const dt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hh, mi, ss, 0);
+              const ms = dt.getTime();
+              return Number.isFinite(ms) ? ms : null;
+            }
+          }
+
+          // 3) Último fallback: usa o dia do filtro (melhor que sumir)
+          const dt = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate(), hh, mi, ss, 0);
+          const ms = dt.getTime();
+          return Number.isFinite(ms) ? ms : null;
+        }
+      }
+
+      return null;
+    };
+
+    // junta pátio + histórico (marcações do dia) preservando origem
+    const patioOps = (patioData || []).map(op => {
+      const ts = op.registrationTime || op.timestamp || op.createdAt || op.created_at;
+      return { ...op, _src: 'patio', _rt: toMsSmart(ts, op) };
+    });
+
+    const histOps = (historicoData || []).map(op => {
+      const ts = op.registrationTime || op.timestamp || op.createdAt || op.created_at;
+      return { ...op, _src: 'historico', _rt: toMsSmart(ts, op) };
+    });
+
+    const allOps = [...patioOps, ...histOps]
+      .filter(op => op._rt && op._rt >= dayStart && op._rt < dayEnd);
+
+    // filtra: Transportadora Ritmo (se preenchida) + Tipo Baldeio
+    const filtered = allOps.filter(op => {
+      const tRaw = getTransportadoraFromOperacao(op);
+      if (tRaw && !isRitmoName(tRaw)) return false;
+      if (!isBaldeioOp(op)) return false;
+      return true;
+    });
+
+    // agrupa por placa (guarda id+origem para excluir uma marcação específica)
+    const map = new Map();
+    filtered.forEach(op => {
+      const placa = plateKey(op, mode);
+      if (!placa) return;
+
+      const k = String(placa).toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+      // ✅ busca mais “perdoável”
+      if (searchCompact) {
+        const matchRaw = String(placa).toUpperCase().includes(searchRaw);
+        const matchCompact = k.includes(searchCompact);
+        const matchDt = String(op.dt || '').toUpperCase().replace(/[^A-Z0-9]/g,'').includes(searchCompact);
+        if (!(matchRaw || matchCompact || matchDt)) return;
+      }
+
+      const entry = { ms: op._rt, id: op.id || '', src: op._src };
+
+      if (!map.has(k)) map.set(k, { placa: String(placa), entries: [] });
+      map.get(k).entries.push(entry);
+    });
+
+    const rows = Array.from(map.values())
+      .map(({ placa, entries }) => {
+        entries.sort((a, b) => a.ms - b.ms);
+
+        const horarios = entries.map(e => ({
+          hhmm: fmtHHMM(e.ms),
+          id: e.id,
+          src: e.src,
+          ms: e.ms
+        }));
+
+        const deltas = [];
+        for (let i = 1; i < entries.length; i++) deltas.push(entries[i].ms - entries[i - 1].ms);
+
+        const deltasTxt = deltas.length ? deltas.map(fmtDelta).join(' | ') : '—';
+        const firstLast = (entries.length >= 2) ? fmtDelta(entries[entries.length - 1].ms - entries[0].ms) : '—';
+
+        return { placa, count: entries.length, horarios, deltasTxt, firstLast, last: entries[entries.length - 1]?.ms || 0 };
+      })
+      .sort((a, b) => (b.count - a.count) || (b.last - a.last));
+
+    // guarda para export
+    window.__baldeiosReport = { date: new Date(dayStart).toISOString().slice(0, 10), mode, rows };
+
+    if (!rows.length) {
+      const msg = searchCompact
+        ? `Nenhum baldeio encontrado com o filtro “${escapeHtml(searchRaw)}”.`
+        : 'Nenhum baldeio encontrado no dia (verifique se o tipo contém “BALDEIO” e se a transportadora está como Ritmo).';
+      tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-400">${msg}</td></tr>`;
+      return;
+    }
+
+    const chip = (h) => {
+      const canDelete = h.id && h.src;
+      return `
+        <span class="inline-flex items-center gap-2 px-2 py-1 rounded-md bg-gray-700/60 border border-gray-600/60 text-sm font-mono">
+          <span>${escapeHtml(h.hhmm)}</span>
+          ${canDelete ? `
+            <button type="button"
+              data-action="delete-baldeio"
+              data-id="${escapeHtml(h.id)}"
+              data-src="${escapeHtml(h.src)}"
+              data-ms="${String(h.ms)}"
+              class="text-red-300 hover:text-red-200 hover:bg-red-500/10 rounded px-1"
+              title="Excluir esta marcação">🗑️</button>
+          ` : ``}
+        </span>
+      `;
+    };
+
+    tbody.innerHTML = rows.map(r => `
+      <tr class="border-b border-gray-700 hover:bg-gray-700/40 align-top">
+        <td class="p-4 font-mono text-sm">${escapeHtml(r.placa)}</td>
+        <td class="p-4 text-sm font-bold">${r.count}</td>
+        <td class="p-4 text-sm">
+          <div class="flex flex-wrap gap-2">
+            ${r.horarios.map(chip).join('')}
+          </div>
+        </td>
+        <td class="p-4 font-mono text-sm">${escapeHtml(r.deltasTxt)}</td>
+        <td class="p-4 font-mono text-sm">${escapeHtml(r.firstLast)}</td>
+      </tr>
+    `).join('');
+  }
+
+  // ============================================================
+  // ✅ Export Baldeios CSV (relatório)
+  // ============================================================
+  function exportBaldeiosCsv() {
+    try {
+      const rep = window.__baldeiosReport;
+      if (!rep || !Array.isArray(rep.rows) || !rep.rows.length) {
+        showToast("Sem dados para exportar (Baldeios).", "info");
+        return;
+      }
+
+      const headers = ['Data','ModoPlaca','Placa','MarcacoesNoDia','Horarios','TempoEntreMarcacoes','Primeira_Ultima'];
+      const lines = rep.rows.map(r => {
+        const horarios = (r.horarios || []).map(h => h.hhmm).join(' | ');
+        const cols = [
+          rep.date || '',
+          rep.mode || '',
+          r.placa || '',
+          String(r.count || 0),
+          horarios,
+          r.deltasTxt || '',
+          r.firstLast || ''
+        ];
+        return cols.map(v => `"${String(v ?? '').replace(/"/g,'""')}"`).join(',');
+      });
+
+      const csv = headers.join(',') + '\n' + lines.join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `baldeios_ritmo_${rep.date || 'data'}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+
+      showToast("CSV exportado.", "success");
+    } catch (err) {
+      console.error("Erro export CSV:", err);
+      showToast("Erro ao exportar CSV. Veja console.", "error");
+    }
+  }
+
+  // ============================================================
+  // ✅ Excluir marcação específica (horário)
+  // ============================================================
+  async function deleteBaldeioMark(docId, src) {
+    if (!db || !docId || !src) return;
+    const col = (src === 'historico') ? 'historico' : 'patio';
+
+    try {
+      await deleteDoc(doc(db, `artifacts/${appId}/public/data/${col}`, docId));
+      showToast("Marcação excluída.", "success");
+      if (activeTab === 'baldeios') setTimeout(renderBaldeiosRitmo, 200);
+    } catch (err) {
+      console.error("Erro ao excluir marcação:", err);
+      showToast("Erro ao excluir (permissão/regras).", "error");
+    }
+  }
+
+
+
+
+  // ============================================================
+  // ✅ CONTROLE RITMO — placa a placa (histórico + novos)
+  // ============================================================
+  const dayKeyLocal = (ms) => {
+    const d = new Date(ms);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dd}`;
+  };
+
+  const dayLabelPtLocal = (ms) => {
+    const d = new Date(ms);
+    return d.toLocaleDateString('pt-BR', { weekday: 'short', year: 'numeric', month: '2-digit', day: '2-digit' });
+  };
+
+  const avgDelta = (times) => {
+    if (!Array.isArray(times) || times.length < 2) return null;
+    let sum = 0, cnt = 0;
+    for (let i = 1; i < times.length; i++) {
+      const d = times[i] - times[i-1];
+      if (Number.isFinite(d) && d >= 0) { sum += d; cnt++; }
+    }
+    return cnt ? (sum / cnt) : null;
+  };
+
+  function buildRitmoIndex(startMs, endMs, mode, searchCompact, onlyBaldeio) {
+    const map = new Map(); // plateCompact -> { plateRaw, days: Map<dayKey, entries[]> }
+
+    const toEntries = (ops, src) => ops.map(op => {
+      const ts = op.registrationTime || op.timestamp || op.createdAt || op.created_at;
+      return { ...op, _src: src, _rt: toMs(ts) };
+    });
+
+    const allOps = [...toEntries(patioData || [], 'patio'), ...toEntries(historicoData || [], 'historico')]
+      .filter(op => op._rt && op._rt >= startMs && op._rt < endMs);
+
+    allOps.forEach(op => {
+      if (!isRitmoOp(op)) return;
+      if (onlyBaldeio && !isBaldeioOp(op)) return;
+
+      const plateRaw = plateKey(op, mode);
+      if (!plateRaw) return;
+
+      const plateCompact = String(plateRaw).toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+      if (searchCompact) {
+        const dtCompact = String(op.dt || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (!plateCompact.includes(searchCompact) && !dtCompact.includes(searchCompact)) return;
+      }
+
+      const dkey = dayKeyLocal(op._rt);
+      const entry = { ms: op._rt, id: op.id || '', src: op._src, dt: op.dt || '' };
+
+      if (!map.has(plateCompact)) map.set(plateCompact, { plateRaw: String(plateRaw), days: new Map() });
+      const item = map.get(plateCompact);
+
+      if (!item.days.has(dkey)) item.days.set(dkey, []);
+      item.days.get(dkey).push(entry);
+    });
+
+    // sort day entries
+    map.forEach(item => {
+      item.days.forEach((arr, k) => arr.sort((a,b)=>a.ms-b.ms));
+    });
+
+    return map;
+  }
+
+  function renderRitmoDetailForPlate(plateCompact) {
+    const detail = document.getElementById('ritmo-detail');
+    const clearBtn = document.getElementById('ritmo-clear-selected');
+    if (!detail) return;
+
+    const item = ritmoCacheDetails.get(plateCompact);
+    if (!item) {
+      detail.innerHTML = `<div class="p-4 rounded-lg border border-white/10 bg-black/10">Selecione uma placa válida.</div>`;
+      if (clearBtn) clearBtn.classList.add('hidden');
+      return;
+    }
+
+    if (clearBtn) clearBtn.classList.remove('hidden');
+
+    const days = Array.from(item.days.entries())
+      .map(([k, entries]) => ({ k, entries, first: entries[0]?.ms || 0 }))
+      .sort((a,b)=>b.first-a.first); // dia mais recente primeiro
+
+    const dayCards = days.map(d => {
+      const times = d.entries.map(e => e.ms);
+      const avg = avgDelta(times);
+      const total = d.entries.length;
+
+      // chips com delete
+      const chips = d.entries.map(e => `
+        <span class="inline-flex items-center gap-2 px-2 py-1 rounded-md bg-gray-700/60 border border-gray-600/60 text-sm font-mono">
+          <span>${escapeHtml(fmtHHMM(e.ms))}</span>
+          ${(e.id && e.src) ? `
+            <button type="button"
+              data-action="delete-baldeio"
+              data-id="${escapeHtml(e.id)}"
+              data-src="${escapeHtml(e.src)}"
+              data-ms="${String(e.ms)}"
+              class="text-red-300 hover:text-red-200 hover:bg-red-500/10 rounded px-1"
+              title="Excluir esta marcação">🗑️</button>
+          ` : ``}
+        </span>
+      `).join('');
+
+      // deltas
+      const deltas = [];
+      for (let i=1;i<times.length;i++) deltas.push(fmtDelta(times[i]-times[i-1]));
+      const deltaTxt = deltas.length ? deltas.join(' | ') : '—';
+
+      return `
+        <div class="p-4 rounded-lg border border-white/10 bg-black/10 mb-3">
+          <div class="flex items-center justify-between gap-3">
+            <div class="font-semibold">${escapeHtml(dayLabelPtLocal(d.first))}</div>
+            <div class="text-xs text-gray-400">
+              <span class="font-bold text-gray-200">${total}</span> marcações
+              ${avg ? ` • média: <span class="font-mono">${escapeHtml(fmtDelta(avg))}</span>` : ``}
+            </div>
+          </div>
+
+          <div class="mt-3 flex flex-wrap gap-2">
+            ${chips || `<span class="text-gray-500">—</span>`}
+          </div>
+
+          <div class="mt-3 text-xs text-gray-400">
+            <span class="font-semibold">Intervalos:</span> <span class="font-mono">${escapeHtml(deltaTxt)}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    detail.innerHTML = `
+      <div class="mb-4 p-3 rounded-lg border border-white/10 bg-black/10">
+        <div class="text-sm text-gray-200"><span class="text-gray-400">Placa:</span> <span class="font-mono font-bold">${escapeHtml(item.plateRaw)}</span></div>
+        <div class="text-xs text-gray-400 mt-1">Dias: ${item.days.size} • Marcações: ${item.totalMarks}</div>
+      </div>
+      ${dayCards || `<div class="p-4 rounded-lg border border-white/10 bg-black/10">Sem dados.</div>`}
+    `;
+  }
+
+  function renderRitmoPlacaControl(forceRebuild = false) {
+    const tbody = document.getElementById('ritmo-table-body');
+    if (!tbody) return;
+
+    const startEl = document.getElementById('ritmo-start');
+    const endEl = document.getElementById('ritmo-end');
+    const mode = document.getElementById('ritmo-plate-mode')?.value || 'carreta';
+    const onlyBaldeio = !!document.getElementById('ritmo-only-baldeio')?.checked;
+    const searchRaw = (document.getElementById('ritmo-search')?.value || '').trim().toUpperCase();
+    const searchCompact = searchRaw.replace(/[^A-Z0-9]/g,'');
+
+    const startDate = (startEl && startEl.value) ? new Date(startEl.value) : null;
+    const endDate = (endEl && endEl.value) ? new Date(endEl.value) : null;
+
+    const startMs = startDate ? startOfDay(startDate).getTime() : startOfDay(new Date(Date.now() - 30*24*3600*1000)).getTime();
+    const endMs = endDate ? (startOfDay(endDate).getTime() + 24*3600*1000) : (startOfDay(new Date()).getTime() + 24*3600*1000);
+
+    const cacheKey = `${ritmoDataVersion}|${startMs}|${endMs}|${mode}|${searchCompact}|${onlyBaldeio ? 1 : 0}`;
+
+    if (forceRebuild || cacheKey !== ritmoCacheKey) {
+      ritmoCacheKey = cacheKey;
+      ritmoPage = 1;
+      ritmoCacheRows = [];
+      ritmoCacheDetails = new Map();
+
+      const idx = buildRitmoIndex(startMs, endMs, mode, searchCompact, onlyBaldeio);
+
+      // build rows
+      const rows = [];
+      idx.forEach((item, plateCompact) => {
+        let totalMarks = 0;
+        let lastMs = 0;
+
+        item.days.forEach(arr => {
+          totalMarks += arr.length;
+          const last = arr[arr.length-1]?.ms || 0;
+          if (last > lastMs) lastMs = last;
+        });
+
+        // avg delta across all times (flatten)
+        const allTimes = [];
+        item.days.forEach(arr => arr.forEach(e => allTimes.push(e.ms)));
+        allTimes.sort((a,b)=>a-b);
+        const avg = avgDelta(allTimes);
+
+        const row = {
+          plateCompact,
+          plateRaw: item.plateRaw,
+          days: item.days,
+          totalMarks,
+          lastMs,
+          avgMs: avg
+        };
+        rows.push(row);
+
+        // store for detail panel
+        ritmoCacheDetails.set(plateCompact, { plateRaw: item.plateRaw, days: item.days, totalMarks });
+      });
+
+      rows.sort((a,b)=> (b.totalMarks - a.totalMarks) || (b.lastMs - a.lastMs));
+      ritmoCacheRows = rows;
+
+      // reset selected plate if it doesn't exist anymore
+      if (ritmoSelectedPlate && !ritmoCacheDetails.has(ritmoSelectedPlate)) ritmoSelectedPlate = null;
+    }
+
+    const info = document.getElementById('ritmo-summary-info');
+    if (info) info.textContent = `Placas encontradas: ${ritmoCacheRows.length}`;
+
+    const total = ritmoCacheRows.length;
+    if (!total) {
+      tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-400">Nenhum registro da Ritmo encontrado no período (se marcou “Somente Baldeio”, verifique se o Tipo contém BALDEIO).</td></tr>`;
+      const pi = document.getElementById('ritmo-pagination-info');
+      const btn = document.getElementById('ritmo-load-more');
+      if (pi) pi.textContent = '';
+      if (btn) btn.classList.add('hidden');
+      const clearBtn = document.getElementById('ritmo-clear-selected');
+      if (clearBtn) clearBtn.classList.add('hidden');
+      document.getElementById('ritmo-detail').innerHTML = `<div class="p-4 rounded-lg border border-white/10 bg-black/10">Sem dados para detalhar.</div>`;
+      return;
+    }
+
+    const max = Math.min(total, ritmoPage * RITMO_PAGE_SIZE);
+    const visible = ritmoCacheRows.slice(0, max);
+
+    const pi = document.getElementById('ritmo-pagination-info');
+    const btn = document.getElementById('ritmo-load-more');
+    if (pi) pi.textContent = `Mostrando ${max} de ${total}`;
+    if (btn) btn.classList.toggle('hidden', max >= total);
+
+    tbody.innerHTML = visible.map(r => {
+      const lastTxt = r.lastMs ? new Date(r.lastMs).toLocaleString('pt-BR') : '—';
+      const avgTxt = r.avgMs ? fmtDelta(r.avgMs) : '—';
+      const isSel = (ritmoSelectedPlate === r.plateCompact);
+
+      return `
+        <tr class="border-b border-gray-700 hover:bg-gray-700/40 ${isSel ? 'bg-blue-500/10' : ''}">
+          <td class="p-4 font-mono text-sm">${escapeHtml(r.plateRaw)}</td>
+          <td class="p-4 text-sm font-bold">${r.days.size}</td>
+          <td class="p-4 text-sm font-bold">${r.totalMarks}</td>
+          <td class="p-4 text-sm">${escapeHtml(lastTxt)}</td>
+          <td class="p-4 font-mono text-sm">${escapeHtml(avgTxt)}</td>
+          <td class="p-4">
+            <button type="button" data-action="ritmo-view" data-plate="${escapeHtml(r.plateCompact)}"
+              class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-3 rounded-lg text-sm">
+              Ver
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    // render detail if selected
+    if (ritmoSelectedPlate) renderRitmoDetailForPlate(ritmoSelectedPlate);
+  }
+
+
+  // ==============================
+  // INIT
+  // ==============================
+  window.addEventListener('load', () => {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    const auth = getAuth(app);
+    setLogLevel('error');
+
+    document.getElementById('filter-date').valueAsDate = new Date();
+    Notification.requestPermission();
+
+    const soundBtn = document.getElementById('toggle-sound-btn');
+    const savedSoundPref = localStorage.getItem('heilogSoundEnabled');
+    if (savedSoundPref !== null) soundEnabled = JSON.parse(savedSoundPref);
+    soundBtn.innerHTML = soundEnabled ? ICONS.SOUND_ON : ICONS.SOUND_OFF;
+    soundBtn.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      soundBtn.innerHTML = soundEnabled ? ICONS.SOUND_ON : ICONS.SOUND_OFF;
+      localStorage.setItem('heilogSoundEnabled', JSON.stringify(soundEnabled));
+    });
+
+    // Monta HTML dos modais
+    document.getElementById('details-modal').innerHTML = `
+      <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl relative">
+        <h3 id="details-modal-title" class="text-xl font-bold text-white mb-4"></h3>
+        <button onclick="window.closeDetailsModal()"
+                class="absolute top-4 right-4 text-gray-500 hover:text-white">
+          <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" x2="6" y1="6" y2="18"/>
+            <line x1="6" x2="18" y1="6" y2="18"/>
+          </svg>
+        </button>
+        <div id="details-modal-content" class="text-gray-300 space-y-2 max-h-[60vh] overflow-y-auto"></div>
+        <div id="log-section" class="mt-6 pt-4 border-t border-gray-700"></div>
+        <div id="details-modal-actions" class="mt-4 pt-4 border-t border-gray-700 flex items-center gap-4"></div>
+      </div>`;
+
+    document.getElementById('occurrence-modal').innerHTML = `
+      <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg relative">
+        <h3 id="occurrence-modal-title" class="text-xl font-bold text-white mb-4"></h3>
+        <button onclick="window.closeOccurrenceModal()"
+                class="absolute top-4 right-4 text-gray-500 hover:text-white">
+          <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" x2="6" y1="6" y2="18"/>
+            <line x1="6" x2="18" y1="6" y2="18"/>
+          </svg>
+        </button>
+        <form id="occurrence-form" class="space-y-4">
+          <div>
+            <label for="occurrenceType" class="block text-sm font-medium text-gray-300">Problema Identificado</label>
+            <select id="occurrenceType" name="type"
+                    class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm
+                           py-2 px-3 focus:outline-none focus:ring-blue-500 sm:text-sm">
+              <option>Mecânico</option>
+              <option>Operacional</option>
+              <option>Trânsito</option>
+              <option>Climático</option>
+              <option>Fiscal</option>
+              <option>Outro</option>
+            </select>
+          </div>
+          <div>
+            <label for="occurrenceDescription" class="block text-sm font-medium text-gray-300">Descrição</label>
+            <textarea id="occurrenceDescription" name="description" rows="3" required
+                      class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm
+                             py-2 px-3 focus:outline-none focus:ring-blue-500 sm:text-sm"></textarea>
+          </div>
+          <button type="submit"
+                  class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
+            Salvar Ocorrência
+          </button>
+        </form>
+      </div>`;
+
+    document.getElementById('resolution-modal').innerHTML = `
+      <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg relative">
+        <h3 id="resolution-modal-title" class="text-xl font-bold text-white mb-4"></h3>
+        <button onclick="window.closeResolutionModal()"
+                class="absolute top-4 right-4 text-gray-500 hover:text-white">
+          <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" x2="6" y1="6" y2="18"/>
+            <line x1="6" x2="18" y1="6" y2="18"/>
+          </svg>
+        </button>
+        <div id="resolution-modal-content" class="text-gray-300 space-y-2 mb-4"></div>
+        <form id="resolution-form" class="space-y-4">
+          <hr class="border-gray-600">
+          <div>
+            <label for="resolutionText" class="block text-sm font-medium text-gray-300 mt-4">Ação de Resolução</label>
+            <textarea id="resolutionText" name="resolution" rows="4"
+                      class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md
+                             shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 sm:text-sm"></textarea>
+          </div>
+          <div>
+            <label for="resolutionStatus" class="block text-sm font-medium text-gray-300">Atualizar Status</label>
+            <select id="resolutionStatus" name="status"
+                    class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm
+                           py-2 px-3 focus:outline-none focus:ring-blue-500 sm:text-sm">
+              <option value="Em andamento">Em andamento</option>
+              <option value="Concluído">Concluído</option>
+              <option value="Cancelado">Cancelado</option>
+            </select>
+          </div>
+          <button type="submit"
+                  class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
+            Salvar Resolução
+          </button>
+        </form>
+      </div>`;
+
+    updateStatusFilterOptions('patio');
+
+    // listeners filtros
+    document.getElementById('search-input').addEventListener('input', debouncedRender);
+    document.getElementById('filter-status').addEventListener('change', debouncedRender);
+    document.getElementById('filter-transportadora').addEventListener('change', debouncedRender);
+    document.getElementById('filter-date').addEventListener('change', debouncedRender);
+    document.getElementById('filter-shift').addEventListener('change', debouncedRender);
+    document.getElementById('filter-tempo-patio').addEventListener('change', debouncedRender);
+
+    // ✅ listeners da aba Motoristas
+    document.getElementById('drivers-search')?.addEventListener('input', () => { driversPage = 1; debouncedRender(); });
+    document.getElementById('drivers-transportadora-filter')?.addEventListener('change', () => { driversPage = 1; debouncedRender(); });
+
+    document.getElementById('drivers-load-more')?.addEventListener('click', () => {
+      driversPage += 1;
+      renderDriversTab();
+    });
+
+    
+    // ✅ clique em "Editar" (aba Motoristas)
+    document.getElementById('drivers-table-body')?.addEventListener('click', (ev) => {
+      const btn = ev.target.closest('button[data-action="edit-driver"]');
+      if (!btn) return;
+      const k = btn.dataset.key || '';
+      openDriverEditModalByKey(k);
+    });
+
+    // ✅ modal editar motorista
+    document.getElementById('driver-edit-close')?.addEventListener('click', closeDriverEditModal);
+    document.getElementById('driver-edit-cancel')?.addEventListener('click', closeDriverEditModal);
+    document.getElementById('driver-edit-save')?.addEventListener('click', saveDriverEditModal);
+
+    document.getElementById('driver-add-field-btn')?.addEventListener('click', () => {
+      const n = document.getElementById('driver-new-field-name')?.value || '';
+      const v = document.getElementById('driver-new-field-value')?.value || '';
+      addDriverEditField(n, v);
+      const nn = document.getElementById('driver-new-field-name'); if (nn) nn.value = '';
+      const vv = document.getElementById('driver-new-field-value'); if (vv) vv.value = '';
+    });
+document.getElementById('clear-date-filter-btn').addEventListener('click', () => {
+      document.getElementById('filter-date').valueAsDate = new Date();
+      document.getElementById('filter-shift').value = 'todos';
+      debouncedRender();
+    });
+
+    document.getElementById('dashboard-transportadora-filter').addEventListener('change', renderManagerDashboard);
+    document.getElementById('export-csv-btn').addEventListener('click', exportToCsv);
+
+    // ✅ Baldeios Ritmo (filtros)
+    const bd = document.getElementById('baldeios-date');
+    if (bd) bd.valueAsDate = new Date();
+    document.getElementById('baldeios-date')?.addEventListener('change', renderBaldeiosRitmo);
+    document.getElementById('baldeios-search')?.addEventListener('input', debounce(renderBaldeiosRitmo, 120));
+    document.getElementById('baldeios-plate-mode')?.addEventListener('change', renderBaldeiosRitmo);
+    document.getElementById('baldeios-export-csv-btn')?.addEventListener('click', exportBaldeiosCsv);
+
+    // ✅ Controle Ritmo (placa a placa)
+    const rStart = document.getElementById('ritmo-start');
+    const rEnd = document.getElementById('ritmo-end');
+    if (rStart && !rStart.value) {
+      const d = new Date(); d.setDate(d.getDate() - 180);
+      rStart.valueAsDate = d;
+    }
+    if (rEnd && !rEnd.value) rEnd.valueAsDate = new Date();
+
+    const runRitmo = () => renderRitmoPlacaControl(true);
+
+    document.getElementById('ritmo-refresh-btn')?.addEventListener('click', runRitmo);
+    document.getElementById('ritmo-start')?.addEventListener('change', runRitmo);
+    document.getElementById('ritmo-end')?.addEventListener('change', runRitmo);
+    document.getElementById('ritmo-plate-mode')?.addEventListener('change', runRitmo);
+    document.getElementById('ritmo-only-baldeio')?.addEventListener('change', runRitmo);
+    document.getElementById('ritmo-search')?.addEventListener('input', debounce(runRitmo, 150));
+
+    document.getElementById('ritmo-load-more')?.addEventListener('click', () => {
+      ritmoPage += 1;
+      renderRitmoPlacaControl(false);
+    });
+
+    // Clique no botão "Ver" da tabela
+    document.getElementById('ritmo-table-body')?.addEventListener('click', (ev) => {
+      const btn = ev.target.closest('button[data-action="ritmo-view"]');
+      if (!btn) return;
+      const plate = btn.dataset.plate || '';
+      if (!plate) return;
+      ritmoSelectedPlate = plate;
+      renderRitmoPlacaControl(false);
+    });
+
+    document.getElementById('ritmo-clear-selected')?.addEventListener('click', () => {
+      ritmoSelectedPlate = null;
+      const clearBtn = document.getElementById('ritmo-clear-selected');
+      if (clearBtn) clearBtn.classList.add('hidden');
+      document.getElementById('ritmo-detail').innerHTML = `<div class="p-4 rounded-lg border border-white/10 bg-black/10">Selecione uma placa no resumo para ver os dias e os intervalos.</div>`;
+    });
+
+    document.getElementById('baldeios-export-csv-btn')?.addEventListener('click', exportBaldeiosCsv);
+    // ✅ Excluir horário (marcação) no relatório de Baldeios
+    
+    // ✅ Excluir horário (marcação) também no detalhe do Controle Ritmo
+    document.getElementById('ritmo-detail')?.addEventListener('click', (ev) => {
+      const btn = ev.target.closest('button[data-action="delete-baldeio"]');
+      if (!btn) return;
+      const id = btn.dataset.id || '';
+      const src = btn.dataset.src || '';
+      const when = btn.dataset.ms ? new Date(Number(btn.dataset.ms)).toLocaleString('pt-BR') : '';
+      showConfirmModal(`Excluir esta marcação? ${when}`, () => deleteBaldeioMark(id, src));
+    });
+
+    document.getElementById('baldeios-table-body')?.addEventListener('click', (ev) => {
+      const btn = ev.target.closest('button[data-action="delete-baldeio"]');
+      if (!btn) return;
+      const id = btn.dataset.id || '';
+      const src = btn.dataset.src || '';
+      const when = btn.dataset.ms ? new Date(Number(btn.dataset.ms)).toLocaleString('pt-BR') : '';
+      showConfirmModal(`Excluir esta marcação? ${when}`, () => deleteBaldeioMark(id, src));
+    });
+
+
+
+    document.getElementById('mass-finish-btn').addEventListener('click', () => {
+      const n = (window.__filteredPatioIds || []).length;
+      showConfirmModal(`Finalizar em massa todos os itens filtrados do Pátio? (${n} DTs)`, finalizarEmMassa);
+    });
+
+    document.getElementById('clear-history-btn').addEventListener('click', () => {
+      showConfirmModal('Tem certeza que deseja limpar todo o histórico? Esta ação é irreversível.', clearHistory);
+    });
+
+    document.getElementById('clear-occurrences-btn').addEventListener('click', () => {
+      showConfirmModal('Tem certeza que deseja limpar todas as ocorrências? Esta ação é irreversível.', clearOccurrences);
+    });
+
+    document.getElementById('occurrence-form').addEventListener('submit', handleAddOccurrence);
+    document.getElementById('resolution-form').addEventListener('submit', handleUpdateResolution);
+    document.getElementById('table-body').addEventListener('click', handleTableClick);
+
+    document.getElementById('confirm-modal-cancel').addEventListener('click', () => {
+      document.getElementById('confirm-modal').classList.add('hidden');
+      confirmCallback = null;
+    });
+
+    document.getElementById('confirm-modal-confirm').addEventListener('click', () => {
+      if (confirmCallback) confirmCallback();
+      document.getElementById('confirm-modal').classList.add('hidden');
+      confirmCallback = null;
+    });
+
+    // tabs
+    const allTabs = [
+      document.getElementById('tab-patio'),
+      document.getElementById('tab-historico'),
+      document.getElementById('tab-ocorrencias'),
+      document.getElementById('tab-performance'),
+      document.getElementById('tab-baldeios'),
+      document.getElementById('tab-ritmo'),
+      document.getElementById('tab-motoristas'),
+      document.getElementById('tab-dashboard')
+    ];
+
+    allTabs.forEach(tab => tab.addEventListener('click', () => {
+      allTabs.forEach(t => {
+        t.classList.remove('text-white', 'border-blue-500');
+        t.classList.add('text-gray-400', 'border-transparent');
+      });
+      tab.classList.add('text-white', 'border-blue-500');
+      tab.classList.remove('text-gray-400', 'border-transparent');
+
+      activeTab = tab.id.replace('tab-', '');
+
+      const showPerformance = activeTab === 'performance';
+      const showDashboard = activeTab === 'dashboard';
+      const showMotoristas = activeTab === 'motoristas';
+      const showBaldeios = activeTab === 'baldeios';
+      const showRitmo = activeTab === 'ritmo';
+      const showMainTable = !showPerformance && !showDashboard && !showMotoristas && !showBaldeios && !showRitmo;
+
+      document.getElementById('kpi-section').style.display = showMainTable ? 'grid' : 'none';
+      document.getElementById('table-main-content').style.display = showMainTable ? 'block' : 'none';
+      document.getElementById('performance-content').style.display = showPerformance ? 'block' : 'none';
+      document.getElementById('dashboard-content').style.display = showDashboard ? 'block' : 'none';
+      document.getElementById('motoristas-content').style.display = showMotoristas ? 'block' : 'none';
+      document.getElementById('baldeios-content').style.display = showBaldeios ? 'block' : 'none';
+      document.getElementById('ritmo-placa-content').style.display = showRitmo ? 'block' : 'none';
+
+      const showHistorico = activeTab === 'historico';
+      const showOcorrencias = activeTab === 'ocorrencias';
+
+      document.getElementById('clear-history-btn').style.display = showHistorico ? 'flex' : 'none';
+      document.getElementById('clear-occurrences-btn').style.display = showOcorrencias ? 'flex' : 'none';
+      document.getElementById('advanced-filters').style.display = showHistorico ? 'flex' : 'none';
+      document.getElementById('filter-status').style.display = showHistorico ? 'none' : 'block';
+
+      document.getElementById('filter-tempo-patio').style.display = (activeTab === 'patio') ? 'block' : 'none';
+      document.getElementById('mass-finish-btn').style.display = (activeTab === 'patio') ? 'flex' : 'none';
+
+      updateStatusFilterOptions(activeTab);
+      document.getElementById('table-title').textContent = tab.textContent;
+
+      debouncedRender();
+    }));
+
+    // auth
+    (async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (error) {
+        console.warn("Falha no login com token customizado, usando anônimo como fallback.", error.message);
+        try { await signInAnonymously(auth); }
+        catch (anonError) { console.error("Crítico: Falha também no login anônimo:", anonError); }
+      }
+    })();
+
+    onAuthStateChanged(auth, user => {
+      if (!user) return;
+
+      const attachDriverSnapshot = (collectionName) => {
+        const ref = collection(db, `artifacts/${appId}/public/data/${collectionName}`);
+        onSnapshot(ref, snap => {
+          // ✅ alimenta lista para a aba Motoristas
+          driversCollections[collectionName] = snap.docs.map(d => {
+            const data = d.data() || {};
+            return {
+              _collection: collectionName,
+              _docId: d.id,
+              raw: data,
+              // comuns p/ busca e exibição
+              id: d.id,
+              cpf: data.cpf || d.id || '',
+              name: String(data.name || data.motorista || ''),
+              phone: String(data.phone || data.telefone || ''),
+              truckPlate: String(data.truckPlate || ''),
+              trailerPlate: String(data.trailerPlate || ''),
+              transportadora: String(data.transportadora || '')
+            };
+          });
+          mergeDriversCollections();
+
+          // mantém o index atual (para preencher placas no painel)
+          snap.docs.forEach(d => {
+            const data = d.data();
+            const idKey  = cpf11(d.id);
+            const cpfKey = cpf11(data.cpf || d.id);
+            const phKey  = phoneDigits(data.phone || data.telefone);
+
+            const info = {
+              cpf: cpfKey || '',
+              id: idKey || '',
+              name: String(data.name || ''),
+              phone: String(data.phone || data.telefone || ''),
+              truckPlate: String(data.truckPlate || ''),
+              trailerPlate: String(data.trailerPlate || ''),
+              transportadora: String(data.transportadora || '')
+            };
+
+            if (cpfKey) driverIndex.byCpf[cpfKey] = info;
+            if (idKey)  driverIndex.byId[idKey] = info;
+            if (phKey)  driverIndex.byPhone[phKey] = info;
+          });
+
+          window.__driversLoaded = Object.keys(driverIndex.byCpf).length;
+          debouncedRender();
+        });
+      };
+
+      attachDriverSnapshot('drivers');
+      attachDriverSnapshot('motoristas');
+
+      onSnapshot(collection(db, `artifacts/${appId}/public/data/patio`), snap => {
+        const newPatioData = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+        newlyAdded.clear();
+
+        // ✅ Congela e grava o TIPO/SEGMENTAÇÃO que vier do HEILOG (não muda com o tempo)
+        // Regra: se o documento já veio com um campo direto (segmentacao/tipo/etc), gravamos em tipoSnapshot só uma vez.
+        newPatioData.forEach((op) => {
+          try {
+            if (!op || !op.id) return;
+
+            // Se já tem tipoSnapshot, só marca e segue
+            if (op.tipoSnapshot && String(op.tipoSnapshot).trim() !== '') {
+              tipoSnapshotMem.add(op.id);
+              return;
+            }
+
+            // Evita repetir update
+            if (tipoSnapshotMem.has(op.id)) return;
+
+            // Só grava o tipo que já veio em campo direto do documento (HEILOG)
+            const directTipo = getTipoHeilogDirect(op);
+            if (!directTipo) return;
+
+            tipoSnapshotMem.add(op.id);
+            const ref = doc(db, `artifacts/${appId}/public/data/patio`, op.id);
+            updateDoc(ref, { tipoSnapshot: directTipo }).catch((err) => {
+              console.warn("Falha ao gravar tipoSnapshot:", err);
+            });
+          } catch (err) {
+            console.warn("Falha ao processar tipoSnapshot:", err);
+          }
+        });
+
+        newPatioData.forEach(op => {
+          const { statusText, isAlert } = getPriorityStatusLogic(op);
+          const isExisting = patioData.some(oldOp => oldOp.id === op.id);
+
+          if (isAlert && !notifiedVehicles.has(op.id)) {
+            playAlertSound();
+            showBrowserNotification(`Alerta de Prioridade: ${op.dt}`, `Veículo entrou em status de ${statusText}`, `alert-${op.id}`);
+            notifiedVehicles.add(op.id);
+          }
+
+          if (!isExisting) {
+            newlyAdded.add(op.id);
+            setTimeout(() => {
+              newlyAdded.delete(op.id);
+              debouncedRender();
+            }, 5000);
+          }
+        });
+
+        patioData = newPatioData;
+        ritmoDataVersion += 1;
+        checkSystemAlerts();
+        runPredictiveAnalysis();
+        debouncedRender();
+      });
+
+      onSnapshot(collection(db, `artifacts/${appId}/public/data/historico`), snap => {
+        historicoData = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+        ritmoDataVersion += 1;
+        rebuildDriverStatsCache();
+        debouncedRender();
+      });
+
+      onSnapshot(collection(db, `artifacts/${appId}/public/data/ocorrencias`), snap => {
+        ocorrenciasData = snap.docs.map(d => ({ ...d.data(), id: d.id }))
+          .sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+        debouncedRender();
+      });
+    });
+
+    if (timerIntervalId) clearInterval(timerIntervalId);
+    timerIntervalId = setInterval(() => {
+      if (activeTab === 'patio') {
+        document.querySelectorAll('.timer-cell').forEach(cell => {
+          const time = cell.getAttribute('data-registration-time');
+          if (time) cell.textContent = getElapsedTime(parseInt(time));
+        });
+      }
+    }, 1000);
+
+    setInterval(() => {
+      if (activeTab === 'performance') renderPerformanceDashboard();
+      if (activeTab === 'patio') { checkSystemAlerts(); runPredictiveAnalysis(); }
+      if (activeTab === 'dashboard') renderManagerDashboard();
+      if (activeTab === 'baldeios') renderBaldeiosRitmo();
+      if (activeTab === 'ritmo') renderRitmoPlacaControl(false);
+    }, 60000);
+
+    // estado inicial
+    document.getElementById('filter-tempo-patio').style.display = 'block';
+    document.getElementById('mass-finish-btn').style.display = 'flex';
+    debouncedRender();
+  });
+
+</script>
+</body>
+</html>
