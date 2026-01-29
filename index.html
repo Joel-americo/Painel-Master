@@ -390,6 +390,80 @@
         </select>
       </div>
 
+      <!-- ✅ Dashboard Ritmo -->
+      <div id="ritmo-dashboard-section" class="mb-8">
+        <div class="flex flex-wrap items-end justify-between gap-4 mb-4">
+          <div>
+            <h3 class="text-2xl font-bold">Dashboard Ritmo</h3>
+            <p class="text-sm text-gray-400 mt-1">Visão dedicada da Ritmo (totais + baldeio), usando histórico + novos em tempo real.</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-gray-400">De</span>
+              <input id="ritmo-dash-start" type="date"
+                class="bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-gray-400">Até</span>
+              <input id="ritmo-dash-end" type="date"
+                class="bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+            </div>
+
+            <select id="ritmo-dash-plate-mode"
+              class="bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="carreta">Placa Carreta</option>
+              <option value="cavalo">Placa Cavalo</option>
+            </select>
+
+            <label class="flex items-center gap-2 text-sm text-gray-300 bg-gray-700/40 border border-gray-600 rounded-lg py-2 px-3">
+              <input id="ritmo-dash-only-baldeio" type="checkbox" class="accent-blue-500">
+              <span>Somente Baldeio</span>
+            </label>
+
+            <button id="ritmo-dash-refresh"
+              class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg">
+              Atualizar
+            </button>
+
+            <button id="ritmo-dash-export"
+              class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">
+              Exportar CSV
+            </button>
+          </div>
+        </div>
+
+        <!-- KPIs -->
+        <div id="ritmo-dash-kpis" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6"></div>
+
+        <!-- Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+            <h4 class="text-xl font-bold mb-4">Marcações por Dia (Ritmo)</h4>
+            <div class="relative h-80">
+              <canvas id="ritmo-dash-daily-chart"></canvas>
+            </div>
+          </div>
+
+          <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+            <h4 class="text-xl font-bold mb-4">Top Placas (mais marcações no período)</h4>
+            <div class="relative h-80">
+              <canvas id="ritmo-dash-top-plates-chart"></canvas>
+            </div>
+          </div>
+
+          <div class="lg:col-span-2 bg-gray-800 p-6 rounded-lg shadow-lg">
+            <h4 class="text-xl font-bold mb-4">Heatmap (últimos 7 dias do período — por hora)</h4>
+            <div class="relative h-96">
+              <canvas id="ritmo-dash-heatmap-chart"></canvas>
+            </div>
+            <p class="text-xs text-gray-400 mt-3">Azul: Ritmo total • Verde: Baldeio (KPIs) • Heatmap usa o conjunto filtrado (total ou somente baldeio).</p>
+          </div>
+        </div>
+      </div>
+
+
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
           <h3 class="text-xl font-bold mb-4">Marcações Diárias (Últimos 7 dias)</h3>
@@ -551,6 +625,13 @@
   let contextChart = null;
   let performanceChart = null;
   let dailyProductivityChart, tmpEvolutionChart, shiftComparisonChart, volumeRankingChart, heatmapChart;
+
+  // ✅ charts do Dashboard Ritmo
+  let ritmoDashDailyChart = null;
+  let ritmoDashTopPlatesChart = null;
+  let ritmoDashHeatmapChart = null;
+  let ritmoDashLastExport = null;
+
 
   let notifiedVehicles = new Set();
   let newlyAdded = new Set();
@@ -990,7 +1071,7 @@
   // ==============================
   const render = () => {
     if (activeTab === 'performance') { renderPerformanceDashboard(); return; }
-    if (activeTab === 'dashboard') { renderManagerDashboard(); return; }
+    if (activeTab === 'dashboard') { renderManagerDashboard(); renderRitmoDashboard(); return; }
     if (activeTab === 'motoristas') { renderDriversTab(); return; }
     if (activeTab === 'baldeios') { renderBaldeiosRitmo(); return; }
     if (activeTab === 'ritmo') { renderRitmoPlacaControl(); return; }
@@ -3522,6 +3603,277 @@
   }
 
 
+
+  // ============================================================
+  // ✅ DASHBOARD RITMO (totais + baldeio)
+  // ============================================================
+  const isoDate = (d) => {
+    const x = new Date(d);
+    const y = x.getFullYear();
+    const m = String(x.getMonth() + 1).padStart(2,'0');
+    const dd = String(x.getDate()).padStart(2,'0');
+    return `${y}-${m}-${dd}`;
+  };
+
+  const fmtDatePt = (ms) => new Date(ms).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+
+  const makeCsv = (headers, rows) => {
+    const esc = (v) => `"${String(v ?? '').replace(/"/g,'""')}"`;
+    return headers.join(',') + '\n' + rows.map(r => r.map(esc).join(',')).join('\n');
+  };
+
+  function exportRitmoDashboardCsv() {
+    const rep = ritmoDashLastExport;
+    if (!rep || !Array.isArray(rep.rows) || !rep.rows.length) {
+      showToast("Sem dados para exportar (Dashboard Ritmo).", "info");
+      return;
+    }
+
+    const csv = makeCsv(rep.headers, rep.rows);
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `dashboard_ritmo_${rep.range || 'periodo'}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast("CSV exportado.", "success");
+  }
+
+  function renderRitmoDashboard() {
+    const kpiWrap = document.getElementById('ritmo-dash-kpis');
+    const dailyCanvas = document.getElementById('ritmo-dash-daily-chart');
+    const topCanvas = document.getElementById('ritmo-dash-top-plates-chart');
+    const heatCanvas = document.getElementById('ritmo-dash-heatmap-chart');
+    if (!kpiWrap || !dailyCanvas || !topCanvas || !heatCanvas) return;
+
+    const startEl = document.getElementById('ritmo-dash-start');
+    const endEl = document.getElementById('ritmo-dash-end');
+    const mode = document.getElementById('ritmo-dash-plate-mode')?.value || 'carreta';
+    const onlyBaldeio = !!document.getElementById('ritmo-dash-only-baldeio')?.checked;
+
+    const startDate = (startEl && startEl.value) ? new Date(startEl.value) : new Date(Date.now() - 30*24*3600*1000);
+    const endDate = (endEl && endEl.value) ? new Date(endEl.value) : new Date();
+
+    const startMs = startOfDay(startDate).getTime();
+    const endMs = startOfDay(endDate).getTime() + 24*3600*1000;
+
+    const toEntries = (ops, src) => (ops || []).map(op => {
+      const ts = op.registrationTime || op.timestamp || op.createdAt || op.created_at;
+      return { ...op, _src: src, _rt: toMs(ts) };
+    });
+
+    const allOps = [...toEntries(patioData, 'patio'), ...toEntries(historicoData, 'historico')]
+      .filter(op => op._rt && op._rt >= startMs && op._rt < endMs);
+
+    const ritmoOps = allOps.filter(op => isRitmoOp(op));
+    const ritmoBaldeioOps = ritmoOps.filter(op => isBaldeioOp(op));
+    const used = onlyBaldeio ? ritmoBaldeioOps : ritmoOps;
+
+    const plateCount = {};
+    used.forEach(op => {
+      const p = String(plateKey(op, mode) || '').toUpperCase().replace(/[^A-Z0-9]/g,'');
+      if (!p) return;
+      plateCount[p] = (plateCount[p] || 0) + 1;
+    });
+
+    const uniquePlates = Object.keys(plateCount).length;
+    const repeatPlates = Object.values(plateCount).filter(x => x >= 2).length;
+
+    let sumInterval = 0, cntInterval = 0;
+    Object.keys(plateCount).forEach(p => {
+      const times = used
+        .filter(op => String(plateKey(op, mode) || '').toUpperCase().replace(/[^A-Z0-9]/g,'') === p)
+        .map(op => op._rt)
+        .filter(Boolean)
+        .sort((a,b)=>a-b);
+
+      for (let i=1;i<times.length;i++) {
+        const d = times[i]-times[i-1];
+        if (Number.isFinite(d) && d >= 0) { sumInterval += d; cntInterval += 1; }
+      }
+    });
+    const avgIntervalMs = cntInterval ? (sumInterval / cntInterval) : null;
+
+    const totalRitmo = ritmoOps.length;
+    const totalBaldeio = ritmoBaldeioOps.length;
+    const baldeioShare = totalRitmo ? Math.round((totalBaldeio/totalRitmo)*100) : 0;
+
+    const kpi = (title, value, sub='') => `
+      <div class="kpi-card-sm rounded-lg p-4">
+        <p class="text-xs text-gray-400">${title}</p>
+        <p class="text-2xl font-bold mt-1">${value}</p>
+        ${sub ? `<p class="text-xs text-gray-500 mt-1">${sub}</p>` : ``}
+      </div>
+    `;
+
+    kpiWrap.innerHTML = `
+      ${kpi(onlyBaldeio ? 'Baldeios (Ritmo)' : 'Marcações (Ritmo)', used.length, `${fmtDatePt(startMs)} → ${fmtDatePt(endMs-1)}`)}
+      ${kpi('Placas únicas', uniquePlates, repeatPlates ? `${repeatPlates} com repetição` : '—')}
+      ${kpi('Ritmo total', totalRitmo, `Baldeio: ${totalBaldeio} (${baldeioShare}%)`)}
+      ${kpi('Média entre marcações', avgIntervalMs ? fmtDelta(avgIntervalMs) : '—', cntInterval ? `${cntInterval} intervalos` : '—')}
+    `;
+
+    // Daily series
+    const days = [];
+    for (let cur = new Date(startMs); cur.getTime() < endMs; cur.setDate(cur.getDate()+1)) {
+      days.push(new Date(cur));
+    }
+    const keys = days.map(d => isoDate(d));
+    const labels = days.map(d => d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit'}));
+
+    const dailyTotal = {}, dailyBaldeio = {};
+    keys.forEach(k => { dailyTotal[k]=0; dailyBaldeio[k]=0; });
+
+    ritmoOps.forEach(op => {
+      const k = isoDate(op._rt);
+      if (k in dailyTotal) dailyTotal[k] += 1;
+    });
+    ritmoBaldeioOps.forEach(op => {
+      const k = isoDate(op._rt);
+      if (k in dailyBaldeio) dailyBaldeio[k] += 1;
+    });
+
+    const seriesTotal = keys.map(k => dailyTotal[k] || 0);
+    const seriesBald = keys.map(k => dailyBaldeio[k] || 0);
+
+    // Daily chart
+    ritmoDashDailyChart = safeDestroyChart(ritmoDashDailyChart);
+    ritmoDashDailyChart = new Chart(dailyCanvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Ritmo (total)', data: seriesTotal, backgroundColor: 'rgba(59,130,246,0.50)', borderColor: 'rgba(59,130,246,0.95)', borderWidth: 1, borderRadius: 6 },
+          { label: 'Baldeio', data: seriesBald, backgroundColor: 'rgba(16,185,129,0.45)', borderColor: 'rgba(16,185,129,0.90)', borderWidth: 1, borderRadius: 6 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: '#d1d5db' } } },
+        scales: {
+          y: { beginAtZero: true, ticks: { color: '#d1d5db', precision: 0 }, grid: { color: 'rgba(255,255,255,0.08)' } },
+          x: { ticks: { color: '#d1d5db' }, grid: { display: false } }
+        }
+      }
+    });
+
+    // Top plates
+    const top = Object.entries(plateCount).sort((a,b)=>b[1]-a[1]).slice(0, 12);
+    const topLabels = top.map(x => x[0]);
+    const topValues = top.map(x => x[1]);
+
+    ritmoDashTopPlatesChart = safeDestroyChart(ritmoDashTopPlatesChart);
+    ritmoDashTopPlatesChart = new Chart(topCanvas.getContext('2d'), {
+      type: 'bar',
+      data: { labels: topLabels, datasets: [{ label: 'Marcações', data: topValues, backgroundColor: 'rgba(245,158,11,0.55)', borderColor: 'rgba(245,158,11,0.95)', borderWidth: 1, borderRadius: 6 }] },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { beginAtZero: true, ticks: { color: '#d1d5db', precision: 0 }, grid: { color: 'rgba(255,255,255,0.08)' } },
+          y: { ticks: { color: '#d1d5db' }, grid: { display: false } }
+        }
+      }
+    });
+
+    // Heatmap (last 7 days in range)
+    const startHeatMs = Math.max(startMs, endMs - 7*24*3600*1000);
+    const heatOps = used.filter(op => op._rt && op._rt >= startHeatMs && op._rt < endMs);
+
+    const heatDays = [];
+    for (let cur = new Date(startHeatMs); cur.getTime() < endMs; cur.setDate(cur.getDate()+1)) {
+      heatDays.push(new Date(cur));
+      if (heatDays.length >= 7) break;
+    }
+    const heatKeys = heatDays.map(d => isoDate(d));
+    const heatLabels = heatDays.map(d => d.toLocaleDateString('pt-BR', { weekday:'short', day:'2-digit', month:'2-digit' }));
+
+    const matrix = Array.from({ length: heatDays.length }, () => Array.from({ length: 24 }, () => 0));
+    heatOps.forEach(op => {
+      const k = isoDate(op._rt);
+      const dayIdx = heatKeys.indexOf(k);
+      if (dayIdx === -1) return;
+      const hour = new Date(op._rt).getHours();
+      matrix[dayIdx][hour] += 1;
+    });
+
+    const points = [];
+    for (let y=0; y<heatDays.length; y++) for (let x=0; x<24; x++) points.push({ x, y, v: matrix[y][x] });
+    const maxV = points.reduce((m,p)=>Math.max(m,p.v),0);
+
+    ritmoDashHeatmapChart = safeDestroyChart(ritmoDashHeatmapChart);
+    ritmoDashHeatmapChart = new Chart(heatCanvas.getContext('2d'), {
+      type: 'matrix',
+      data: {
+        datasets: [{
+          label: 'Marcações',
+          data: points,
+          backgroundColor: (ctx) => {
+            const v = ctx.raw?.v ?? 0;
+            if (!v) return 'rgba(255,255,255,0.03)';
+            const a = Math.min(0.85, 0.12 + (maxV ? (v / maxV) * 0.75 : 0.2));
+            return `rgba(59, 130, 246, ${a})`;
+          },
+          borderColor: 'rgba(17,24,39,0.35)',
+          borderWidth: 1,
+          width: ({ chart }) => (chart.chartArea || {}).width / 24 - 2,
+          height: ({ chart }) => (chart.chartArea || {}).height / Math.max(1, heatDays.length) - 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: (items) => {
+                const r = items?.[0]?.raw;
+                if (!r) return '';
+                const day = heatLabels[r.y] || '';
+                const h = String(r.x).padStart(2,'0');
+                return `${day} — ${h}:00`;
+              },
+              label: (item) => ` ${item.raw?.v ?? 0} marcação(ões)`
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'linear',
+            position: 'bottom',
+            min: 0,
+            max: 23,
+            ticks: { stepSize: 1, color: '#d1d5db', callback: (v) => (v % 2 === 0 ? String(v).padStart(2,'0') : '') },
+            grid: { color: 'rgba(255,255,255,0.06)' }
+          },
+          y: {
+            type: 'linear',
+            min: 0,
+            max: Math.max(0, heatDays.length - 1),
+            ticks: { stepSize: 1, color: '#d1d5db', callback: (v) => heatLabels[v] || '' },
+            grid: { color: 'rgba(255,255,255,0.06)' }
+          }
+        }
+      }
+    });
+
+    // Export rows (daily)
+    const exportRows = keys.map((k, idx) => [k, labels[idx], dailyTotal[k] || 0, dailyBaldeio[k] || 0]);
+    ritmoDashLastExport = {
+      headers: ['DataISO','Data','RitmoTotal','RitmoBaldeio'],
+      rows: exportRows,
+      range: `${isoDate(startMs)}_${isoDate(endMs-1)}`
+    };
+  }
+
   // ==============================
   // INIT
   // ==============================
@@ -3688,6 +4040,25 @@ document.getElementById('clear-date-filter-btn').addEventListener('click', () =>
     });
 
     document.getElementById('dashboard-transportadora-filter').addEventListener('change', renderManagerDashboard);
+
+    // ✅ Dashboard Ritmo (filtros)
+    const rdS = document.getElementById('ritmo-dash-start');
+    const rdE = document.getElementById('ritmo-dash-end');
+    if (rdS && !rdS.value) {
+      const d = new Date(); d.setDate(d.getDate() - 30);
+      rdS.valueAsDate = d;
+    }
+    if (rdE && !rdE.value) rdE.valueAsDate = new Date();
+
+    const runRitmoDash = () => renderRitmoDashboard();
+
+    document.getElementById('ritmo-dash-refresh')?.addEventListener('click', runRitmoDash);
+    document.getElementById('ritmo-dash-start')?.addEventListener('change', runRitmoDash);
+    document.getElementById('ritmo-dash-end')?.addEventListener('change', runRitmoDash);
+    document.getElementById('ritmo-dash-plate-mode')?.addEventListener('change', runRitmoDash);
+    document.getElementById('ritmo-dash-only-baldeio')?.addEventListener('change', runRitmoDash);
+    document.getElementById('ritmo-dash-export')?.addEventListener('click', exportRitmoDashboardCsv);
+
     document.getElementById('export-csv-btn').addEventListener('click', exportToCsv);
 
     // ✅ Baldeios Ritmo (filtros)
@@ -4000,7 +4371,7 @@ document.getElementById('clear-date-filter-btn').addEventListener('click', () =>
     setInterval(() => {
       if (activeTab === 'performance') renderPerformanceDashboard();
       if (activeTab === 'patio') { checkSystemAlerts(); runPredictiveAnalysis(); }
-      if (activeTab === 'dashboard') renderManagerDashboard();
+      if (activeTab === 'dashboard') { renderManagerDashboard(); renderRitmoDashboard(); }
       if (activeTab === 'baldeios') renderBaldeiosRitmo();
       if (activeTab === 'ritmo') renderRitmoPlacaControl(false);
     }, 60000);
