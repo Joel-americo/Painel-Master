@@ -2874,8 +2874,7 @@ async function handleAddOccurrence(e) {
 
 
   const PERF_MANUAL_ROWS = [
-    { key: 'carga_pa', label: 'Bandeja - Carga PA' },
-    { key: 'descarga_pa', label: 'Bandeja - Descargas PA' },
+    { key: 'produto_acabado_manual', label: 'Produto acabado' },
     { key: 'rpm_hnk', label: 'Bandeja - Descargas RPM HNK' },
     { key: 'rpm_ambar', label: 'Bandeja - Descargas RPM AMBAR' },
     { key: 'rpm_keg', label: 'Bandeja - Descargas RPM KEG' },
@@ -2884,8 +2883,8 @@ async function handleAddOccurrence(e) {
     { key: 'fluxo_carregamento', label: 'Fluxo de Carregamento' },
     { key: 'problemas', label: 'Problemas' },
     { key: 'marcacoes_fazer', label: 'Marcações a Fazer' },
-    { key: 'baldeios_totais_ritmo', label: 'Baldeios totais - Ritmo', baldeioOnly: true },
-    { key: 'baldeios_totais_jsl', label: 'Baldeios totais - JSL', baldeioOnly: true }
+    { key: 'baldeios_totais_ritmo', label: 'Baldeios totais - Ritmo' },
+    { key: 'baldeios_totais_jsl', label: 'Baldeios totais - JSL' }
   ];
 
   const PERF_AUTO_CATEGORY_ORDER = [
@@ -2903,7 +2902,7 @@ async function handleAddOccurrence(e) {
     'Outros'
   ];
 
-  const PERF_SUMMARY_STORAGE_PREFIX = 'heilog-perf-summary-manual-v5';
+  const PERF_SUMMARY_STORAGE_PREFIX = 'heilog-perf-summary-manual-v6';
   const PERF_HOURLY_STORAGE_PREFIX = 'heilog-perf-hourly-manual-v7';
 
   const perfNorm = (v = '') =>
@@ -3316,8 +3315,8 @@ async function handleAddOccurrence(e) {
             </tr>
             <tr class="bg-green-700 text-white border-t border-green-900/40">
               <th class="p-2 font-semibold">Tipo</th>
-              <th class="p-2 text-center font-semibold w-28">Vendas</th>
-              <th class="p-2 text-center font-semibold w-28">Baldeio AE</th>
+              <th class="p-2 text-center font-semibold w-28">Descargas</th>
+              <th class="p-2 text-center font-semibold w-28">Carregamento</th>
               <th class="p-2 text-center font-semibold w-20">Total</th>
             </tr>
           </thead>
