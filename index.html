@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -14,43 +14,467 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix"></script>
 
   <style>
-    body { background-color: #111827; }
-    .modal-backdrop { transition: opacity 0.3s ease; }
-    .kpi-card-sm {
-      background-color: rgba(31, 41, 55, 0.7);
-      border: 1px solid rgba(75, 85, 99, 0.5);
-    }
-    @keyframes pulse-red { 50% { background-color: rgba(239, 68, 68, 0.15); } }
-    .animate-pulse-red { animation: pulse-red 2s cubic-bezier(0.4,0,0.6,1) infinite; }
-    @keyframes pulse-yellow { 50% { background-color: rgba(245, 158, 11, 0.15); } }
-    .animate-pulse-yellow { animation: pulse-yellow 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+  .site-header {
+    position: relative;
+    padding: 22px 24px;
+    border-radius: 24px;
+    background:
+      linear-gradient(135deg, rgba(6, 28, 17, 0.96), rgba(4, 18, 11, 0.94)),
+      radial-gradient(circle at top right, rgba(0, 169, 79, 0.18), transparent 30%);
+    border: 1px solid rgba(0, 169, 79, 0.18);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+    overflow: hidden;
+  }
 
-    #performance-chart { cursor: pointer; }
+.site-header {
+  position: relative;
+  padding: 22px 24px;
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, rgba(6, 28, 17, 0.96), rgba(4, 18, 11, 0.94)),
+    radial-gradient(circle at top right, rgba(0, 169, 79, 0.18), transparent 30%);
+  border: 1px solid rgba(0, 169, 79, 0.18);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+}
 
-    .alert-banner { animation: fadeIn-slideDown 0.5s ease-out forwards; }
-    @keyframes fadeIn-slideDown {
-      from { opacity: 0; transform: translateY(-20px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-  </style>
+.site-header::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.02), transparent);
+  pointer-events: none;
+}
+
+.site-header-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.brand-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.brand-mark {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255,255,255,0.08), transparent 35%),
+    linear-gradient(135deg, rgba(0,169,79,0.22), rgba(4,21,13,0.95));
+  border: 1px solid rgba(0,169,79,0.28);
+  box-shadow:
+    0 12px 28px rgba(0,0,0,0.28),
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    inset 0 -12px 24px rgba(0,0,0,0.18);
+}
+
+.heilog-logo-svg {
+  width: 48px;
+  height: 48px;
+  display: block;
+}
+
+.brand-text-clean {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.brand-title-main {
+  margin: 0;
+  font-size: clamp(1.7rem, 2.3vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: 0.2px;
+  color: #ffffff;
+}
+
+@media (max-width: 640px) {
+  .brand-mark {
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+  }
+
+  .heilog-logo-svg {
+    width: 42px;
+    height: 42px;
+  }
+}
+
+  .brand-mark {
+    width: 50px;
+    height: 50px;
+    border-radius: 16px;
+  }
+
+  .brand-logo-img {
+    max-width: 36px;
+    max-height: 36px;
+  }
+
+  .top-actions {
+    width: 100%;
+    justify-content: flex-end;
+    margin-left: 0;
+  }
+}
+  :root {
+    --heineken-green: #008C45;
+    --heineken-green-strong: #00A94F;
+    --heineken-green-dark: #005B2E;
+    --heineken-red: #E30613;
+    --heineken-gold: #C8A96B;
+    --bg-main: #04150d;
+    --bg-panel: rgba(7, 30, 18, 0.92);
+    --bg-panel-soft: rgba(10, 40, 24, 0.82);
+    --border-main: rgba(0, 169, 79, 0.22);
+    --text-soft: #b7cdbf;
+    --text-muted: #87a292;
+    --shadow-green: 0 10px 30px rgba(0, 140, 69, 0.18);
+  }
+
+  html, body {
+    width: 100%;
+    min-height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    color: #fff;
+    background:
+      radial-gradient(circle at top left, rgba(0, 169, 79, 0.18), transparent 28%),
+      radial-gradient(circle at top right, rgba(200, 169, 107, 0.08), transparent 22%),
+      linear-gradient(135deg, #031008 0%, #071a10 45%, #04150d 100%);
+  }
+
+  body {
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  .modal-backdrop { transition: opacity 0.3s ease; }
+
+  .kpi-card-sm {
+    background: linear-gradient(180deg, rgba(8, 33, 20, 0.95), rgba(5, 24, 14, 0.96));
+    border: 1px solid rgba(0, 169, 79, 0.16);
+    box-shadow: var(--shadow-green);
+  }
+
+  @keyframes pulse-red { 50% { background-color: rgba(227, 6, 19, 0.16); } }
+  .animate-pulse-red { animation: pulse-red 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+
+  @keyframes pulse-yellow { 50% { background-color: rgba(200, 169, 107, 0.16); } }
+  .animate-pulse-yellow { animation: pulse-yellow 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+
+  .alert-banner { animation: fadeIn-slideDown 0.5s ease-out forwards; }
+  @keyframes fadeIn-slideDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  #performance-chart { cursor: pointer; }
+
+  /* Superfícies */
+  .bg-gray-800 {
+    background: linear-gradient(180deg, rgba(8, 33, 20, 0.95), rgba(5, 24, 14, 0.96)) !important;
+    border: 1px solid var(--border-main) !important;
+    box-shadow: var(--shadow-green) !important;
+  }
+
+  .bg-gray-700 {
+    background: rgba(11, 41, 25, 0.95) !important;
+  }
+
+  .bg-gray-600 {
+    background: rgba(16, 57, 35, 0.95) !important;
+  }
+
+  .bg-gray-900\/60,
+  .bg-gray-900\/50 {
+    background: rgba(3, 16, 8, 0.82) !important;
+  }
+
+  .border-gray-700,
+  .border-gray-600 {
+    border-color: rgba(0, 169, 79, 0.18) !important;
+  }
+
+  .text-gray-400 {
+    color: var(--text-muted) !important;
+  }
+
+  .text-gray-300 {
+    color: var(--text-soft) !important;
+  }
+
+  .hover\:bg-gray-700:hover,
+  .hover\:bg-gray-600:hover,
+  .hover\:bg-gray-500:hover {
+    background: rgba(18, 66, 40, 0.95) !important;
+  }
+
+  /* Botões principais */
+  .bg-blue-600,
+  .bg-green-600 {
+    background: linear-gradient(135deg, var(--heineken-green), var(--heineken-green-strong)) !important;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 10px 20px rgba(0, 169, 79, 0.22);
+  }
+
+  .hover\:bg-blue-700:hover,
+  .hover\:bg-green-700:hover {
+    background: linear-gradient(135deg, var(--heineken-green-dark), var(--heineken-green)) !important;
+  }
+
+  .bg-red-600 {
+    background: linear-gradient(135deg, #9b0f19, var(--heineken-red)) !important;
+  }
+
+  .hover\:bg-red-700:hover {
+    background: linear-gradient(135deg, #7d0912, #c10d18) !important;
+  }
+
+  /* Cabeçalho */
+  header h1 {
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+
+  header p {
+    color: #a9c0b1 !important;
+  }
+
+  /* Tabs */
+  nav[aria-label="Tabs"] {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 14px 14px 0 0;
+    border-bottom-width: 2px;
+    transition: all 0.25s ease;
+    background: transparent;
+  }
+
+  .tab-btn .tab-icon {
+    width: 18px;
+    height: 18px;
+    opacity: 0.95;
+  }
+
+  .tab-btn.inactive-tab {
+    color: #93ad9c;
+    border-color: transparent;
+  }
+
+  .tab-btn.inactive-tab:hover {
+    color: #ffffff;
+    border-color: rgba(0, 169, 79, 0.28);
+    background: rgba(0, 140, 69, 0.08);
+  }
+
+  .tab-btn.active-tab {
+    color: #ffffff;
+    border-color: var(--heineken-green-strong);
+    background: linear-gradient(180deg, rgba(0, 169, 79, 0.16), rgba(0, 169, 79, 0.04));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+
+  /* Tabela */
+  thead tr {
+    background: rgba(0, 169, 79, 0.05);
+  }
+
+  tbody tr:hover {
+    background: rgba(0, 169, 79, 0.08) !important;
+  }
+
+  /* Inputs */
+  input, select, textarea {
+    color: #fff !important;
+  }
+
+  input::placeholder, textarea::placeholder {
+    color: #89a594 !important;
+  }
+
+
+  /* Inputs claros da aba Perf. do Turno */
+  input[data-perf-manual="1"],
+  input[data-hourly-field] {
+    color: #111827 !important;
+    caret-color: #111827 !important;
+    -webkit-text-fill-color: #111827 !important;
+    font-size: 0.95rem;
+    line-height: 1.25rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  input[data-perf-manual="1"]::placeholder,
+  input[data-hourly-field]::placeholder {
+    color: #6b7280 !important;
+    -webkit-text-fill-color: #6b7280 !important;
+  }
+
+  /* Destaques */
+  .heineken-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(0, 169, 79, 0.12);
+    border: 1px solid rgba(0, 169, 79, 0.2);
+    color: #dff7e7;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+  }
+
+.brand-logo-wide {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 170px;
+  flex-shrink: 0;
+}
+
+.heilog-logo-wide-svg {
+  width: 180px;
+  height: auto;
+  display: block;
+}
+
+.brand-text-clean {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.brand-title-clean {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  color: #8ec7a2;
+}
+
+.brand-subtitle-clean {
+  margin: 6px 0 0;
+  color: #dbe9df;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+@media (max-width: 640px) {
+  .heilog-logo-wide-svg {
+    width: 145px;
+  }
+
+  .brand-wrap {
+    align-items: flex-start;
+  }
+
+  .brand-subtitle-clean {
+    font-size: 0.92rem;
+  }
+}
+</style>
 </head>
 
 <body class="text-white font-sans">
-<div class="max-w-screen-2xl mx-auto p-4 sm:p-6 lg:p-8">
+<div class="w-full min-h-screen p-4 sm:p-6 lg:p-8">
 
   <!-- Cabeçalho -->
-  <header class="mb-6 flex flex-wrap justify-between items-center gap-4">
-    <div>
-      <h1 class="text-3xl font-bold">Painel do Analista</h1>
-      <p class="text-gray-400 mt-1">Visão em tempo real do pátio - HEILOG</p>
+<header class="site-header mb-6">
+  <div class="site-header-main">
+    <div class="brand-wrap">
+      <div class="brand-mark">
+  <svg class="heilog-logo-svg" viewBox="0 0 84 84" xmlns="http://www.w3.org/2000/svg" aria-label="HEILOG">
+    <defs>
+      <linearGradient id="hlgBg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#0E3B24"/>
+        <stop offset="100%" stop-color="#051A10"/>
+      </linearGradient>
+
+      <linearGradient id="hlgGreen" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#00B65A"/>
+        <stop offset="100%" stop-color="#007A3D"/>
+      </linearGradient>
+
+      <linearGradient id="hlgGlow" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#6DFFAF"/>
+        <stop offset="100%" stop-color="#00A94F"/>
+      </linearGradient>
+
+      <filter id="hlgShadow" x="-30%" y="-30%" width="160%" height="160%">
+        <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.35"/>
+      </filter>
+    </defs>
+
+    <!-- Fundo -->
+    <rect x="6" y="6" width="72" height="72" rx="22" fill="url(#hlgBg)"/>
+
+    <!-- Brilho superior -->
+    <ellipse cx="42" cy="20" rx="20" ry="8" fill="rgba(255,255,255,0.05)"/>
+
+    <!-- Estrela -->
+    <path
+      d="M42 12.5l2.6 5.8 6.3.5-4.8 4.2 1.6 6.1-5.7-3.3-5.7 3.3 1.6-6.1-4.8-4.2 6.3-.5L42 12.5z"
+      fill="#E30613"
+      stroke="#FFD9A6"
+      stroke-width="1"
+      filter="url(#hlgShadow)"
+    />
+
+    <!-- H moderno -->
+    <g filter="url(#hlgShadow)">
+      <rect x="23" y="28" width="10" height="28" rx="4" fill="url(#hlgGreen)"/>
+      <rect x="51" y="28" width="10" height="28" rx="4" fill="url(#hlgGreen)"/>
+      <rect x="31" y="38" width="22" height="8" rx="4" fill="url(#hlgGlow)"/>
+    </g>
+
+    <!-- Detalhe inferior -->
+    <rect x="25" y="62" width="28" height="3" rx="1.5" fill="#C8A96B" opacity="0.95"/>
+    <circle cx="57.5" cy="63.5" r="3" fill="#E8C97A"/>
+  </svg>
+</div>
+
+      <div class="brand-text-clean">
+        <h1 class="brand-title-main">Painel do Analista</h1>
+      </div>
     </div>
 
-    <div id="predictive-alert" class="w-full md:w-auto text-center md:text-right"></div>
-
-    <div>
-      <button id="toggle-sound-btn" class="p-2 rounded-full hover:bg-gray-700" title="Ativar/Desativar Som"></button>
+    <div class="top-actions">
+      <button id="toggle-sound-btn"
+              class="header-action-btn"
+              title="Ativar/Desativar Som"></button>
     </div>
-  </header>
+  </div>
+
+  <div class="header-divider"></div>
+
+  <div id="predictive-alert" class="header-alert-slot"></div>
+</header>
 
   <!-- Alertas -->
   <div id="system-alerts-container" class="mb-6 space-y-2"></div>
@@ -58,17 +482,63 @@
   <!-- Abas -->
   <div class="mb-4">
     <div class="border-b border-gray-700">
-      <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-        <button id="tab-patio" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-blue-500 text-white">Pátio</button>
-        <button id="tab-historico" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-300">Histórico</button>
-        <button id="tab-ocorrencias" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-300">Ocorrências</button>
-        <button id="tab-performance" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-300">Perf. do Turno</button>
-        <!-- ✅ NOVA ABA -->
-        <button id="tab-motoristas" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-300">Motoristas</button>
-        <button id="tab-baldeios" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-300">Baldeios Ritmo</button>
-        <button id="tab-ritmo" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-300">Controle Ritmo</button>
-        <button id="tab-dashboard" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-300">Dashboard</button>
-      </nav>
+      <nav class="-mb-px flex" aria-label="Tabs">
+  <button id="tab-patio" class="tab-btn active-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg">
+    <svg class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5h18M6 16.5V9.75A1.75 1.75 0 0 1 7.75 8h8.5A1.75 1.75 0 0 1 18 9.75v6.75M7.5 16.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm12 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"/>
+    </svg>
+    <span>Pátio</span>
+  </button>
+
+  <button id="tab-historico" class="tab-btn inactive-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg">
+    <svg class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l2.5 2.5M21 12a9 9 0 1 1-3.34-6.95M21 4v5h-5"/>
+    </svg>
+    <span>Histórico</span>
+  </button>
+
+  <button id="tab-ocorrencias" class="tab-btn inactive-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg">
+    <svg class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/>
+    </svg>
+    <span>Ocorrências</span>
+  </button>
+
+  <button id="tab-performance" class="tab-btn inactive-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg">
+    <svg class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M4 19V5m5 14V9m5 10V12m5 7V7"/>
+    </svg>
+    <span>Perf. do Turno</span>
+  </button>
+
+  <button id="tab-motoristas" class="tab-btn inactive-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg">
+    <svg class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2m18 0v-2a4 4 0 0 0-3-3.87m-2-7.13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Zm6 13v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+    </svg>
+    <span>Motoristas</span>
+  </button>
+
+  <button id="tab-baldeios" class="tab-btn inactive-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg">
+    <svg class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M17 3h4v4M7 21H3v-4m0 0 6-6m12-4-6 6M21 7l-4-4M3 17l4 4"/>
+    </svg>
+    <span>Baldeios</span>
+  </button>
+
+  <button id="tab-ritmo" class="tab-btn inactive-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg">
+    <svg class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M3 12h4l2-5 4 10 2-5h6"/>
+    </svg>
+    <span>Controle Baldeios</span>
+  </button>
+
+  <button id="tab-dashboard" class="tab-btn inactive-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg">
+    <svg class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M4 5h7v6H4V5Zm9 0h7v10h-7V5ZM4 13h7v6H4v-6Zm9 4h7v2h-7v-2Z"/>
+    </svg>
+    <span>Dashboard</span>
+  </button>
+</nav>
     </div>
   </div>
 
@@ -174,28 +644,67 @@
     <div id="performance-content" class="hidden">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-1 space-y-6">
-          <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
-            <h3 id="hora-hora-title" class="text-xl font-bold mb-4">Chegadas no Pátio (Hora a Hora)</h3>
-            <div id="hora-hora-table" class="max-h-80 overflow-y-auto"></div>
+          <div class="bg-gray-800 p-4 rounded-lg shadow-lg space-y-6">
+            <div>
+              <div class="flex items-center justify-between gap-3 mb-4">
+                <h3 id="hora-hora-title" class="text-xl font-bold">Resumo do Turno</h3>
+                <button id="perf-manual-reset-btn"
+                        class="text-xs bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-3 rounded-lg">
+                  Limpar Bandeja/Última chamada
+                </button>
+              </div>
+              <div id="hora-hora-table" class="space-y-4"></div>
+            </div>
+
+            <div>
+              <h4 class="text-lg font-bold mb-3">Bandeja / Última chamada (manual)</h4>
+              <div id="performance-manual-table" class="overflow-x-auto"></div>
+            </div>
           </div>
 
-          <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
-            <h3 class="text-lg font-bold mb-4">Fluxo Carregamento (Finalizados no Turno)</h3>
+          <div class="hidden bg-gray-800 p-4 rounded-lg shadow-lg">
+            <h3 class="text-lg font-bold mb-4">Fluxo Carregamento (Turno Atual)</h3>
             <div id="fluxo-carregamento-kpis" class="grid grid-cols-2 gap-4"></div>
           </div>
 
-          <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+          <div class="hidden bg-gray-800 p-4 rounded-lg shadow-lg">
             <h3 class="text-lg font-bold mb-4">Fluxo para Entrar (Veículos no Pátio)</h3>
             <div id="fluxo-entrar-kpis" class="grid grid-cols-2 gap-4"></div>
           </div>
         </div>
 
-        <div class="lg:col-span-2 bg-gray-800 p-4 rounded-lg shadow-lg">
-          <h3 id="performance-chart-title" class="text-xl font-bold mb-4">Chegadas no Pátio (Hora a Hora)</h3>
-          <div id="performance-chart-container" class="relative h-96">
-            <canvas id="performance-chart"></canvas>
-            <div id="performance-chart-no-data" class="absolute inset-0 flex items-center justify-center text-gray-400 hidden">
-              <span>Sem chegadas no turno para exibir.</span>
+        <div class="lg:col-span-2 space-y-6">
+          <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <div>
+                <h3 class="text-xl font-bold">Volume por Hora (manual)</h3>
+                <p id="performance-hourly-manual-title" class="text-sm text-gray-400 mt-1"></p>
+              </div>
+              <button id="perf-hourly-reset-btn"
+                      class="text-xs bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-3 rounded-lg">
+                Limpar dados manuais
+              </button>
+            </div>
+
+            <div id="performance-hourly-manual-table" class="overflow-x-auto"></div>
+
+            <div class="mt-6">
+              <div class="relative h-80">
+                <canvas id="performance-hourly-manual-chart"></canvas>
+                <div id="performance-hourly-manual-no-data" class="absolute inset-0 flex items-center justify-center text-gray-400 hidden">
+                  <span>Preencha os campos manuais para gerar o gráfico por hora.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="hidden bg-gray-800 p-4 rounded-lg shadow-lg">
+            <h3 id="performance-chart-title" class="text-xl font-bold mb-4">Chegadas no Pátio (Automático por Hora)</h3>
+            <div id="performance-chart-container" class="relative h-96">
+              <canvas id="performance-chart"></canvas>
+              <div id="performance-chart-no-data" class="absolute inset-0 flex items-center justify-center text-gray-400 hidden">
+                <span>Sem chegadas no turno para exibir.</span>
+              </div>
             </div>
           </div>
         </div>
@@ -250,10 +759,13 @@
     </div>
 
     
-    <!-- ✅ Baldeios Ritmo -->
+    <!-- ✅ Baldeios -->
     <div id="baldeios-content" class="hidden">
       <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
-        <h3 class="text-2xl font-semibold">Baldeios — Ritmo</h3>
+        <div>
+          <h3 class="text-2xl font-semibold">Baldeios</h3>
+          <p class="text-sm text-gray-400 mt-1">Mostra todos os baldeios do dia e permite filtrar por origem: Ritmo ou JSL.</p>
+        </div>
 
         <div class="flex flex-wrap items-center gap-3">
           <input id="baldeios-date" type="date"
@@ -261,6 +773,13 @@
 
           <input id="baldeios-search" type="text" placeholder="Buscar placa..."
             class="w-full sm:w-72 bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+
+          <select id="baldeios-origin-filter"
+            class="bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="todos">Todos os baldeios</option>
+            <option value="ritmo">Somente Ritmo</option>
+            <option value="jsl">Somente JSL</option>
+          </select>
 
           <select id="baldeios-plate-mode"
             class="bg-gray-700 border border-gray-600 rounded-lg py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -279,6 +798,7 @@
         <table class="w-full text-left">
           <thead class="border-b border-gray-700">
             <tr>
+              <th class="p-4 text-sm font-semibold text-gray-400">Origem</th>
               <th class="p-4 text-sm font-semibold text-gray-400">Placa</th>
               <th class="p-4 text-sm font-semibold text-gray-400">Marcações no dia</th>
               <th class="p-4 text-sm font-semibold text-gray-400">Horários</th>
@@ -292,11 +812,11 @@
     </div>
 
 
-    <!-- ✅ Controle Ritmo (Placa a Placa) -->
+    <!-- ✅ Controle Baldeios (Placa a Placa) -->
     <div id="ritmo-placa-content" class="hidden">
       <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
         <div>
-          <h3 class="text-2xl font-semibold">Controle Ritmo — Placa a Placa</h3>
+          <h3 class="text-2xl font-semibold">Controle Baldeios — Placa a Placa</h3>
           <p class="text-sm text-gray-400 mt-1">Agrupa baldeios por placa e separa por dia (inclui histórico antigo + novos em tempo real).</p>
         </div>
 
@@ -611,6 +1131,7 @@
     };
 
   const appId = "heilog-logistica";
+const POWERAPPS_OCCURRENCE_URL = "https://apps.powerapps.com/play/e/ddc30d71-5a62-4877-915b-84434ed9e1d4/a/e44689a4-a84d-46db-ad44-96e757ba7920?tenantId=66e853de-ece3-44dd-9d66-ee6bdf4159d4&source=curatedApps&hint=191f9b9d-3803-4b2b-a391-2a0782d6e3c4&sourcetime=1772715327162";
 
   // ==============================
   // ESTADO GLOBAL
@@ -624,6 +1145,7 @@
 
   let contextChart = null;
   let performanceChart = null;
+  let performanceHourlyManualChart = null;
   let dailyProductivityChart, tmpEvolutionChart, shiftComparisonChart, volumeRankingChart, heatmapChart;
 
   // ✅ charts do Dashboard Ritmo
@@ -639,7 +1161,7 @@
   let audioContext;
   let timerIntervalId = null;
   
-  // ✅ Controle Ritmo (placa a placa)
+  // ✅ Controle Baldeios (placa a placa)
   let ritmoDataVersion = 0;
   let ritmoCacheKey = '';
   let ritmoCacheRows = [];
@@ -1246,7 +1768,7 @@
               <circle cx="12" cy="12" r="3"/>
             </svg>
           </button>
-          <button type="button" data-action="occurrence" data-id="${op.id}" title="Adicionar Ocorrência">
+          <button type="button" data-action="occurrence" data-id="${op.id}" title="Ocorrência / Power Apps">
             <svg class="w-5 h-5 text-amber-400 hover:text-amber-300 pointer-events-none"
                 xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2070,7 +2592,46 @@
     }
   }
 
-  async function handleAddOccurrence(e) {
+  async function openPowerAppsOccurrence() {
+  if (!db || !selectedOperacao) return;
+
+  try {
+    const prioridade = getPriorityStatusLogic(selectedOperacao).statusText;
+
+    // 1) grava na aba Ocorrências
+    await addDoc(collection(db, `artifacts/${appId}/public/data/ocorrencias`), {
+      type: "Abertura Power Apps",
+      description: `Usuário abriu o Power Apps para tratar a DT ${selectedOperacao.dt}.`,
+      dt: selectedOperacao.dt || '',
+      operacaoId: selectedOperacao.id || '',
+      timestamp: serverTimestamp(),
+      canal: "Power Apps",
+      prioridade,
+      statusOcorrencia: "Aberto no Power Apps",
+      resolucao: ""
+    });
+
+    // 2) grava também no log da operação
+    await addLogEntry(
+      selectedOperacao.id,
+      `Usuário abriu ocorrência no Power Apps para a DT ${selectedOperacao.dt}.`,
+      false
+    );
+
+    // 3) abre o app
+    window.open(POWERAPPS_OCCURRENCE_URL, '_blank', 'noopener,noreferrer');
+    window.closeOccurrenceModal();
+
+    showToast("Power Apps aberto e ocorrência registrada.", "success");
+  } catch (error) {
+    console.error("Erro ao abrir Power Apps e registrar ocorrência:", error);
+    window.open(POWERAPPS_OCCURRENCE_URL, '_blank', 'noopener,noreferrer');
+    window.closeOccurrenceModal();
+    showToast("Power Apps aberto, mas não foi possível registrar no painel.", "error");
+  }
+}
+
+async function handleAddOccurrence(e) {
     e.preventDefault();
     if (!db || !selectedOperacao) return;
 
@@ -2309,18 +2870,713 @@
     return slots;
   };
 
-  const kpiCardSm = (title, value, sub = '') => `
-    <div class="kpi-card-sm rounded-lg p-4">
-      <p class="text-xs text-gray-400">${title}</p>
-      <p class="text-2xl font-bold mt-1">${value}</p>
-      ${sub ? `<p class="text-xs text-gray-500 mt-1">${sub}</p>` : ``}
-    </div>
-  `;
+  const slotLabelsFromDOM = () => Array.from(document.querySelectorAll('tr[data-hour-slot]')).map(row => row.dataset.hourSlot).filter(Boolean);
+
+
+  const PERF_MANUAL_ROWS = [
+    { key: 'carga_pa', label: 'Bandeja - Carga PA' },
+    { key: 'descarga_pa', label: 'Bandeja - Descargas PA' },
+    { key: 'rpm_hnk', label: 'Bandeja - Descargas RPM HNK' },
+    { key: 'rpm_ambar', label: 'Bandeja - Descargas RPM AMBAR' },
+    { key: 'rpm_keg', label: 'Bandeja - Descargas RPM KEG' },
+    { key: 'rpm_pallet', label: 'Bandeja - Descargas RPM PALLET' },
+    { key: 'ultima_chamada', label: 'Última chamada' },
+    { key: 'fluxo_carregamento', label: 'Fluxo de Carregamento' },
+    { key: 'problemas', label: 'Problemas' },
+    { key: 'marcacoes_fazer', label: 'Marcações a Fazer' },
+    { key: 'baldeios_totais_ritmo', label: 'Baldeios totais - Ritmo', baldeioOnly: true },
+    { key: 'baldeios_totais_jsl', label: 'Baldeios totais - JSL', baldeioOnly: true }
+  ];
+
+  const PERF_AUTO_CATEGORY_ORDER = [
+    'Vendas',
+    'JSL',
+    'Latas vazias',
+    'Bulk',
+    'Insumo',
+    'Produto acabado',
+    'Paletes vazios',
+    'Vasilhames',
+    'Hidroman',
+    'Ritmo',
+    'Devolução',
+    'Outros'
+  ];
+
+  const PERF_SUMMARY_STORAGE_PREFIX = 'heilog-perf-summary-manual-v5';
+  const PERF_HOURLY_STORAGE_PREFIX = 'heilog-perf-hourly-manual-v7';
+
+  const perfNorm = (v = '') =>
+    String(v ?? '')
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .toUpperCase()
+      .trim();
+
+  const perfTitleCase = (v = '') => {
+    const clean = String(v || '')
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+    if (!clean) return '';
+    return clean.replace(/\w/g, m => m.toUpperCase());
+  };
+
+  const perfToNumber = (v) => {
+    if (v === undefined || v === null || String(v).trim() === '') return 0;
+    const num = Number(String(v).replace(',', '.'));
+    return Number.isFinite(num) ? num : 0;
+  };
+
+  const perfFormatMetric = (v) => {
+    const n = Number(v || 0);
+    return n.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 3 });
+  };
+
+  const perfToInputString = (v) => {
+    const n = Number(v || 0);
+    if (!Number.isFinite(n)) return '0';
+    const rounded = Number(n.toFixed(3));
+    return Number.isInteger(rounded) ? String(rounded) : String(rounded);
+  };
+
+  const normalizePerfHourlyState = (state = {}, labels = []) => {
+    const out = {};
+    let previousTotal = 0;
+    labels.forEach((slot, index) => {
+      const total = Math.max(perfToNumber(state?.[slot]?.total), 0);
+      const ae = Math.max(perfToNumber(state?.[slot]?.ae), 0);
+      const fb = Math.max(total - ae, 0);
+      const realizedManual = Math.max(perfToNumber(state?.[slot]?.realizado), 0);
+      const realizado = index === 0
+        ? realizedManual
+        : Math.max(total - previousTotal, 0);
+
+      out[slot] = {
+        fb: perfToInputString(fb),
+        ae: perfToInputString(ae),
+        total: perfToInputString(total),
+        realizado: perfToInputString(realizado)
+      };
+
+      previousTotal = total;
+    });
+    return out;
+  };
+
+  const perfReadLocal = (key, fallback) => {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (_) {
+      return fallback;
+    }
+  };
+
+  const perfWriteLocal = (key, value) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (_) {}
+  };
+
+  const getPerfShiftStorageKey = (prefix, start, end, label) => {
+    return `${prefix}::${label}::${start.toISOString()}::${end.toISOString()}`;
+  };
+
+  const getPerfSummaryState = (start, end, label) => {
+    const raw = perfReadLocal(getPerfShiftStorageKey(PERF_SUMMARY_STORAGE_PREFIX, start, end, label), {});
+    const out = {};
+    PERF_MANUAL_ROWS.forEach(row => {
+      out[row.key] = {
+        vendas: String(raw?.[row.key]?.vendas ?? '0'),
+        baldeio: String(raw?.[row.key]?.baldeio ?? '0')
+      };
+    });
+    return out;
+  };
+
+  const setPerfSummaryValue = (start, end, label, rowKey, col, value) => {
+    const key = getPerfShiftStorageKey(PERF_SUMMARY_STORAGE_PREFIX, start, end, label);
+    const raw = perfReadLocal(key, {});
+    raw[rowKey] = raw[rowKey] || {};
+    raw[rowKey][col] = String(value ?? '');
+    perfWriteLocal(key, raw);
+  };
+
+  const clearPerfSummaryState = (start, end, label) => {
+    try {
+      localStorage.removeItem(getPerfShiftStorageKey(PERF_SUMMARY_STORAGE_PREFIX, start, end, label));
+    } catch (_) {}
+  };
+
+  const getPerfHourlyState = (start, end, label, labels = []) => {
+    const raw = perfReadLocal(getPerfShiftStorageKey(PERF_HOURLY_STORAGE_PREFIX, start, end, label), {});
+    const manual = {};
+    labels.forEach((slot, index) => {
+      manual[slot] = {
+        ae: String(raw?.[slot]?.ae ?? '0'),
+        total: String(raw?.[slot]?.total ?? '0'),
+        realizado: String(index === 0 ? (raw?.[slot]?.realizado ?? '0') : '0')
+      };
+    });
+    return normalizePerfHourlyState(manual, labels);
+  };
+
+  const setPerfHourlyValue = (start, end, label, slot, field, value) => {
+    if (!['ae', 'total', 'realizado'].includes(field)) return;
+    const key = getPerfShiftStorageKey(PERF_HOURLY_STORAGE_PREFIX, start, end, label);
+    const raw = perfReadLocal(key, {});
+    raw[slot] = raw[slot] || {};
+    raw[slot][field] = String(value ?? '');
+    perfWriteLocal(key, raw);
+  };
+
+  const clearPerfHourlyState = (start, end, label) => {
+    try {
+      localStorage.removeItem(getPerfShiftStorageKey(PERF_HOURLY_STORAGE_PREFIX, start, end, label));
+    } catch (_) {}
+  };
+
+  const getPerfFlowClassificacaoRaw = (op = {}) => {
+    const candidates = [
+      op.classificacaoFluxo,
+      op.classificacao_fluxo,
+      op.classificacaoOperacao,
+      op.classificacao_operacao,
+      op.classificacaoPainel,
+      op.classificacao_painel,
+      op.flowClassificacao,
+      op.flow_classificacao,
+      op.perfClassificacao,
+      op.perf_classificacao,
+      op.classificacao,
+      op.classificação,
+      op.categoriaFluxo,
+      op.categoria_fluxo,
+      op.tipoFluxo,
+      op.tipo_fluxo
+    ];
+
+    const first = candidates.find(v => v !== undefined && v !== null && String(v).trim() !== '');
+    return first === undefined || first === null ? '' : String(first).trim();
+  };
+
+  const getPerfFlowClassificacao = (op = {}) => perfNorm(getPerfFlowClassificacaoRaw(op));
+
+  const isPerfFlowBaldeio = (op = {}) => {
+    const cls = getPerfFlowClassificacao(op);
+    return !!cls && (cls === 'BALDEIO' || cls.includes('BALDEIO'));
+  };
+
+  const isPerfFlowVendas = (op = {}) => {
+    const cls = getPerfFlowClassificacao(op);
+    return !!cls && (cls === 'VENDAS' || cls === 'VENDA' || cls.includes('VENDAS') || cls.includes('VENDA'));
+  };
+
+  const isPerfFlowCargaDescarga = (op = {}) => {
+    const cls = getPerfFlowClassificacao(op);
+    if (!cls) return false;
+    return [
+      'CARREGAMENTO + DESCARGA',
+      'CARREGAMENTO E DESCARGA',
+      'CARREGAMENTO/DESCARGA',
+      'CARREGAMENTO DESCARGA',
+      'CARGA + DESCARGA',
+      'CARGA E DESCARGA',
+      'CARGA/DESCARGA'
+    ].some(token => cls.includes(token));
+  };
+
+  const perfBlob = (op = {}) => [
+    getPerfFlowClassificacaoRaw(op),
+    op.tipoSnapshot,
+    op.tipo_heilog,
+    op.tipoHeilog,
+    op.tipoOperacao,
+    op.tipo_operacao,
+    op.tipo,
+    getSegmentacaoLabel(op),
+    op.status,
+    op.canal,
+    op.canalOperacao,
+    op.xtAdicional,
+    op.observacao,
+    op.obs,
+    op.notas,
+    op.descricao,
+    op.operacao,
+    op.modalidade,
+    op.origem,
+    op.destino,
+    op.transportadora
+  ].map(perfNorm).join(' | ');
+
+  const isJslName = (v = '') => {
+    const x = perfNorm(v).replace(/[^A-Z0-9]/g, '');
+    return !!x && x.includes('JSL');
+  };
+
+  const isJslOp = (op = {}) => {
+    const transportadora = String(getTransportadoraFromOperacao(op) || op.transportadora || '');
+    if (isJslName(transportadora)) return true;
+
+    try {
+      const all = JSON.stringify(op).toUpperCase().replace(/0/g, 'O').replace(/1/g, 'I');
+      return all.includes('JSL');
+    } catch (_) {
+      return false;
+    }
+  };
+
+  const isPerfExplicitBaldeioOp = (op = {}) => {
+    if (isPerfFlowBaldeio(op)) return true;
+
+    const joined = [
+      getPerfFlowClassificacaoRaw(op),
+      getSegmentacaoLabel(op),
+      op.tipoSnapshot,
+      op.tipo_heilog,
+      op.tipoHeilog,
+      op.tipoOperacao,
+      op.tipo_operacao,
+      op.tipo,
+      op.xtAdicional,
+      op.modalidade,
+      op.operacao,
+      op.status,
+      op.canal,
+      op.canalOperacao,
+      getTransportadoraFromOperacao(op),
+      op.transportadora,
+      op.observacao,
+      op.obs,
+      op.notas,
+      op.descricao
+    ].map(perfNorm).join(' | ');
+
+    if (
+      joined.includes('BALDEIO') ||
+      joined.includes('BALDEI') ||
+      joined.includes('BALDEIO AE') ||
+      joined.includes('JSL BALDEIO') ||
+      joined.includes('RITMO BALDEIO')
+    ) {
+      return true;
+    }
+
+    if (op?.baldeio === true || String(op?.baldeio || '').toLowerCase() === 'true') {
+      return true;
+    }
+
+    try {
+      const all = JSON.stringify(op).toUpperCase().replace(/0/g, 'O').replace(/1/g, 'I');
+      return all.includes('BALDEIO') || all.includes('BALDEI');
+    } catch (_) {
+      return false;
+    }
+  };
+
+  const isJslBaldeioPerfOp = (op = {}) => isJslOp(op) && isPerfExplicitBaldeioOp(op);
+
+  const perfColumn = (op = {}) => {
+    if (isPerfFlowBaldeio(op)) return 'baldeio';
+    if (isPerfFlowVendas(op) || isPerfFlowCargaDescarga(op)) return 'vendas';
+
+    const vals = [
+      getPerfFlowClassificacaoRaw(op),
+      op.canal,
+      op.canalOperacao,
+      op.tipoSnapshot,
+      op.tipo,
+      getSegmentacaoLabel(op),
+      op.xtAdicional,
+      op.modalidade,
+      op.operacao,
+      getTransportadoraFromOperacao(op),
+      op.transportadora
+    ].map(perfNorm);
+
+    const joined = vals.join(' | ');
+    if (
+      isRitmoOp(op) ||
+      isJslBaldeioPerfOp(op) ||
+      joined.includes('BALDEIO') ||
+      joined.includes('BALDEIO AE') ||
+      vals.some(v => v === 'AE')
+    ) return 'baldeio';
+
+    return 'vendas';
+  };
+
+  const isPerfManualBlob = (blob = '') => {
+    return [
+      'CARGA PA',
+      'DESCARGA PA',
+      'RPM HNK',
+      'RPM AMBAR',
+      'RPM KEG',
+      'RPM PALLET',
+      'ULTIMA CHAMADA'
+    ].some(token => blob.includes(token));
+  };
+
+  const detectPerfAutoCategory = (op = {}) => {
+    const blob = perfBlob(op);
+    if (!blob || isPerfManualBlob(blob)) return null;
+
+    if (isRitmoOp(op) || blob.includes('RITMO') || blob.includes('RITIMO')) return 'Ritmo';
+    if (isJslBaldeioPerfOp(op) || (isJslOp(op) && isPerfExplicitBaldeioOp(op))) return 'JSL';
+    if (blob.includes('LATAS VAZIAS') || blob.includes('LATA VAZIA')) return 'Latas vazias';
+    if (blob.includes('BULK')) return 'Bulk';
+    if (blob.includes('INSUMO')) return 'Insumo';
+    if (blob.includes('PRODUTO ACABADO')) return 'Produto acabado';
+    if (blob.includes('PALLET VAZIO') || blob.includes('PALET VAZIO') || blob.includes('PALLETS VAZIOS') || blob.includes('PALETES VAZIOS')) return 'Paletes vazios';
+    if (blob.includes('VASILHAME')) return 'Vasilhames';
+    if (blob.includes('HIDROMAN')) return 'Hidroman';
+    if (blob.includes('DEVOLUCAO')) return 'Devolução';
+    if (isJslOp(op)) return 'Vendas';
+
+    return 'Vendas';
+  };
+
+  const buildPerfAutoCounters = (ops = []) => {
+    const map = new Map();
+    ops.forEach(op => {
+      const label = detectPerfAutoCategory(op);
+      if (!label) return;
+      const col = perfColumn(op);
+      if (!map.has(label)) map.set(label, { label, vendas: 0, baldeio: 0 });
+      map.get(label)[col] += 1;
+    });
+
+    PERF_AUTO_CATEGORY_ORDER
+      .filter(label => label !== 'Outros')
+      .forEach(label => {
+        if (!map.has(label)) map.set(label, { label, vendas: 0, baldeio: 0 });
+      });
+
+    return [...map.values()].sort((a, b) => {
+      const ai = PERF_AUTO_CATEGORY_ORDER.indexOf(a.label);
+      const bi = PERF_AUTO_CATEGORY_ORDER.indexOf(b.label);
+      if (ai !== -1 || bi !== -1) {
+        return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+      }
+      return a.label.localeCompare(b.label, 'pt-BR');
+    });
+  };
+
+  const renderPerfAutoSummaryHtml = (title, rows = []) => {
+    if (!rows.length) {
+      return `
+        <div class="mb-3 text-sm text-gray-300">${title}</div>
+        <div class="rounded-lg border border-white/10 bg-black/10 p-4 text-sm text-gray-400">
+          Nenhum tipo automático encontrado no turno atual.
+        </div>
+      `;
+    }
+
+    return `
+      <div class="mb-3 text-sm text-gray-300">${title}</div>
+      <div class="overflow-hidden rounded-lg border border-gray-700">
+        <table class="w-full text-left text-sm">
+          <thead>
+            <tr class="bg-green-800 text-white">
+              <th colspan="4" class="p-3 text-center font-bold">Resumo Automático por Tipo</th>
+            </tr>
+            <tr class="bg-green-700 text-white border-t border-green-900/40">
+              <th class="p-2 font-semibold">Tipo</th>
+              <th class="p-2 text-center font-semibold w-24">Vendas</th>
+              <th class="p-2 text-center font-semibold w-28">Baldeio AE</th>
+              <th class="p-2 text-center font-semibold w-20">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(row => `
+              <tr class="border-t border-black/20 bg-white/95 text-black">
+                <td class="p-2">${escapeHtml(row.label)}</td>
+                <td class="p-2 text-center font-bold">${row.vendas}</td>
+                <td class="p-2 text-center font-bold">${row.baldeio}</td>
+                <td class="p-2 text-center font-bold">${row.vendas + row.baldeio}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  };
+
+  const renderPerfManualSummaryHtml = (state = {}) => {
+    return `
+      <div class="overflow-hidden rounded-lg border border-gray-700">
+        <table class="w-full text-left text-sm">
+          <thead>
+            <tr class="bg-green-800 text-white">
+              <th colspan="4" class="p-3 text-center font-bold">Campos Manuais</th>
+            </tr>
+            <tr class="bg-green-700 text-white border-t border-green-900/40">
+              <th class="p-2 font-semibold">Tipo</th>
+              <th class="p-2 text-center font-semibold w-28">Vendas</th>
+              <th class="p-2 text-center font-semibold w-28">Baldeio AE</th>
+              <th class="p-2 text-center font-semibold w-20">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${PERF_MANUAL_ROWS.map(row => {
+              const vendas = state?.[row.key]?.vendas ?? '0';
+              const baldeio = state?.[row.key]?.baldeio ?? '0';
+              const total = perfToNumber(vendas) + perfToNumber(baldeio);
+              const isBaldeioOnly = !!row.baldeioOnly;
+              return `
+                <tr class="border-t border-black/20 bg-white/95 text-black" data-manual-row="${row.key}">
+                  <td class="p-2">${row.label}</td>
+                  <td class="p-2">
+                    <input type="number" min="0" step="1" inputmode="numeric" value="${escapeHtml(isBaldeioOnly ? '0' : vendas)}" ${isBaldeioOnly ? 'readonly' : ''}
+                           data-perf-manual="1" data-row-key="${row.key}" data-col="vendas"
+                           class="w-full rounded border border-gray-300 ${isBaldeioOnly ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'} px-2 py-1 text-center font-semibold text-black focus:outline-none focus:ring-2 focus:ring-green-600" />
+                  </td>
+                  <td class="p-2">
+                    <input type="number" min="0" step="1" inputmode="numeric" value="${escapeHtml(baldeio)}"
+                           data-perf-manual="1" data-row-key="${row.key}" data-col="baldeio"
+                           class="w-full rounded border border-gray-300 bg-white px-2 py-1 text-center font-semibold text-black focus:outline-none focus:ring-2 focus:ring-green-600" />
+                  </td>
+                  <td class="p-2 text-center font-bold" data-manual-total>${total}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  };
+
+  const updatePerfManualTotalsFromDOM = () => {
+    document.querySelectorAll('[data-manual-row]').forEach(row => {
+      const vendas = perfToNumber(row.querySelector('input[data-col="vendas"]')?.value || 0);
+      const baldeio = perfToNumber(row.querySelector('input[data-col="baldeio"]')?.value || 0);
+      const totalCell = row.querySelector('[data-manual-total]');
+      if (totalCell) totalCell.textContent = String(vendas + baldeio);
+    });
+  };
+
+  const updatePerfHourlyTotalsFromDOM = () => {
+    const totals = { fb: 0, ae: 0, total: 0, realizado: 0 };
+    let previousTotal = 0;
+
+    document.querySelectorAll('tr[data-hour-slot]').forEach((row, index) => {
+      const totalInput = row.querySelector('input[data-hourly-field="total"]');
+      const aeInput = row.querySelector('input[data-hourly-field="ae"]');
+      const fbInput = row.querySelector('input[data-hourly-field="fb"]');
+      const realizadoInput = row.querySelector('input[data-hourly-field="realizado"]');
+
+      const total = Math.max(perfToNumber(totalInput?.value || 0), 0);
+      const ae = Math.max(perfToNumber(aeInput?.value || 0), 0);
+      const fb = Math.max(total - ae, 0);
+      const realizado = index === 0
+        ? Math.max(perfToNumber(realizadoInput?.value || 0), 0)
+        : Math.max(total - previousTotal, 0);
+
+      if (fbInput) fbInput.value = perfToInputString(fb);
+      if (realizadoInput) {
+        if (index === 0) {
+          realizadoInput.value = perfToInputString(realizado);
+        } else {
+          realizadoInput.value = perfToInputString(realizado);
+        }
+      }
+
+      totals.fb += fb;
+      totals.ae += ae;
+      totals.total += total;
+      totals.realizado += realizado;
+
+      previousTotal = total;
+    });
+
+    document.querySelectorAll('[data-hourly-total]').forEach(cell => {
+      const field = cell.getAttribute('data-hourly-total');
+      if (!field || !(field in totals)) return;
+      cell.textContent = perfFormatMetric(totals[field]);
+    });
+  };
+
+  const collectPerfHourlyStateFromDOM = () => {
+    const raw = {};
+    const labels = [];
+    document.querySelectorAll('tr[data-hour-slot]').forEach((row, index) => {
+      const slot = row.dataset.hourSlot || '';
+      if (!slot) return;
+      labels.push(slot);
+      raw[slot] = {
+        ae: row.querySelector('input[data-hourly-field="ae"]')?.value || '0',
+        total: row.querySelector('input[data-hourly-field="total"]')?.value || '0',
+        realizado: index === 0 ? (row.querySelector('input[data-hourly-field="realizado"]')?.value || '0') : '0'
+      };
+    });
+    return normalizePerfHourlyState(raw, labels);
+  };
+
+  const renderPerfHourlyManualTableHtml = (title, labels = [], state = {}) => {
+    const rowsHtml = labels.map((slot, index) => {
+      const row = state?.[slot] || { fb: '0', ae: '0', total: '0', realizado: '0' };
+      const isFirstRow = index === 0;
+      return `
+        <tr class="border-t border-black/20 bg-white/95 text-black" data-hour-slot="${escapeHtml(slot)}">
+          <td class="p-2 font-semibold whitespace-nowrap">${slot.split('–')[0]}</td>
+          <td class="p-2">
+            <input type="number" step="0.001" inputmode="decimal" value="${escapeHtml(row.fb)}" readonly
+                   data-hourly-slot="${escapeHtml(slot)}" data-hourly-field="fb"
+                   class="w-full rounded border border-gray-300 bg-gray-100 px-2 py-1 text-center font-semibold text-black cursor-not-allowed focus:outline-none" />
+          </td>
+          <td class="p-2">
+            <input type="number" step="0.001" min="0" inputmode="decimal" value="${escapeHtml(row.ae)}"
+                   data-hourly-slot="${escapeHtml(slot)}" data-hourly-field="ae"
+                   class="w-full rounded border border-gray-300 bg-white px-2 py-1 text-center font-semibold text-black focus:outline-none focus:ring-2 focus:ring-blue-600" />
+          </td>
+          <td class="p-2">
+            <input type="number" step="0.001" min="0" inputmode="decimal" value="${escapeHtml(row.total)}"
+                   data-hourly-slot="${escapeHtml(slot)}" data-hourly-field="total"
+                   class="w-full rounded border border-gray-300 bg-white px-2 py-1 text-center font-semibold text-black focus:outline-none focus:ring-2 focus:ring-blue-600" />
+          </td>
+          <td class="p-2">
+            <input type="number" step="0.001" min="0" inputmode="decimal" value="${escapeHtml(row.realizado)}" ${isFirstRow ? '' : 'readonly'}
+                   data-hourly-slot="${escapeHtml(slot)}" data-hourly-field="realizado"
+                   class="w-full rounded border border-gray-300 ${isFirstRow ? 'bg-white focus:ring-2 focus:ring-blue-600' : 'bg-gray-100 cursor-not-allowed'} px-2 py-1 text-center font-semibold text-black focus:outline-none" />
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    const totals = labels.reduce((acc, slot) => {
+      const row = state?.[slot] || {};
+      acc.realizado += Math.max(perfToNumber(row.realizado), 0);
+      return acc;
+    }, { realizado: 0 });
+
+    return `
+      <div class="mb-3 text-sm text-gray-300">${title}</div>
+      <div class="mb-3 text-xs text-emerald-200">
+        Preencha <strong>Total FB+AE</strong> e <strong>AE</strong>. O <strong>FB</strong> é calculado por <strong>Total - AE</strong>. O <strong>Realizado</strong> da <strong>primeira linha</strong> é manual e as demais linhas são calculadas por <strong>Total atual - Total anterior</strong>. Valores negativos são convertidos para <strong>0</strong>.
+      </div>
+      <div class="overflow-hidden rounded-lg border border-gray-700">
+        <table class="w-full text-left text-sm min-w-[720px]">
+          <thead>
+            <tr class="bg-green-800 text-white">
+              <th class="p-2 font-semibold">Volume Faturado (KHL)</th>
+              <th class="p-2 text-center font-semibold">FB</th>
+              <th class="p-2 text-center font-semibold">AE</th>
+              <th class="p-2 text-center font-semibold">Total FB+AE</th>
+              <th class="p-2 text-center font-semibold">Realizado</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+          <tfoot>
+            <tr class="border-t border-black/20 bg-emerald-100 text-black font-bold">
+              <td class="p-2">Total</td>
+              <td class="p-2 text-center">—</td>
+              <td class="p-2 text-center">—</td>
+              <td class="p-2 text-center">—</td>
+              <td class="p-2 text-center" data-hourly-total="realizado">${perfFormatMetric(totals.realizado)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    `;
+  };
+
+  const renderPerformanceHourlyManualChart = (labels = [], state = {}) => {
+    const canvas = document.getElementById('performance-hourly-manual-chart');
+    const noData = document.getElementById('performance-hourly-manual-no-data');
+    if (!canvas) return;
+
+    const fbSeries = labels.map(slot => perfToNumber(state?.[slot]?.fb));
+    const aeSeries = labels.map(slot => perfToNumber(state?.[slot]?.ae));
+    const totalSeries = labels.map(slot => perfToNumber(state?.[slot]?.total));
+    const realizadoSeries = labels.map(slot => perfToNumber(state?.[slot]?.realizado));
+    const hasData = [...fbSeries, ...aeSeries, ...totalSeries, ...realizadoSeries].some(v => v > 0);
+
+    if (noData) noData.classList.toggle('hidden', hasData);
+    canvas.style.display = hasData ? 'block' : 'none';
+
+    if (!hasData) {
+      performanceHourlyManualChart = safeDestroyChart(performanceHourlyManualChart);
+      return;
+    }
+
+    performanceHourlyManualChart = safeDestroyChart(performanceHourlyManualChart);
+    performanceHourlyManualChart = new Chart(canvas.getContext('2d'), {
+      data: {
+        labels: labels.map(slot => slot.split('–')[0]),
+        datasets: [
+          {
+            type: 'bar',
+            label: 'FB',
+            data: fbSeries,
+            backgroundColor: 'rgba(16,185,129,0.45)',
+            borderColor: 'rgba(16,185,129,0.95)',
+            borderWidth: 1,
+            borderRadius: 6
+          },
+          {
+            type: 'bar',
+            label: 'AE',
+            data: aeSeries,
+            backgroundColor: 'rgba(245,158,11,0.45)',
+            borderColor: 'rgba(245,158,11,0.95)',
+            borderWidth: 1,
+            borderRadius: 6
+          },
+          {
+            type: 'line',
+            label: 'Total FB+AE',
+            data: totalSeries,
+            borderColor: 'rgba(59,130,246,0.95)',
+            backgroundColor: 'rgba(59,130,246,0.12)',
+            borderWidth: 3,
+            tension: 0.25,
+            fill: false
+          },
+          {
+            type: 'line',
+            label: 'Realizado',
+            data: realizadoSeries,
+            borderColor: 'rgba(239,68,68,0.95)',
+            backgroundColor: 'rgba(239,68,68,0.12)',
+            borderWidth: 3,
+            tension: 0.25,
+            fill: false
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: { color: '#d1d5db' }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { color: '#d1d5db' },
+            grid: { color: 'rgba(255,255,255,0.08)' }
+          },
+          x: {
+            ticks: { color: '#d1d5db' },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  };
 
   function renderPerformanceDashboard() {
-    // (mesmo conteúdo do seu código original - sem alteração funcional)
     const horaHoraTitle = document.getElementById('hora-hora-title');
     const horaHoraTable = document.getElementById('hora-hora-table');
+    const manualTable = document.getElementById('performance-manual-table');
+    const hourlyManualTitle = document.getElementById('performance-hourly-manual-title');
+    const hourlyManualTable = document.getElementById('performance-hourly-manual-table');
     const fluxoCarregamento = document.getElementById('fluxo-carregamento-kpis');
     const fluxoEntrar = document.getElementById('fluxo-entrar-kpis');
 
@@ -2333,51 +3589,67 @@
     const startTxt = start.toLocaleString('pt-BR');
     const endTxt = end.toLocaleString('pt-BR');
 
-    if (horaHoraTitle) horaHoraTitle.textContent = `Chegadas no Pátio (Hora a Hora) — ${label}`;
-    if (perfTitle) perfTitle.textContent = `Chegadas no Pátio (Hora a Hora) — ${label} (${startTxt} → ${endTxt})`;
+    if (horaHoraTitle) {
+      horaHoraTitle.textContent = `Resumo do Turno — ${label}`;
+    }
+
+    if (hourlyManualTitle) {
+      hourlyManualTitle.textContent = `${label} (${startTxt} → ${endTxt})`;
+    }
+
+    if (perfTitle) {
+      perfTitle.textContent = `Chegadas no Pátio (Automático por Hora) — ${label} (${startTxt} → ${endTxt})`;
+    }
 
     const allOps = [...(patioData || []), ...(historicoData || [])];
-    const arrivalsInShift = allOps.filter(op => inRange(toMs(op.registrationTime), start, end));
+
+    const opsMap = new Map();
+    allOps.forEach(op => {
+      const rt = toMs(op.registrationTime);
+      const key = op?.id || `${op?.dt || ''}-${op?.cpf || ''}-${rt || ''}`;
+      if (!key || !inRange(rt, start, end)) return;
+      if (!opsMap.has(key)) opsMap.set(key, op);
+    });
+    const opsTurno = [...opsMap.values()];
 
     const slots = buildHourSlots(start, end);
-    const labels = slots.map(s => {
+    const slotLabels = slots.map(s => {
       const a = s.start.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
       const b = s.end.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
       return `${a}–${b}`;
     });
 
-    const counts = slots.map(s => arrivalsInShift.filter(op => {
+    const counts = slots.map(s => opsTurno.filter(op => {
       const rt = toMs(op.registrationTime);
       return rt && rt >= s.start.getTime() && rt < s.end.getTime();
     }).length);
 
-    const totalArrivals = counts.reduce((a,b)=>a+b,0);
+    const totalArrivals = counts.reduce((a, b) => a + b, 0);
+    const autoRows = buildPerfAutoCounters(opsTurno);
+    const manualState = getPerfSummaryState(start, end, label);
+    const hourlyState = getPerfHourlyState(start, end, label, slotLabels);
 
     if (horaHoraTable) {
-      horaHoraTable.innerHTML = `
-        <div class="mb-3 text-sm text-gray-300">
-          <span class="font-semibold">${totalArrivals}</span> chegadas no turno
-        </div>
-        <div class="overflow-hidden rounded-lg border border-gray-700">
-          <table class="w-full text-left">
-            <thead>
-              <tr class="bg-gray-900/50 border-b border-gray-700">
-                <th class="p-3 text-xs font-semibold text-gray-400">Faixa</th>
-                <th class="p-3 text-xs font-semibold text-gray-400">Chegadas</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${labels.map((l,i)=>`
-                <tr class="border-b border-gray-700/50 hover:bg-gray-700/30">
-                  <td class="p-3 text-sm text-gray-200 font-mono">${l}</td>
-                  <td class="p-3 text-sm text-gray-200 font-bold">${counts[i]}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
+      horaHoraTable.innerHTML = renderPerfAutoSummaryHtml(
+        `Turno: ${label} (${startTxt} → ${endTxt})`,
+        autoRows
+      );
     }
+
+    if (manualTable) {
+      manualTable.innerHTML = renderPerfManualSummaryHtml(manualState);
+      updatePerfManualTotalsFromDOM();
+    }
+
+    if (hourlyManualTable) {
+      hourlyManualTable.innerHTML = renderPerfHourlyManualTableHtml(
+        `Preencha Total FB+AE e AE do turno ${label}`,
+        slotLabels,
+        hourlyState
+      );
+      updatePerfHourlyTotalsFromDOM();
+    }
+    renderPerformanceHourlyManualChart(slotLabels, hourlyState);
 
     const finishedInShift = (historicoData || []).filter(op => inRange(toMs(op.finishedTime), start, end));
     const finalizados = finishedInShift.filter(op => (op.status || '').toLowerCase() === 'finalizado');
@@ -2389,15 +3661,19 @@
       return (rt && ft) ? (ft - rt) : null;
     }).filter(v => v !== null && v >= 0);
 
-    const avgStayMs = stayTimes.length ? (stayTimes.reduce((a,b)=>a+b,0) / stayTimes.length) : 0;
+    const avgStayMs = stayTimes.length
+      ? (stayTimes.reduce((a, b) => a + b, 0) / stayTimes.length)
+      : 0;
+
     const avgStayH = avgStayMs ? (avgStayMs / 3600000) : 0;
+    const ritmoMarcadas = opsTurno.filter(op => isRitmoOp(op)).length;
 
     if (fluxoCarregamento) {
       fluxoCarregamento.innerHTML = `
         ${kpiCardSm('Finalizadas', finalizados.length, 'no turno')}
         ${kpiCardSm('Canceladas', cancelados.length, 'no turno')}
         ${kpiCardSm('TMP médio', avgStayMs ? `${avgStayH.toFixed(2)} h` : '—', 'média das finalizadas')}
-        ${kpiCardSm('Chegadas', totalArrivals, 'no turno')}
+        ${kpiCardSm('Ritmos marcadas', ritmoMarcadas, 'marcações do turno')}
       `;
     }
 
@@ -2406,21 +3682,24 @@
       const s = getPriorityStatusLogic(op).statusText;
       return s === 'Grade queimada' || s === 'Prioridade (TOP 18)' || s === 'Atrasado';
     }).length;
+
     const atencao = patio.filter(op => getPriorityStatusLogic(op).statusText === 'Atenção').length;
     const atrasados = patio.filter(op => getPriorityStatusLogic(op).statusText === 'Atrasado').length;
+    const emDoca = patio.filter(op => perfBlob(op).includes('EM DOCA')).length;
 
     if (fluxoEntrar) {
       fluxoEntrar.innerHTML = `
         ${kpiCardSm('No pátio agora', patio.length)}
+        ${kpiCardSm('Em doca', emDoca)}
         ${kpiCardSm('Críticos', criticos, 'grade/top/atrasado')}
-        ${kpiCardSm('Atenção', atencao)}
-        ${kpiCardSm('Atrasados', atrasados)}
+        ${kpiCardSm('Atrasados', atrasados || atencao, atrasados ? 'status atrasado' : 'itens em atenção')}
       `;
     }
 
     const hasData = totalArrivals > 0;
     if (perfNoData) perfNoData.classList.toggle('hidden', hasData);
     perfCanvas.style.display = hasData ? 'block' : 'none';
+
     if (!hasData) {
       performanceChart = safeDestroyChart(performanceChart);
       return;
@@ -2429,14 +3708,33 @@
     performanceChart = safeDestroyChart(performanceChart);
     performanceChart = new Chart(perfCanvas.getContext('2d'), {
       type: 'bar',
-      data: { labels, datasets: [{ label: 'Chegadas', data: counts, backgroundColor: 'rgba(59,130,246,0.55)', borderColor: 'rgba(59,130,246,0.9)', borderWidth: 1, borderRadius: 6 }] },
+      data: {
+        labels: slotLabels,
+        datasets: [{
+          label: 'Chegadas',
+          data: counts,
+          backgroundColor: 'rgba(59,130,246,0.55)',
+          borderColor: 'rgba(59,130,246,0.9)',
+          borderWidth: 1,
+          borderRadius: 6
+        }]
+      },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
+        plugins: {
+          legend: { display: false }
+        },
         scales: {
-          y: { beginAtZero: true, ticks: { color: '#d1d5db', precision: 0 }, grid: { color: 'rgba(255,255,255,0.08)' } },
-          x: { ticks: { color: '#d1d5db', maxRotation: 0, autoSkip: true }, grid: { display: false } }
+          y: {
+            beginAtZero: true,
+            ticks: { color: '#d1d5db', precision: 0 },
+            grid: { color: 'rgba(255,255,255,0.08)' }
+          },
+          x: {
+            ticks: { color: '#d1d5db', maxRotation: 0, autoSkip: true },
+            grid: { display: false }
+          }
         }
       }
     });
@@ -3060,8 +4358,13 @@
   };
 
   const isBaldeioOp = (op = {}) => {
+    const cls = perfNorm(getPerfFlowClassificacaoRaw(op));
+    if (cls && cls.includes('BALDEIO')) return true;
+
     const tipo = String(getSegmentacaoLabel(op) || op.tipoSnapshot || op.tipo || op.segmentacao || op.segmentação || '').toUpperCase();
     if (tipo.includes('BALDEI')) return true;
+
+    if (op?.baldeio === true || String(op?.baldeio || '').toLowerCase() === 'true') return true;
 
     // fallback: procura no objeto inteiro
     try {
@@ -3085,6 +4388,18 @@
     }
   };
 
+  const getBaldeioOrigemKey = (op = {}) => {
+    if (isJslOp(op)) return 'jsl';
+    if (isRitmoOp(op)) return 'ritmo';
+    return 'outros';
+  };
+
+  const getBaldeioOrigemLabel = (op = {}) => {
+    const key = getBaldeioOrigemKey(op);
+    if (key === 'jsl') return 'JSL';
+    if (key === 'ritmo') return 'Ritmo';
+    return 'Outros';
+  };
 
 
   // ============================================================
@@ -3122,20 +4437,16 @@
     const searchCompact = searchRaw.replace(/[^A-Z0-9]/g, '');
 
     const mode = document.getElementById('baldeios-plate-mode')?.value || 'carreta';
+    const originFilter = document.getElementById('baldeios-origin-filter')?.value || 'todos';
 
     const baseDate = (dateEl && dateEl.value) ? new Date(dateEl.value) : new Date();
     const dayStart = startOfDay(baseDate).getTime();
     const dayEnd = dayStart + 24 * 3600 * 1000;
 
-    // ✅ Sempre usa o DIA da marcação (registrationTime/timestamp)
-// Se vier só "HH:MM", tenta combinar com um campo de data do próprio registro.
-// (Se não existir data no registro, usa o dia do filtro como último fallback.)
     const toMsSmart = (ts, op) => {
-      // 1) Timestamp/number/string completa
       const msDirect = toMs(ts);
       if (msDirect) return msDirect;
 
-      // 2) Se for só hora, tenta achar uma data no próprio registro
       if (typeof ts === 'string') {
         const str = ts.trim();
         const m = str.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
@@ -3160,7 +4471,6 @@
             }
           }
 
-          // 3) Último fallback: usa o dia do filtro (melhor que sumir)
           const dt = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate(), hh, mi, ss, 0);
           const ms = dt.getTime();
           return Number.isFinite(ms) ? ms : null;
@@ -3170,7 +4480,6 @@
       return null;
     };
 
-    // junta pátio + histórico (marcações do dia) preservando origem
     const patioOps = (patioData || []).map(op => {
       const ts = op.registrationTime || op.timestamp || op.createdAt || op.created_at;
       return { ...op, _src: 'patio', _rt: toMsSmart(ts, op) };
@@ -3184,38 +4493,38 @@
     const allOps = [...patioOps, ...histOps]
       .filter(op => op._rt && op._rt >= dayStart && op._rt < dayEnd);
 
-    // filtra: Transportadora Ritmo (se preenchida) + Tipo Baldeio
     const filtered = allOps.filter(op => {
-      const tRaw = getTransportadoraFromOperacao(op);
-      if (tRaw && !isRitmoName(tRaw)) return false;
       if (!isBaldeioOp(op)) return false;
+      const origemKey = getBaldeioOrigemKey(op);
+      if (originFilter !== 'todos' && origemKey !== originFilter) return false;
       return true;
     });
 
-    // agrupa por placa (guarda id+origem para excluir uma marcação específica)
     const map = new Map();
     filtered.forEach(op => {
       const placa = plateKey(op, mode);
       if (!placa) return;
 
-      const k = String(placa).toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const origemKey = getBaldeioOrigemKey(op);
+      const origemLabel = getBaldeioOrigemLabel(op);
+      const plateCompact = String(placa).toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const key = `${origemKey}__${plateCompact}`;
 
-      // ✅ busca mais “perdoável”
       if (searchCompact) {
         const matchRaw = String(placa).toUpperCase().includes(searchRaw);
-        const matchCompact = k.includes(searchCompact);
+        const matchCompact = plateCompact.includes(searchCompact);
         const matchDt = String(op.dt || '').toUpperCase().replace(/[^A-Z0-9]/g,'').includes(searchCompact);
         if (!(matchRaw || matchCompact || matchDt)) return;
       }
 
       const entry = { ms: op._rt, id: op.id || '', src: op._src };
 
-      if (!map.has(k)) map.set(k, { placa: String(placa), entries: [] });
-      map.get(k).entries.push(entry);
+      if (!map.has(key)) map.set(key, { placa: String(placa), origem: origemLabel, origemKey, entries: [] });
+      map.get(key).entries.push(entry);
     });
 
     const rows = Array.from(map.values())
-      .map(({ placa, entries }) => {
+      .map(({ placa, origem, origemKey, entries }) => {
         entries.sort((a, b) => a.ms - b.ms);
 
         const horarios = entries.map(e => ({
@@ -3228,21 +4537,31 @@
         const deltas = [];
         for (let i = 1; i < entries.length; i++) deltas.push(entries[i].ms - entries[i - 1].ms);
 
-        const deltasTxt = deltas.length ? deltas.map(fmtDelta).join(' | ') : '—';
-        const firstLast = (entries.length >= 2) ? fmtDelta(entries[entries.length - 1].ms - entries[0].ms) : '—';
-
-        return { placa, count: entries.length, horarios, deltasTxt, firstLast, last: entries[entries.length - 1]?.ms || 0 };
+        return {
+          placa,
+          origem,
+          origemKey,
+          count: entries.length,
+          horarios,
+          deltasTxt: deltas.length ? deltas.map(fmtDelta).join(' | ') : '—',
+          firstLast: entries.length ? `${fmtHHMM(entries[0].ms)} → ${fmtHHMM(entries[entries.length - 1].ms)}` : '—',
+          last: entries[entries.length - 1]?.ms || 0
+        };
       })
-      .sort((a, b) => (b.count - a.count) || (b.last - a.last));
+      .sort((a, b) => (b.count - a.count) || a.origem.localeCompare(b.origem, 'pt-BR') || (b.last - a.last) || a.placa.localeCompare(b.placa, 'pt-BR'));
 
-    // guarda para export
-    window.__baldeiosReport = { date: new Date(dayStart).toISOString().slice(0, 10), mode, rows };
+    window.__baldeiosReport = {
+      date: new Date(dayStart).toISOString().slice(0, 10),
+      mode,
+      originFilter,
+      rows
+    };
 
     if (!rows.length) {
       const msg = searchCompact
         ? `Nenhum baldeio encontrado com o filtro “${escapeHtml(searchRaw)}”.`
-        : 'Nenhum baldeio encontrado no dia (verifique se o tipo contém “BALDEIO” e se a transportadora está como Ritmo).';
-      tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-400">${msg}</td></tr>`;
+        : 'Nenhum baldeio encontrado no dia para o filtro selecionado.';
+      tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-400">${msg}</td></tr>`;
       return;
     }
 
@@ -3266,6 +4585,7 @@
 
     tbody.innerHTML = rows.map(r => `
       <tr class="border-b border-gray-700 hover:bg-gray-700/40 align-top">
+        <td class="p-4 text-sm font-semibold">${escapeHtml(r.origem)}</td>
         <td class="p-4 font-mono text-sm">${escapeHtml(r.placa)}</td>
         <td class="p-4 text-sm font-bold">${r.count}</td>
         <td class="p-4 text-sm">
@@ -3290,12 +4610,14 @@
         return;
       }
 
-      const headers = ['Data','ModoPlaca','Placa','MarcacoesNoDia','Horarios','TempoEntreMarcacoes','Primeira_Ultima'];
+      const headers = ['Data','ModoPlaca','FiltroOrigem','Origem','Placa','MarcacoesNoDia','Horarios','TempoEntreMarcacoes','Primeira_Ultima'];
       const lines = rep.rows.map(r => {
         const horarios = (r.horarios || []).map(h => h.hhmm).join(' | ');
         const cols = [
           rep.date || '',
           rep.mode || '',
+          rep.originFilter || 'todos',
+          r.origem || '',
           r.placa || '',
           String(r.count || 0),
           horarios,
@@ -3310,7 +4632,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `baldeios_ritmo_${rep.date || 'data'}.csv`;
+      a.download = `baldeios_${rep.date || 'data'}.csv`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -3917,43 +5239,58 @@
       </div>`;
 
     document.getElementById('occurrence-modal').innerHTML = `
-      <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg relative">
-        <h3 id="occurrence-modal-title" class="text-xl font-bold text-white mb-4"></h3>
-        <button onclick="window.closeOccurrenceModal()"
-                class="absolute top-4 right-4 text-gray-500 hover:text-white">
-          <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg"
-               viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" x2="6" y1="6" y2="18"/>
-            <line x1="6" x2="18" y1="6" y2="18"/>
-          </svg>
+  <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg relative">
+    <h3 id="occurrence-modal-title" class="text-xl font-bold text-white mb-2"></h3>
+    <p class="text-sm text-gray-400 mb-4">
+      Você pode registrar a ocorrência no painel ou abrir diretamente no Power Apps.
+    </p>
+
+    <button onclick="window.closeOccurrenceModal()"
+            class="absolute top-4 right-4 text-gray-500 hover:text-white">
+      <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg"
+           viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" x2="6" y1="6" y2="18"/>
+        <line x1="6" x2="18" y1="6" y2="18"/>
+      </svg>
+    </button>
+
+    <form id="occurrence-form" class="space-y-4">
+      <div>
+        <label for="occurrenceType" class="block text-sm font-medium text-gray-300">Problema Identificado</label>
+        <select id="occurrenceType" name="type"
+                class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm
+                       py-2 px-3 focus:outline-none focus:ring-blue-500 sm:text-sm">
+          <option>Mecânico</option>
+          <option>Operacional</option>
+          <option>Trânsito</option>
+          <option>Climático</option>
+          <option>Fiscal</option>
+          <option>Outro</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="occurrenceDescription" class="block text-sm font-medium text-gray-300">Descrição</label>
+        <textarea id="occurrenceDescription" name="description" rows="3" required
+                  class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm
+                         py-2 px-3 focus:outline-none focus:ring-blue-500 sm:text-sm"></textarea>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <button type="submit"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
+          Salvar Ocorrência
         </button>
-        <form id="occurrence-form" class="space-y-4">
-          <div>
-            <label for="occurrenceType" class="block text-sm font-medium text-gray-300">Problema Identificado</label>
-            <select id="occurrenceType" name="type"
-                    class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm
-                           py-2 px-3 focus:outline-none focus:ring-blue-500 sm:text-sm">
-              <option>Mecânico</option>
-              <option>Operacional</option>
-              <option>Trânsito</option>
-              <option>Climático</option>
-              <option>Fiscal</option>
-              <option>Outro</option>
-            </select>
-          </div>
-          <div>
-            <label for="occurrenceDescription" class="block text-sm font-medium text-gray-300">Descrição</label>
-            <textarea id="occurrenceDescription" name="description" rows="3" required
-                      class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm
-                             py-2 px-3 focus:outline-none focus:ring-blue-500 sm:text-sm"></textarea>
-          </div>
-          <button type="submit"
-                  class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
-            Salvar Ocorrência
-          </button>
-        </form>
-      </div>`;
+
+        <button type="button"
+        id="open-powerapps-btn"
+        class="w-full text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg">
+  Ir para Power Apps
+</button>
+      </div>
+    </form>
+  </div>`;
 
     document.getElementById('resolution-modal').innerHTML = `
       <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg relative">
@@ -4061,15 +5398,71 @@ document.getElementById('clear-date-filter-btn').addEventListener('click', () =>
 
     document.getElementById('export-csv-btn').addEventListener('click', exportToCsv);
 
-    // ✅ Baldeios Ritmo (filtros)
+    document.getElementById('perf-manual-reset-btn')?.addEventListener('click', () => {
+      const { label, start, end } = getShiftInfo(new Date());
+      clearPerfSummaryState(start, end, label);
+      renderPerformanceDashboard();
+    });
+
+    document.getElementById('perf-hourly-reset-btn')?.addEventListener('click', () => {
+      const { label, start, end } = getShiftInfo(new Date());
+      clearPerfHourlyState(start, end, label);
+      renderPerformanceDashboard();
+    });
+
+    document.getElementById('performance-content')?.addEventListener('input', (ev) => {
+      const target = ev.target;
+      if (!(target instanceof HTMLInputElement)) return;
+
+      if (target.matches('input[data-perf-manual="1"]')) {
+        if (target.hasAttribute('readonly')) {
+          target.value = target.value || '0';
+        } else {
+          target.value = String(target.value || '').replace(/[^0-9]/g, '');
+        }
+      }
+
+      if (target.matches('input[data-hourly-field]')) {
+        target.value = String(target.value || '')
+          .replace(',', '.')
+          .replace(/[^0-9.]/g, '')
+          .replace(/(\..*)\./g, '$1');
+      }
+
+      const { label, start, end } = getShiftInfo(new Date());
+
+      if (target.matches('input[data-perf-manual="1"]')) {
+        const rowKey = target.dataset.rowKey || '';
+        const col = target.dataset.col || '';
+        if (!rowKey || !col) return;
+        setPerfSummaryValue(start, end, label, rowKey, col, target.value);
+        updatePerfManualTotalsFromDOM();
+        return;
+      }
+
+      if (target.matches('input[data-hourly-field]')) {
+        const slot = target.dataset.hourlySlot || '';
+        const field = target.dataset.hourlyField || '';
+        if (!slot || !field) return;
+        const row = target.closest('tr[data-hour-slot]');
+        const isFirstRow = !!row && row === document.querySelector('tr[data-hour-slot]');
+        if (field === 'realizado' && !isFirstRow) return;
+        setPerfHourlyValue(start, end, label, slot, field, target.value);
+        updatePerfHourlyTotalsFromDOM();
+        renderPerformanceHourlyManualChart(slotLabelsFromDOM(), collectPerfHourlyStateFromDOM());
+      }
+    });
+
+    // ✅ Baldeios (filtros)
     const bd = document.getElementById('baldeios-date');
     if (bd) bd.valueAsDate = new Date();
     document.getElementById('baldeios-date')?.addEventListener('change', renderBaldeiosRitmo);
     document.getElementById('baldeios-search')?.addEventListener('input', debounce(renderBaldeiosRitmo, 120));
     document.getElementById('baldeios-plate-mode')?.addEventListener('change', renderBaldeiosRitmo);
+    document.getElementById('baldeios-origin-filter')?.addEventListener('change', renderBaldeiosRitmo);
     document.getElementById('baldeios-export-csv-btn')?.addEventListener('click', exportBaldeiosCsv);
 
-    // ✅ Controle Ritmo (placa a placa)
+    // ✅ Controle Baldeios (placa a placa)
     const rStart = document.getElementById('ritmo-start');
     const rEnd = document.getElementById('ritmo-end');
     if (rStart && !rStart.value) {
@@ -4112,7 +5505,7 @@ document.getElementById('clear-date-filter-btn').addEventListener('click', () =>
     document.getElementById('baldeios-export-csv-btn')?.addEventListener('click', exportBaldeiosCsv);
     // ✅ Excluir horário (marcação) no relatório de Baldeios
     
-    // ✅ Excluir horário (marcação) também no detalhe do Controle Ritmo
+    // ✅ Excluir horário (marcação) também no detalhe do Controle Baldeios
     document.getElementById('ritmo-detail')?.addEventListener('click', (ev) => {
       const btn = ev.target.closest('button[data-action="delete-baldeio"]');
       if (!btn) return;
@@ -4147,6 +5540,7 @@ document.getElementById('clear-date-filter-btn').addEventListener('click', () =>
     });
 
     document.getElementById('occurrence-form').addEventListener('submit', handleAddOccurrence);
+    document.getElementById('open-powerapps-btn')?.addEventListener('click', openPowerAppsOccurrence);
     document.getElementById('resolution-form').addEventListener('submit', handleUpdateResolution);
     document.getElementById('table-body').addEventListener('click', handleTableClick);
 
@@ -4174,12 +5568,12 @@ document.getElementById('clear-date-filter-btn').addEventListener('click', () =>
     ];
 
     allTabs.forEach(tab => tab.addEventListener('click', () => {
-      allTabs.forEach(t => {
-        t.classList.remove('text-white', 'border-blue-500');
-        t.classList.add('text-gray-400', 'border-transparent');
-      });
-      tab.classList.add('text-white', 'border-blue-500');
-      tab.classList.remove('text-gray-400', 'border-transparent');
+  allTabs.forEach(t => {
+    t.classList.remove('active-tab');
+    t.classList.add('inactive-tab');
+  });
+  tab.classList.add('active-tab');
+  tab.classList.remove('inactive-tab');
 
       activeTab = tab.id.replace('tab-', '');
 
