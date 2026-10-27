@@ -1,0 +1,8 @@
+{
+  "name":"heilog-github-pages",
+  "version":"1.0.0",
+  "private":true,
+  "type":"module",
+  "scripts":{"test":"node --test scripts/pages.test.mjs","build":"node scripts/build.mjs","vendor":"node scripts/vendor.mjs"},
+  "engines":{"node":">=22"}
+}

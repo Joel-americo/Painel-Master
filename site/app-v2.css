@@ -1,0 +1,3803 @@
+:root {
+  --app-bg: #f1f7f3;
+  --app-surface: #ffffff;
+  --app-green: #075c34;
+  --app-green-2: #0b7a45;
+  --app-green-soft: #ddf2e6;
+  --app-ink: #13231b;
+  --app-muted: #607067;
+  --app-line: #dce8e0;
+  --app-critical: #c62828;
+  --app-warning: #b7791f;
+  --app-sidebar: 256px;
+  --app-sidebar-collapsed: 78px;
+  --app-shadow: 0 10px 30px rgba(18, 52, 34, 0.07);
+}
+
+html:has(body.heilog-app-v2),
+body.heilog-app-v2 {
+  min-width: 0 !important;
+  min-height: 100% !important;
+  margin: 0 !important;
+  background: var(--app-bg) !important;
+  color: var(--app-ink) !important;
+  font-family: Inter, "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+
+body.heilog-app-v2 {
+  overflow-x: hidden !important;
+}
+
+.heilog-app-root-v2 {
+  display: grid !important;
+  grid-template-columns: var(--app-sidebar) minmax(0, 1fr);
+  width: 100% !important;
+  min-height: 100dvh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: var(--app-bg) !important;
+  transition: grid-template-columns 220ms ease;
+}
+
+.heilog-app-root-v2.sidebar-collapsed {
+  grid-template-columns: var(--app-sidebar-collapsed) minmax(0, 1fr);
+}
+
+.heilog-app-workspace {
+  grid-column: 2;
+  min-width: 0;
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 86% 4%, rgba(30, 138, 79, 0.06), transparent 24rem),
+    var(--app-bg);
+}
+
+.heilog-app-sidebar {
+  position: sticky;
+  top: 0;
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--app-surface);
+  border-right: 1px solid var(--app-line);
+  box-shadow: 8px 0 30px rgba(23, 49, 37, 0.035);
+  z-index: 80;
+}
+
+.heilog-app-sidebar::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 6px;
+  background: linear-gradient(180deg, #078240, #075c34);
+}
+
+.app-sidebar-brand {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 150px;
+  padding: 18px 30px 12px;
+}
+
+.app-sidebar-brand img {
+  width: 150px;
+  max-height: 116px;
+  object-fit: contain;
+  transition: width 220ms ease;
+}
+
+.app-sidebar-collapse {
+  position: absolute;
+  top: 24px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #34463d;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, transform 220ms ease;
+}
+
+.app-sidebar-collapse:hover {
+  background: var(--app-green-soft);
+  color: var(--app-green);
+}
+
+.app-sidebar-collapse svg {
+  width: 20px;
+  height: 20px;
+}
+
+.sidebar-collapsed .app-sidebar-brand {
+  min-height: 120px;
+  padding: 18px 8px;
+}
+
+.sidebar-collapsed .app-sidebar-brand img {
+  width: 58px;
+}
+
+.sidebar-collapsed .app-sidebar-collapse {
+  top: 76px;
+  right: 22px;
+  transform: rotate(180deg);
+  background: #fff;
+  border: 1px solid var(--app-line);
+  box-shadow: 0 5px 16px rgba(12, 51, 31, 0.1);
+}
+
+.app-sidebar-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 16px 18px;
+  scrollbar-width: thin;
+  scrollbar-color: #bad6c5 transparent;
+}
+
+.sidebar-collapsed .app-sidebar-scroll {
+  padding-inline: 9px;
+  overflow-x: hidden;
+}
+
+.app-sidebar-nav,
+#panel-tabs-wrap,
+#panel-tabs-wrap nav {
+  width: 100% !important;
+}
+
+#panel-tabs-wrap {
+  display: block !important;
+  margin: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+#panel-tabs-wrap nav {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 4px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+#panel-tabs-wrap .app-nav-section {
+  margin: 16px 12px 5px;
+  color: #8a9890;
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+#panel-tabs-wrap .app-nav-section:first-child {
+  margin-top: 2px;
+}
+
+#panel-tabs-wrap .tab-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+  width: 100% !important;
+  min-height: 46px !important;
+  margin: 0 !important;
+  padding: 9px 12px !important;
+  border: 1px solid transparent !important;
+  border-radius: 12px !important;
+  background: transparent !important;
+  color: #405048 !important;
+  font-size: 0.92rem !important;
+  font-weight: 650 !important;
+  line-height: 1.15 !important;
+  white-space: normal !important;
+  text-align: left !important;
+  box-shadow: none !important;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease !important;
+}
+
+#panel-tabs-wrap .tab-btn:hover {
+  background: #f2f8f4 !important;
+  border-color: #e4eee7 !important;
+  color: var(--app-green) !important;
+  transform: translateX(2px);
+}
+
+#panel-tabs-wrap .tab-btn.active-tab,
+#panel-tabs-wrap .tab-btn.active {
+  background: var(--app-green-soft) !important;
+  border-color: #bfe1cc !important;
+  color: var(--app-green) !important;
+  box-shadow: inset 3px 0 0 #0b7a45 !important;
+}
+
+#panel-tabs-wrap .tab-icon {
+  flex: 0 0 auto !important;
+  width: 22px !important;
+  height: 22px !important;
+  color: currentColor !important;
+  stroke: currentColor !important;
+}
+
+.sidebar-collapsed #panel-tabs-wrap .app-nav-section,
+.sidebar-collapsed #panel-tabs-wrap .tab-btn span,
+.sidebar-collapsed .app-sidebar-foot-label {
+  display: none !important;
+}
+
+.sidebar-collapsed #panel-tabs-wrap .tab-btn {
+  justify-content: center !important;
+  width: 52px !important;
+  height: 48px !important;
+  padding: 8px !important;
+  margin-inline: auto !important;
+}
+
+.sidebar-collapsed #panel-tabs-wrap .tab-btn:hover {
+  transform: none;
+}
+
+.app-sidebar-foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 58px;
+  margin: 0 16px 14px;
+  padding: 10px;
+  border: 1px solid #d7ebde;
+  border-radius: 12px;
+  background: #eff9f2;
+  color: #17663a;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.sidebar-collapsed .app-sidebar-foot {
+  margin-inline: 10px;
+  padding-inline: 0;
+}
+
+.app-live-dot {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #12aa55;
+  box-shadow: 0 0 0 4px rgba(18, 170, 85, 0.12);
+  animation: app-live-pulse 1.8s ease-in-out infinite;
+}
+
+.heilog-app-v2 .site-header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 60 !important;
+  display: block !important;
+  min-height: 82px !important;
+  margin: 0 !important;
+  padding: 0 30px !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--app-line) !important;
+  border-radius: 0 !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  box-shadow: 0 5px 18px rgba(20, 54, 35, 0.045) !important;
+  backdrop-filter: blur(14px);
+}
+
+.heilog-app-v2 #header-intro-shell,
+.heilog-app-v2 #header-intro-video-shell,
+.heilog-app-v2 .header-divider {
+  display: none !important;
+}
+
+.heilog-app-v2 .site-header-main {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 20px !important;
+  width: 100% !important;
+  min-height: 82px !important;
+}
+
+.heilog-app-v2 .brand-wrap {
+  justify-content: flex-start !important;
+  width: auto !important;
+  margin: 0 !important;
+  gap: 0 !important;
+}
+
+.heilog-app-v2 .brand-mark {
+  display: none !important;
+}
+
+.heilog-app-v2 .brand-text-clean {
+  display: flex !important;
+  gap: 3px !important;
+}
+
+.heilog-app-v2 .brand-title-main {
+  color: var(--app-ink) !important;
+  font-size: 1.35rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.025em !important;
+}
+
+.heilog-app-v2 .brand-subtitle-premium {
+  margin: 0 !important;
+  color: var(--app-muted) !important;
+  font-size: 0.84rem !important;
+  font-weight: 500 !important;
+}
+
+.heilog-app-v2 .top-actions {
+  position: static !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  transform: none !important;
+}
+
+.app-v2-live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid #cfe8d8;
+  border-radius: 10px;
+  background: #eff9f2;
+  color: #17663a;
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+
+.heilog-app-v2 .header-action-btn {
+  min-height: 40px !important;
+  padding: 8px 13px !important;
+  border: 1px solid var(--app-line) !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  color: var(--app-ink) !important;
+  box-shadow: none !important;
+}
+
+.heilog-app-v2 .header-action-btn:hover {
+  border-color: #b8d7c4 !important;
+  background: #f2f8f4 !important;
+  color: var(--app-green) !important;
+}
+
+.heilog-app-v2 .header-alert-slot:empty {
+  display: none !important;
+}
+
+.heilog-app-v2 .header-alert-slot:not(:empty) {
+  width: 100% !important;
+  padding: 0 0 12px !important;
+  color: var(--app-ink) !important;
+}
+
+.app-mobile-menu {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--app-line);
+  border-radius: 11px;
+  background: #fff;
+  color: var(--app-green);
+}
+
+.app-mobile-menu svg {
+  width: 22px;
+  height: 22px;
+}
+
+.app-sidebar-backdrop {
+  display: none;
+}
+
+.app-v2-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px 32px 20px;
+}
+
+.app-v2-eyebrow {
+  margin: 0 0 7px !important;
+  color: var(--app-green-2) !important;
+  font-size: 0.72rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.11em !important;
+  text-transform: uppercase !important;
+}
+
+.app-v2-hero h2 {
+  margin: 0 !important;
+  color: var(--app-ink) !important;
+  font-size: clamp(1.65rem, 2.3vw, 2.2rem) !important;
+  font-weight: 820 !important;
+  letter-spacing: -0.035em !important;
+  line-height: 1.1 !important;
+}
+
+.app-v2-hero-copy > p:last-child {
+  margin: 7px 0 0 !important;
+  color: var(--app-muted) !important;
+  font-size: 0.98rem !important;
+  font-weight: 500 !important;
+}
+
+.app-v2-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.heilog-app-v2 .app-v2-hero-actions > button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  min-height: 46px !important;
+  margin: 0 !important;
+  padding: 10px 18px !important;
+  border-radius: 11px !important;
+  font-size: 0.9rem !important;
+  font-weight: 780 !important;
+  box-shadow: none !important;
+}
+
+.heilog-app-v2 .app-v2-export-action {
+  border: 1px solid #aebdb4 !important;
+  background: #fff !important;
+  color: #263b30 !important;
+}
+
+.heilog-app-v2 .app-v2-primary-action {
+  border: 1px solid var(--app-green-2) !important;
+  background: linear-gradient(135deg, #0b7a45, #075c34) !important;
+  color: #fff !important;
+  box-shadow: 0 9px 20px rgba(7, 92, 52, 0.16) !important;
+}
+
+.heilog-app-v2 #system-alerts-container {
+  margin: 0 32px 18px !important;
+}
+
+.heilog-app-v2 #system-alerts-container > * {
+  border-radius: 12px !important;
+  border: 1px solid #f1d2a2 !important;
+  box-shadow: none !important;
+}
+
+.heilog-app-v2 #main-content {
+  padding: 0 32px 34px !important;
+}
+
+.heilog-app-v2 #main-content,
+.heilog-app-v2 #main-content * {
+  scrollbar-width: thin;
+  scrollbar-color: #bdd7c7 transparent;
+}
+
+.heilog-app-v2 #kpi-section {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(245px, 0.3fr) !important;
+  align-items: stretch !important;
+  gap: 18px !important;
+  margin: 0 0 18px !important;
+}
+
+.heilog-app-v2 #kpi-container {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+}
+
+.heilog-app-v2 #kpi-container > *,
+.heilog-app-v2 #kpi-section > :last-child {
+  min-height: 120px !important;
+  padding: 20px !important;
+  border: 1px solid var(--app-line) !important;
+  border-radius: 16px !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  color: var(--app-ink) !important;
+  box-shadow: var(--app-shadow) !important;
+}
+
+.heilog-app-v2 #kpi-container p,
+.heilog-app-v2 #kpi-container h3,
+.heilog-app-v2 #kpi-section > :last-child h3 {
+  color: var(--app-ink) !important;
+  -webkit-text-fill-color: var(--app-ink) !important;
+}
+
+.heilog-app-v2 #kpi-container [class*="text-gray"],
+.heilog-app-v2 #context-chart-no-data {
+  color: var(--app-muted) !important;
+  -webkit-text-fill-color: var(--app-muted) !important;
+}
+
+.heilog-app-v2 #table-main-content,
+.heilog-app-v2 .dark-surface,
+.heilog-app-v2 .bd-panel,
+.heilog-app-v2 .cdt-panel,
+.heilog-app-v2 .drop-panel-card,
+.heilog-app-v2 .drop-dashboard-card,
+.heilog-app-v2 .pandora-panel,
+.heilog-app-v2 .perf-sort-card {
+  border: 1px solid var(--app-line) !important;
+  border-radius: 16px !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  color: var(--app-ink) !important;
+  box-shadow: var(--app-shadow) !important;
+}
+
+.heilog-app-v2 #table-main-content {
+  padding: 22px !important;
+}
+
+.heilog-app-v2 #table-main-content > div:first-child {
+  align-items: flex-start !important;
+  gap: 16px !important;
+  margin-bottom: 18px !important;
+}
+
+.heilog-app-v2 #table-title {
+  color: var(--app-ink) !important;
+  font-size: 1.35rem !important;
+  font-weight: 820 !important;
+  letter-spacing: -0.025em !important;
+}
+
+.heilog-app-v2 #filters-container {
+  flex: 1 1 720px !important;
+  justify-content: flex-end !important;
+  gap: 9px !important;
+}
+
+.heilog-app-v2 #filters-container input,
+.heilog-app-v2 #filters-container select,
+.heilog-app-v2 .table-pagination select,
+.heilog-app-v2 input:not([type="checkbox"]):not([type="radio"]),
+.heilog-app-v2 textarea,
+.heilog-app-v2 select {
+  min-height: 42px !important;
+  border: 1px solid #cfdcd4 !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  color: var(--app-ink) !important;
+  -webkit-text-fill-color: var(--app-ink) !important;
+  box-shadow: none !important;
+}
+
+.heilog-app-v2 input::placeholder,
+.heilog-app-v2 textarea::placeholder {
+  color: #849188 !important;
+  -webkit-text-fill-color: #849188 !important;
+}
+
+.heilog-app-v2 input:focus,
+.heilog-app-v2 textarea:focus,
+.heilog-app-v2 select:focus,
+.heilog-app-v2 button:focus-visible {
+  outline: 3px solid rgba(11, 122, 69, 0.22) !important;
+  outline-offset: 2px !important;
+  border-color: #5ca77b !important;
+}
+
+.heilog-app-v2 .table-responsive-shell {
+  overflow: auto !important;
+  border: 1px solid var(--app-line) !important;
+  border-radius: 13px !important;
+  background: #fff !important;
+}
+
+.heilog-app-v2 #operations-table {
+  min-width: 1460px !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  background: #fff !important;
+  color: var(--app-ink) !important;
+}
+
+.heilog-app-v2 #operations-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: #f5f8f6 !important;
+}
+
+.heilog-app-v2 #operations-table thead tr,
+.heilog-app-v2 #operations-table tbody tr {
+  border-color: var(--app-line) !important;
+  background: #fff !important;
+}
+
+.heilog-app-v2 #operations-table tbody tr:hover {
+  background: #f5faf7 !important;
+}
+
+.heilog-app-v2 #operations-table th {
+  padding: 13px 12px !important;
+  color: #526159 !important;
+  font-size: 0.72rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.035em !important;
+  text-transform: uppercase !important;
+}
+
+.heilog-app-v2 #operations-table td {
+  padding: 13px 12px !important;
+  border-top: 1px solid #e6eee9 !important;
+  color: var(--app-ink) !important;
+  vertical-align: middle !important;
+}
+
+.heilog-app-v2 #operations-table td *,
+.heilog-app-v2 #operations-table .op-stack-sub,
+.heilog-app-v2 #operations-table .op-stack-sub strong {
+  color: inherit;
+}
+
+.heilog-app-v2 #operations-table .timeline-card,
+.heilog-app-v2 #operations-table [class*="timeline"] {
+  border-color: #dce9e1 !important;
+}
+
+.heilog-app-v2 #operations-table[data-active-tab] th:last-child,
+.heilog-app-v2 #operations-table[data-active-tab] .action-cell {
+  position: sticky !important;
+  right: 0 !important;
+  z-index: 7 !important;
+  width: 340px !important;
+  min-width: 340px !important;
+  max-width: 340px !important;
+  overflow: visible !important;
+  background: #fff !important;
+}
+
+.heilog-app-v2 #operations-table[data-active-tab] th:last-child {
+  z-index: 9 !important;
+  background: #f5f8f6 !important;
+  box-shadow: -10px 0 18px rgba(20, 52, 34, 0.045);
+}
+
+.heilog-app-v2 #operations-table[data-active-tab] .action-cell {
+  box-shadow: -10px 0 18px rgba(20, 52, 34, 0.04);
+}
+
+.heilog-app-v2 #operations-table[data-active-tab] .action-cell-inner {
+  position: relative !important;
+  display: block !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  width: 100% !important;
+  overflow: visible !important;
+}
+
+.mobile-actions-toggle {
+  display: none;
+}
+
+.heilog-app-v2 #operations-table[data-active-tab] .mobile-actions-menu {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  align-items: center !important;
+  gap: 7px !important;
+  width: 100% !important;
+}
+
+.heilog-app-v2 #operations-table .table-action-btn,
+.heilog-app-v2 #operations-table a.table-action-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  width: auto !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  margin: 0 !important;
+  padding: 8px 10px !important;
+  border: 1px solid #d3e1d8 !important;
+  border-radius: 9px !important;
+  background: #f7faf8 !important;
+  color: #294237 !important;
+  font-size: 0.75rem !important;
+  font-weight: 760 !important;
+  line-height: 1 !important;
+  box-shadow: none !important;
+  transition: transform 150ms ease, background 150ms ease, border-color 150ms ease !important;
+}
+
+.heilog-app-v2 #operations-table[data-active-tab] .mobile-actions-menu .table-action-btn {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  flex: 1 1 auto !important;
+}
+
+.heilog-app-v2 #operations-table[data-active-tab] .mobile-actions-menu button[data-action="whatsapp"],
+.heilog-app-v2 #operations-table[data-active-tab] .mobile-actions-menu button[data-action="sap-whatsapp"],
+.heilog-app-v2 #operations-table[data-active-tab] .mobile-actions-menu button[data-action="finish"],
+.heilog-app-v2 #operations-table[data-active-tab] .mobile-actions-menu button[data-action="cancel"] {
+  grid-column: 1 / -1;
+}
+
+.heilog-app-v2 #operations-table .table-action-btn:hover {
+  border-color: #9bc7ad !important;
+  background: #eaf5ee !important;
+  transform: translateY(-1px);
+}
+
+.heilog-app-v2 #operations-table .table-action-btn svg {
+  flex: 0 0 auto !important;
+  width: 17px !important;
+  height: 17px !important;
+}
+
+.heilog-app-v2 #operations-table .table-action-label {
+  display: inline !important;
+  width: auto !important;
+  max-width: none !important;
+  color: inherit !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
+  white-space: nowrap !important;
+}
+
+.heilog-app-v2 #operations-table button[data-action="whatsapp"] {
+  border-color: #a9dcc0 !important;
+  background: #edf9f2 !important;
+  color: #08733e !important;
+}
+
+.heilog-app-v2 #operations-table button[data-action="occurrence"] {
+  border-color: #f0d59e !important;
+  background: #fff8e8 !important;
+  color: #966111 !important;
+}
+
+.heilog-app-v2 #operations-table button[data-action="finish"] {
+  border-color: #add8bd !important;
+  background: #eef8f1 !important;
+  color: #08703d !important;
+}
+
+.heilog-app-v2 #operations-table button[data-action="cancel"] {
+  border-color: #efc4c4 !important;
+  background: #fff1f1 !important;
+  color: #b52b2b !important;
+}
+
+.heilog-app-v2 .table-pagination {
+  margin-top: 16px !important;
+  border-color: var(--app-line) !important;
+  color: var(--app-muted) !important;
+}
+
+.heilog-app-v2 .table-page-btn,
+.heilog-app-v2 button:not(.tab-btn):not(.table-action-btn):not(.mobile-actions-toggle):not(.app-sidebar-backdrop) {
+  border-radius: 10px;
+}
+
+.heilog-app-v2 #pandora-tabs-wrap {
+  margin: 0 32px 20px !important;
+  border: 1px solid var(--app-line) !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+  box-shadow: var(--app-shadow) !important;
+}
+
+.heilog-app-v2 #pandora-tabs-wrap nav {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 5px !important;
+  padding: 8px !important;
+}
+
+.heilog-app-v2 #pandora-tabs-wrap .tab-btn {
+  min-height: 42px !important;
+  padding: 8px 13px !important;
+  border: 1px solid transparent !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  color: var(--app-muted) !important;
+}
+
+.heilog-app-v2 #pandora-tabs-wrap .tab-btn.active {
+  border-color: #bfe1cc !important;
+  background: var(--app-green-soft) !important;
+  color: var(--app-green) !important;
+}
+
+.heilog-app-v2 #performance-content,
+.heilog-app-v2 #dashboard-content,
+.heilog-app-v2 #drop-dashboard-content,
+.heilog-app-v2 #drop-panel-content,
+.heilog-app-v2 #motoristas-content,
+.heilog-app-v2 #baldeios-content,
+.heilog-app-v2 #ritmo-placa-content,
+.heilog-app-v2 #controle-dt-content,
+.heilog-app-v2 #pandora-content {
+  color: var(--app-ink) !important;
+}
+
+.heilog-app-v2 #performance-content h1,
+.heilog-app-v2 #performance-content h2,
+.heilog-app-v2 #performance-content h3,
+.heilog-app-v2 #performance-content h4,
+.heilog-app-v2 #dashboard-content h1,
+.heilog-app-v2 #dashboard-content h2,
+.heilog-app-v2 #dashboard-content h3,
+.heilog-app-v2 #dashboard-content h4,
+.heilog-app-v2 #drop-dashboard-content h1,
+.heilog-app-v2 #drop-dashboard-content h2,
+.heilog-app-v2 #drop-dashboard-content h3,
+.heilog-app-v2 #drop-panel-content h1,
+.heilog-app-v2 #drop-panel-content h2,
+.heilog-app-v2 #drop-panel-content h3,
+.heilog-app-v2 #controle-dt-content h1,
+.heilog-app-v2 #controle-dt-content h2,
+.heilog-app-v2 #controle-dt-content h3,
+.heilog-app-v2 #pandora-content h1,
+.heilog-app-v2 #pandora-content h2,
+.heilog-app-v2 #pandora-content h3 {
+  color: var(--app-ink) !important;
+  -webkit-text-fill-color: var(--app-ink) !important;
+}
+
+.heilog-app-v2 .modal-backdrop > div {
+  border: 1px solid #dce8e0 !important;
+  background: #fff !important;
+  color: var(--app-ink) !important;
+}
+
+.heilog-app-v2 .modal-backdrop h1,
+.heilog-app-v2 .modal-backdrop h2,
+.heilog-app-v2 .modal-backdrop h3,
+.heilog-app-v2 .modal-backdrop h4,
+.heilog-app-v2 .modal-backdrop p,
+.heilog-app-v2 .modal-backdrop label {
+  color: var(--app-ink) !important;
+  -webkit-text-fill-color: var(--app-ink) !important;
+}
+
+@keyframes app-live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@media (max-width: 1280px) {
+  .heilog-app-v2 #kpi-section {
+    grid-template-columns: 1fr !important;
+  }
+
+  .heilog-app-v2 #kpi-section > :last-child {
+    min-height: 230px !important;
+  }
+}
+
+@media (max-width: 1080px) {
+  .heilog-app-v2 #kpi-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .heilog-app-root-v2,
+  .heilog-app-root-v2.sidebar-collapsed {
+    display: block !important;
+  }
+
+  .heilog-app-workspace {
+    min-height: 100dvh;
+  }
+
+  .heilog-app-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: min(84vw, 292px);
+    transform: translateX(-105%);
+    transition: transform 220ms ease;
+  }
+
+  .app-sidebar-open .heilog-app-sidebar {
+    transform: translateX(0);
+  }
+
+  .app-sidebar-open {
+    overflow: hidden !important;
+  }
+
+  .app-sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 75;
+    display: block;
+    visibility: hidden;
+    border: 0;
+    background: rgba(8, 24, 15, 0.48);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms ease, visibility 180ms ease;
+  }
+
+  .app-sidebar-open .app-sidebar-backdrop {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .app-sidebar-collapse {
+    display: none;
+  }
+
+  .app-mobile-menu {
+    display: inline-flex;
+    flex: 0 0 auto;
+  }
+
+  .heilog-app-v2 .site-header {
+    padding-inline: 16px !important;
+  }
+
+  .heilog-app-v2 .site-header-main {
+    gap: 12px !important;
+  }
+
+  .heilog-app-v2 .brand-title-main {
+    font-size: 1.05rem !important;
+  }
+
+  .heilog-app-v2 .brand-subtitle-premium,
+  .app-v2-live-pill {
+    display: none !important;
+  }
+
+  .app-v2-hero {
+    align-items: flex-start;
+    padding: 22px 18px 16px;
+  }
+
+  .heilog-app-v2 #system-alerts-container {
+    margin-inline: 18px !important;
+  }
+
+  .heilog-app-v2 #main-content {
+    padding-inline: 18px !important;
+  }
+
+  .heilog-app-v2 #pandora-tabs-wrap {
+    margin-inline: 18px !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .app-v2-hero {
+    display: grid;
+    gap: 16px;
+  }
+
+  .app-v2-hero-actions {
+    justify-content: flex-start;
+  }
+
+  .heilog-app-v2 .app-v2-hero-actions > button {
+    flex: 1 1 150px;
+  }
+
+  .heilog-app-v2 #kpi-container {
+    display: flex !important;
+    gap: 12px !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 5px;
+  }
+
+  .heilog-app-v2 #kpi-container > * {
+    flex: 0 0 min(82vw, 270px);
+    scroll-snap-align: start;
+  }
+
+  .heilog-app-v2 #table-main-content {
+    padding: 14px !important;
+  }
+
+  .heilog-app-v2 #table-main-content > div:first-child {
+    display: grid !important;
+  }
+
+  .heilog-app-v2 #filters-container {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    width: 100% !important;
+  }
+
+  .heilog-app-v2 #filters-container > * {
+    width: 100% !important;
+  }
+
+  .heilog-app-v2 #operations-table[data-active-tab] th:last-child,
+  .heilog-app-v2 #operations-table[data-active-tab] .action-cell {
+    position: sticky !important;
+    right: 0 !important;
+    z-index: 8 !important;
+    width: 108px !important;
+    min-width: 108px !important;
+    max-width: 108px !important;
+    background: #fff !important;
+  }
+
+  .mobile-actions-toggle {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    width: 100% !important;
+    min-height: 42px !important;
+    padding: 9px 12px !important;
+    border: 1px solid #b9d8c5 !important;
+    border-radius: 10px !important;
+    background: #edf8f1 !important;
+    color: var(--app-green) !important;
+    font-size: 0.8rem !important;
+    font-weight: 800 !important;
+  }
+
+  .mobile-actions-toggle svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 160ms ease;
+  }
+
+  .action-cell-inner.is-open .mobile-actions-toggle svg {
+    transform: rotate(180deg);
+  }
+
+  .heilog-app-v2 #operations-table[data-active-tab] .mobile-actions-menu {
+    position: fixed !important;
+    inset: auto 14px 16px !important;
+    z-index: 120 !important;
+    display: none !important;
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    grid-template-columns: 1fr !important;
+    width: auto !important;
+    max-width: 380px !important;
+    margin: 0 auto !important;
+    padding: 12px !important;
+    border: 1px solid var(--app-line) !important;
+    border-radius: 16px !important;
+    background: #fff !important;
+    box-shadow: 0 16px 40px rgba(13, 45, 28, 0.2) !important;
+  }
+
+  .heilog-app-v2 #operations-table[data-active-tab] .action-cell-inner.is-open .mobile-actions-menu {
+    display: grid !important;
+  }
+
+  .heilog-app-v2 #operations-table[data-active-tab] .mobile-actions-menu .table-action-btn,
+  .heilog-app-v2 #operations-table[data-active-tab] .mobile-actions-menu button[data-action] {
+    grid-column: 1 !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    min-height: 42px !important;
+  }
+
+  .heilog-app-v2 #operations-table .mobile-actions-menu .table-action-label {
+    display: inline !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .heilog-app-v2 .site-header {
+    min-height: 70px !important;
+  }
+
+  .heilog-app-v2 .site-header-main {
+    min-height: 70px !important;
+  }
+
+  .heilog-app-v2 .pandora-env-text {
+    display: none !important;
+  }
+
+  .app-v2-hero {
+    padding-top: 18px;
+  }
+
+  .app-v2-hero h2 {
+    font-size: 1.55rem !important;
+  }
+
+  .heilog-app-v2 #main-content {
+    padding-inline: 12px !important;
+  }
+
+  .heilog-app-v2 #system-alerts-container,
+  .heilog-app-v2 #pandora-tabs-wrap {
+    margin-inline: 12px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heilog-app-root-v2,
+  .heilog-app-sidebar,
+  #panel-tabs-wrap .tab-btn,
+  .app-live-dot,
+  .heilog-app-v2 .table-action-btn {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Resumo do Pátio compacto e exclusivo da aba Pátio. */
+body.heilog-app-v2:not([data-active-panel-tab="patio"]) .app-v2-hero,
+body.heilog-app-v2:not([data-active-panel-tab="patio"]) #system-alerts-container,
+body.heilog-app-v2:not([data-active-panel-tab="patio"]) #kpi-section {
+  display: none !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] .app-v2-hero {
+  min-height: 0 !important;
+  padding: 14px 32px 10px !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] .app-v2-eyebrow,
+body.heilog-app-v2[data-active-panel-tab="patio"] .app-v2-hero-copy > p:last-child {
+  display: none !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] .app-v2-hero h2 {
+  font-size: 1.45rem !important;
+  letter-spacing: -0.025em !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] .app-v2-hero-actions {
+  gap: 8px !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] .app-v2-hero-actions > button {
+  min-height: 40px !important;
+  padding: 8px 14px !important;
+  border-radius: 10px !important;
+  font-size: 0.82rem !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] #system-alerts-container {
+  margin: 0 32px 12px !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] #system-alerts-container .alert-banner {
+  padding: 9px 12px !important;
+  border-color: #efc4c4 !important;
+  border-radius: 10px !important;
+  background: #fff1f1 !important;
+  color: #9d1c1c !important;
+  -webkit-text-fill-color: #9d1c1c !important;
+  font-size: 0.78rem !important;
+  line-height: 1.35 !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] #system-alerts-container .alert-banner * {
+  color: #9d1c1c !important;
+  -webkit-text-fill-color: #9d1c1c !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] #kpi-section {
+  grid-template-columns: 1fr !important;
+  gap: 0 !important;
+  margin-bottom: 14px !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] #kpi-section > :last-child {
+  display: none !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] #kpi-container {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] #kpi-container > * {
+  grid-column: auto !important;
+  min-height: 84px !important;
+  padding: 12px 14px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 6px 18px rgba(18, 52, 34, 0.055) !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] #kpi-container > .priority-kpi-card {
+  --priority-accent: #64748b;
+  display: flex !important;
+  min-height: 132px !important;
+  padding: 14px !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  border: 1px solid rgba(148, 163, 184, 0.24) !important;
+  border-top: 4px solid var(--priority-accent) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] #kpi-container > .priority-kpi-high {
+  --priority-accent: #dc2626;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] #kpi-container > .priority-kpi-medium {
+  --priority-accent: #ca8a04;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] #kpi-container > .priority-kpi-low {
+  --priority-accent: #0d9488;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] #kpi-container > .priority-kpi-card > .priority-kpi-header {
+  display: flex !important;
+  padding: 0 !important;
+  flex: 0 0 auto !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: transparent !important;
+  border: 0 !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] .priority-kpi-heading {
+  display: flex !important;
+  min-width: 0 !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 2px !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] .priority-kpi-title {
+  color: #17251d !important;
+  font-size: 0.78rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] .priority-kpi-range {
+  color: #748078 !important;
+  font-size: 0.66rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.04em !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] .priority-kpi-total {
+  display: flex !important;
+  min-width: 54px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  border-radius: 999px !important;
+  background: color-mix(in srgb, var(--priority-accent) 10%, white) !important;
+  color: #405047 !important;
+  padding: 5px 8px !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] .priority-kpi-total strong {
+  color: var(--priority-accent) !important;
+  font-size: 0.95rem !important;
+  line-height: 1 !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] .priority-kpi-total small {
+  font-size: 0.58rem !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] #kpi-container > .priority-kpi-card .priority-kpi-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] .priority-kpi-item {
+  min-height: 37px !important;
+  border: 1px solid rgba(148, 163, 184, 0.22) !important;
+  border-left: 0 !important;
+  border-radius: 10px !important;
+  background: #f8faf9 !important;
+  padding: 5px 7px !important;
+  box-shadow: none !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] .priority-kpi-item::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.7;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] .priority-kpi-code {
+  margin-right: auto !important;
+  color: #475569 !important;
+  font-size: 0.68rem !important;
+  font-weight: 900 !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] .priority-kpi-item strong {
+  display: inline-flex !important;
+  min-width: 24px !important;
+  height: 24px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  color: #17251d !important;
+  font-size: 0.95rem !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08) !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] .priority-kpi-item.has-count {
+  border-color: color-mix(in srgb, currentColor 28%, white) !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06) !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] .priority-kpi-item.priority-p1 { color: #991b1b !important; }
+body.heilog-app-v2[data-active-panel-tab="patio"] .priority-kpi-item.priority-p2 { color: #dc2626 !important; }
+body.heilog-app-v2[data-active-panel-tab="patio"] .priority-kpi-item.priority-p3 { color: #ea580c !important; }
+body.heilog-app-v2[data-active-panel-tab="patio"] .priority-kpi-item.priority-p4 { color: #f59e0b !important; }
+body.heilog-app-v2[data-active-panel-tab="patio"] .priority-kpi-item.priority-p5 { color: #ca8a04 !important; }
+body.heilog-app-v2[data-active-panel-tab="patio"] .priority-kpi-item.priority-p6 { color: #65a30d !important; }
+body.heilog-app-v2[data-active-panel-tab="patio"] .priority-kpi-item.priority-p7 { color: #16a34a !important; }
+body.heilog-app-v2[data-active-panel-tab="patio"] .priority-kpi-item.priority-p8 { color: #059669 !important; }
+body.heilog-app-v2[data-active-panel-tab="patio"] .priority-kpi-item.priority-p9 { color: #0d9488 !important; }
+body.heilog-app-v2[data-active-panel-tab="patio"] .priority-kpi-item.priority-p10 { color: #0284c7 !important; }
+body.heilog-app-v2[data-active-panel-tab="patio"] .priority-kpi-item.priority-p11 { color: #64748b !important; }
+
+body.heilog-app-v2[data-active-panel-tab="patio"] #kpi-container > * > div:first-child {
+  flex: 0 0 auto !important;
+  padding: 9px !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] #kpi-container svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] #kpi-container .text-sm {
+  font-size: 0.75rem !important;
+  line-height: 1.2 !important;
+}
+
+body.heilog-app-v2[data-active-panel-tab="patio"] #kpi-container .text-2xl {
+  margin-top: 2px !important;
+  font-size: 1.75rem !important;
+  line-height: 1 !important;
+}
+
+@media (max-width: 900px) {
+  body.heilog-app-v2[data-active-panel-tab="patio"] .app-v2-hero {
+    padding-inline: 18px !important;
+  }
+
+  body.heilog-app-v2[data-active-panel-tab="patio"] #system-alerts-container {
+    margin-inline: 18px !important;
+  }
+
+  body.heilog-app-v2[data-active-panel-tab="patio"] #kpi-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 520px) {
+  body.heilog-app-v2[data-active-panel-tab="patio"] #kpi-container {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Linha do Tempo: cabeçalho e ações fixos, conteúdo com rolagem própria. */
+body.heilog-app-v2 #details-modal {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 150 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px !important;
+  overflow: hidden !important;
+}
+
+body.heilog-app-v2 #details-modal.hidden {
+  display: none !important;
+}
+
+body.heilog-app-v2 #details-modal:not(.hidden) {
+  display: flex !important;
+}
+
+body.heilog-app-v2 #details-modal > div {
+  display: flex !important;
+  flex-direction: column !important;
+  width: min(1040px, calc(100vw - 32px)) !important;
+  max-width: min(1040px, calc(100vw - 32px)) !important;
+  height: auto !important;
+  max-height: calc(100dvh - 32px) !important;
+  margin: auto !important;
+  padding: 20px !important;
+  overflow: hidden !important;
+  border-radius: 20px !important;
+}
+
+body.heilog-app-v2 #details-modal-title {
+  flex: 0 0 auto !important;
+  margin: 0 48px 14px 0 !important;
+}
+
+body.heilog-app-v2 #details-modal .details-modal-scroll {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  padding-right: 8px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+body.heilog-app-v2 #details-modal-content {
+  max-height: none !important;
+  padding-right: 0 !important;
+  overflow: visible !important;
+}
+
+body.heilog-app-v2 #details-modal #details-modal-actions {
+  position: static !important;
+  flex: 0 0 auto !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  margin: 12px 0 0 !important;
+  padding: 12px 0 0 !important;
+  background: #fff !important;
+}
+
+body.heilog-app-v2 #details-modal #details-modal-actions button {
+  min-height: 40px !important;
+  margin: 0 !important;
+  padding: 8px 13px !important;
+  white-space: nowrap !important;
+}
+
+/* Ocorrências: ações em coluna, sem texto vazando ou sobreposição. */
+body.heilog-app-v2 #operations-table[data-active-tab="ocorrencias"] th:last-child,
+body.heilog-app-v2 #operations-table[data-active-tab="ocorrencias"] .action-cell {
+  width: 260px !important;
+  min-width: 260px !important;
+  max-width: 260px !important;
+}
+
+body.heilog-app-v2 #operations-table[data-active-tab="ocorrencias"] .mobile-actions-menu {
+  grid-template-columns: minmax(0, 1fr) !important;
+  align-items: stretch !important;
+}
+
+body.heilog-app-v2 #operations-table[data-active-tab="ocorrencias"] .mobile-actions-menu .table-action-btn,
+body.heilog-app-v2 #operations-table[data-active-tab="ocorrencias"] .mobile-actions-menu button[data-action] {
+  grid-column: 1 !important;
+  justify-content: center !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 42px !important;
+  padding: 9px 12px !important;
+}
+
+body.heilog-app-v2 #operations-table[data-active-tab="ocorrencias"] .table-action-label {
+  min-width: 0 !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.2 !important;
+  text-align: center !important;
+}
+
+body.heilog-app-v2 #operations-table[data-active-tab="ocorrencias"] .occ-evidence-button {
+  max-width: 150px !important;
+  overflow: hidden !important;
+}
+
+/* Pandora volta a ser um ambiente visual próprio dentro do aplicativo. */
+body.heilog-app-v2.pandora-env-active .heilog-app-workspace {
+  background:
+    radial-gradient(circle at 88% 8%, rgba(37, 99, 235, 0.13), transparent 26rem),
+    linear-gradient(180deg, #f8fbff 0%, #eef5ff 44%, #e7f0ff 100%) !important;
+}
+
+body.heilog-app-v2.pandora-env-active #panel-tabs-wrap {
+  display: block !important;
+}
+
+body.heilog-app-v2.pandora-env-active .site-header {
+  position: relative !important;
+  top: auto !important;
+  min-height: 220px !important;
+  padding: 24px 32px !important;
+  overflow: visible !important;
+  border-bottom: 1px solid rgba(147, 197, 253, 0.25) !important;
+  background:
+    radial-gradient(circle at 14% 20%, rgba(125, 211, 252, 0.18), transparent 22rem),
+    linear-gradient(135deg, #0f172a, #122a46 58%, #2452c8) !important;
+  box-shadow: 0 18px 38px rgba(30, 64, 175, 0.2) !important;
+}
+
+body.heilog-app-v2.pandora-env-active .site-header-main {
+  align-items: center !important;
+  min-height: 172px !important;
+}
+
+body.heilog-app-v2.pandora-env-active .brand-wrap {
+  align-items: center !important;
+  gap: 24px !important;
+}
+
+body.heilog-app-v2.pandora-env-active .brand-mark {
+  display: flex !important;
+  flex: 0 0 142px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 142px !important;
+  min-width: 142px !important;
+  max-width: 142px !important;
+  height: 142px !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body.heilog-app-v2.pandora-env-active .pandora-logo-mark,
+body.heilog-app-v2.pandora-env-active .pandora-logo-image {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+body.heilog-app-v2.pandora-env-active .brand-text-clean {
+  display: flex !important;
+  gap: 7px !important;
+}
+
+body.heilog-app-v2.pandora-env-active .brand-title-main {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  font-size: clamp(1.8rem, 2.4vw, 2.55rem) !important;
+  letter-spacing: -0.035em !important;
+}
+
+body.heilog-app-v2.pandora-env-active .brand-subtitle-premium {
+  display: block !important;
+  color: #c7dbf6 !important;
+  -webkit-text-fill-color: #c7dbf6 !important;
+  font-size: 0.98rem !important;
+}
+
+body.heilog-app-v2.pandora-env-active .top-actions {
+  align-self: flex-end !important;
+  padding-bottom: 2px !important;
+}
+
+body.heilog-app-v2.pandora-env-active .app-v2-live-pill {
+  border-color: rgba(255, 255, 255, 0.32) !important;
+  background: rgba(255, 255, 255, 0.94) !important;
+  color: #075c34 !important;
+}
+
+body.heilog-app-v2.pandora-env-active .pandora-env-btn {
+  min-width: 132px !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
+
+body.heilog-app-v2.pandora-env-active .pandora-env-btn:hover {
+  border-color: rgba(255, 255, 255, 0.46) !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #fff !important;
+}
+
+body.heilog-app-v2.pandora-env-active #pandora-tabs-wrap {
+  display: block !important;
+  margin-top: 0 !important;
+  border-color: rgba(37, 99, 235, 0.14) !important;
+  box-shadow: 0 12px 30px rgba(30, 64, 175, 0.11) !important;
+}
+
+body.heilog-app-v2.pandora-env-active #pandora-tabs-wrap .tab-btn.active,
+body.heilog-app-v2.pandora-env-active #pandora-tabs-wrap .tab-btn.active-tab {
+  border-color: rgba(37, 99, 235, 0.32) !important;
+  background: linear-gradient(135deg, #173257, #2452c8) !important;
+  color: #fff !important;
+}
+
+@media (max-width: 900px) {
+  body.heilog-app-v2 #details-modal {
+    padding: 8px !important;
+  }
+
+  body.heilog-app-v2 #details-modal > div {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+    padding: 16px !important;
+    border-radius: 16px !important;
+  }
+
+  body.heilog-app-v2.pandora-env-active .site-header {
+    min-height: 172px !important;
+    padding: 18px !important;
+  }
+
+  body.heilog-app-v2.pandora-env-active .site-header-main {
+    min-height: 136px !important;
+  }
+
+  body.heilog-app-v2.pandora-env-active .brand-mark {
+    flex-basis: 92px !important;
+    width: 92px !important;
+    min-width: 92px !important;
+    max-width: 92px !important;
+    height: 92px !important;
+  }
+
+  body.heilog-app-v2.pandora-env-active .brand-wrap {
+    gap: 15px !important;
+  }
+}
+
+@media (max-width: 720px) {
+  body.heilog-app-v2 #operations-table[data-active-tab="ocorrencias"] th:last-child,
+  body.heilog-app-v2 #operations-table[data-active-tab="ocorrencias"] .action-cell {
+    width: 108px !important;
+    min-width: 108px !important;
+    max-width: 108px !important;
+  }
+
+  body.heilog-app-v2 #details-modal #details-modal-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  body.heilog-app-v2 #details-modal #details-modal-actions button {
+    width: 100% !important;
+    white-space: normal !important;
+  }
+
+  body.heilog-app-v2.pandora-env-active .site-header-main {
+    align-items: flex-start !important;
+  }
+
+  body.heilog-app-v2.pandora-env-active .brand-mark {
+    flex-basis: 72px !important;
+    width: 72px !important;
+    min-width: 72px !important;
+    max-width: 72px !important;
+    height: 72px !important;
+  }
+
+  body.heilog-app-v2.pandora-env-active .brand-title-main {
+    font-size: 1.45rem !important;
+  }
+
+  body.heilog-app-v2.pandora-env-active .top-actions {
+    align-self: center !important;
+  }
+}
+
+/* Acesso protegido — mesmo padrão visual do aplicativo de inventário. */
+body.heilog-auth-locked {
+  overflow: hidden !important;
+}
+
+body.heilog-auth-locked > :not(#heilog-login-screen):not(script):not(style):not(link) {
+  visibility: hidden !important;
+}
+
+.heilog-login-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 100dvh;
+  padding: clamp(16px, 3vw, 42px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  color: #14241b;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(30, 178, 91, 0.18), transparent 32rem),
+    radial-gradient(circle at 92% 88%, rgba(0, 98, 49, 0.14), transparent 28rem),
+    linear-gradient(145deg, #edf7f0 0%, #f8fbf9 48%, #e8f3ec 100%);
+  font-family: Inter, "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.heilog-login-screen[hidden] {
+  display: none !important;
+}
+
+.heilog-login-shell {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(360px, 0.9fr) minmax(430px, 1.1fr);
+  width: min(1080px, 100%);
+  min-height: min(720px, calc(100dvh - 84px));
+  overflow: hidden;
+  border: 1px solid rgba(18, 65, 39, 0.12);
+  border-radius: 30px;
+  background: #fff;
+  box-shadow: 0 30px 80px rgba(10, 54, 31, 0.18);
+}
+
+.heilog-login-brand {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+  padding: clamp(34px, 5vw, 62px);
+  overflow: hidden;
+  color: #fff;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.04), transparent 44%),
+    linear-gradient(155deg, #073d25 0%, #006a35 52%, #008947 100%);
+}
+
+.heilog-login-brand::before,
+.heilog-login-brand::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.heilog-login-brand::before {
+  top: -120px;
+  right: -130px;
+  width: 360px;
+  height: 360px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 0 0 54px rgba(255, 255, 255, 0.035),
+    0 0 0 108px rgba(255, 255, 255, 0.025);
+}
+
+.heilog-login-brand::after {
+  left: -90px;
+  bottom: -120px;
+  width: 300px;
+  height: 300px;
+  background: rgba(1, 33, 19, 0.18);
+  filter: blur(2px);
+}
+
+.heilog-login-brand-glow {
+  position: absolute;
+  z-index: -1;
+  inset: auto 8% 18% auto;
+  width: 220px;
+  height: 220px;
+  border-radius: 999px;
+  background: rgba(83, 225, 142, 0.16);
+  filter: blur(48px);
+}
+
+.heilog-login-logo {
+  width: min(230px, 72%);
+  height: auto;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 20px 48px rgba(1, 25, 14, 0.24);
+}
+
+.heilog-login-brand-copy {
+  display: grid;
+  gap: 12px;
+  margin-block: 40px;
+}
+
+.heilog-login-kicker {
+  color: #a8efc4;
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.heilog-login-brand-copy h1 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(2.2rem, 4.2vw, 3.75rem);
+  font-weight: 880;
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+}
+
+.heilog-login-brand-copy p {
+  max-width: 400px;
+  margin: 0;
+  color: #d5f3e1;
+  font-size: 1rem;
+  font-weight: 550;
+  line-height: 1.6;
+}
+
+.heilog-login-live {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 10px;
+  min-height: 40px;
+  padding: 9px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(0, 39, 22, 0.22);
+  color: #e9fff1;
+  font-size: 0.8rem;
+  font-weight: 760;
+}
+
+.heilog-login-live span {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: #6df0a0;
+  box-shadow: 0 0 0 5px rgba(109, 240, 160, 0.12);
+}
+
+.heilog-login-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  padding: clamp(34px, 5vw, 68px);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(0, 126, 62, 0.055), transparent 19rem),
+    #fff;
+}
+
+.heilog-auth-view[hidden] {
+  display: none !important;
+}
+
+.heilog-auth-heading {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 28px;
+}
+
+.heilog-auth-badge {
+  justify-self: start;
+  padding: 6px 10px;
+  border: 1px solid #b8dfc7;
+  border-radius: 999px;
+  background: #eaf7ef;
+  color: #006a35;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.heilog-auth-heading h2 {
+  margin: 0;
+  color: #14241b;
+  font-size: clamp(2rem, 3.4vw, 2.8rem);
+  font-weight: 860;
+  letter-spacing: -0.05em;
+  line-height: 1.05;
+}
+
+.heilog-auth-heading p {
+  margin: 0;
+  color: #64736b;
+  font-size: 0.94rem;
+  font-weight: 540;
+  line-height: 1.5;
+}
+
+.heilog-auth-form {
+  display: grid;
+  gap: 10px;
+}
+
+.heilog-auth-form label {
+  margin-top: 5px;
+  color: #293d32;
+  font-size: 0.8rem;
+  font-weight: 790;
+}
+
+.heilog-auth-field {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 1px solid #cedbd3;
+  border-radius: 13px;
+  background: #fbfdfc;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
+}
+
+.heilog-auth-field:focus-within {
+  border-color: #4fa174;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(0, 126, 62, 0.1);
+}
+
+.heilog-auth-field > svg {
+  width: 19px;
+  height: 19px;
+  margin-right: 11px;
+  fill: none;
+  stroke: #668074;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.heilog-auth-field input {
+  width: 100%;
+  min-width: 0;
+  height: 50px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #14241b;
+  -webkit-text-fill-color: #14241b;
+  font-size: 0.92rem;
+  font-weight: 620;
+}
+
+body.heilog-app-v2 .heilog-auth-field input {
+  width: 100% !important;
+  min-height: 0 !important;
+  height: 50px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.heilog-auth-field input::placeholder {
+  color: #94a49b;
+  -webkit-text-fill-color: #94a49b;
+}
+
+.heilog-password-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-right: -7px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #587066;
+  cursor: pointer;
+}
+
+.heilog-password-toggle:hover {
+  background: #edf5f0;
+  color: #006a35;
+}
+
+.heilog-password-toggle svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.heilog-auth-status {
+  min-height: 42px;
+  margin-top: 7px;
+  padding: 10px 12px;
+  border: 1px solid #dce8e0;
+  border-radius: 10px;
+  background: #f5f9f6;
+  color: #637269;
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.heilog-auth-status.is-error {
+  border-color: #efc0c0;
+  background: #fff1f1;
+  color: #a31f1f;
+}
+
+.heilog-auth-status.is-success {
+  border-color: #a8d7ba;
+  background: #edf9f1;
+  color: #08723d;
+}
+
+.heilog-auth-status.is-loading {
+  border-color: #b7d8c4;
+  background: #eef7f1;
+  color: #17643b;
+}
+
+.heilog-auth-primary,
+.heilog-auth-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 50px;
+  padding: 11px 17px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 840;
+  cursor: pointer;
+}
+
+.heilog-auth-primary {
+  border: 1px solid #006a35;
+  background: linear-gradient(135deg, #008241, #005b2e);
+  color: #fff;
+  box-shadow: 0 13px 28px rgba(0, 106, 53, 0.2);
+}
+
+.heilog-auth-primary:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+.heilog-auth-primary:disabled,
+.heilog-auth-secondary:disabled {
+  opacity: 0.62;
+  cursor: wait;
+  transform: none;
+}
+
+.heilog-auth-primary svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.heilog-auth-secondary {
+  border: 1px solid #cbd9d1;
+  background: #fff;
+  color: #33483d;
+}
+
+.heilog-auth-secondary:hover {
+  border-color: #99bbaa;
+  background: #f1f7f3;
+}
+
+.heilog-auth-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+  color: #9aaba1;
+  font-size: 0.8rem;
+  font-weight: 680;
+}
+
+.heilog-auth-links button {
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  color: #147346;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+.heilog-auth-links button:hover {
+  color: #005a2d;
+  text-decoration: underline;
+}
+
+.heilog-auth-two-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.heilog-auth-two-columns > div {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.heilog-auth-request-actions {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.42fr) minmax(0, 1fr);
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.heilog-auth-device-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 26px 0 0;
+  color: #7b8b82;
+  font-size: 0.72rem;
+  font-weight: 620;
+  text-align: center;
+}
+
+.heilog-auth-device-note svg {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: #16834d;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.heilog-user-session {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 40px;
+  padding: 5px 6px 5px 8px;
+  border: 1px solid #d5e3da;
+  border-radius: 11px;
+  background: #f8fbf9;
+}
+
+.heilog-user-session[hidden] {
+  display: none !important;
+}
+
+.heilog-user-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: #dff2e7;
+  color: #006a35;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.heilog-user-copy {
+  display: grid;
+  min-width: 0;
+  line-height: 1.08;
+}
+
+.heilog-user-copy strong {
+  max-width: 150px;
+  overflow: hidden;
+  color: #23372c;
+  font-size: 0.76rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.heilog-user-copy small {
+  margin-top: 3px;
+  color: #728078;
+  font-size: 0.65rem;
+  font-weight: 620;
+}
+
+.heilog-user-session #heilog-logout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 6px 9px;
+  border: 1px solid #e1c7c7;
+  border-radius: 8px;
+  background: #fff3f3;
+  color: #a32929;
+  font-size: 0.72rem;
+  font-weight: 820;
+  cursor: pointer;
+}
+
+.heilog-user-session #heilog-logout-btn:hover {
+  border-color: #dca7a7;
+  background: #ffe9e9;
+}
+
+.heilog-user-session #heilog-logout-btn svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+body.heilog-app-v2.pandora-env-active .heilog-user-session {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.94);
+}
+
+@media (max-width: 920px) {
+  .heilog-login-screen {
+    padding: 14px;
+  }
+
+  .heilog-login-shell {
+    grid-template-columns: 1fr;
+    width: min(590px, 100%);
+    min-height: 0;
+    border-radius: 24px;
+  }
+
+  .heilog-login-brand {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 18px;
+    padding: 25px;
+  }
+
+  .heilog-login-logo {
+    width: 108px;
+    padding: 7px;
+    border-radius: 17px;
+  }
+
+  .heilog-login-brand-copy {
+    gap: 5px;
+    margin: 0;
+  }
+
+  .heilog-login-brand-copy h1 {
+    font-size: 1.55rem;
+  }
+
+  .heilog-login-brand-copy p,
+  .heilog-login-live,
+  .heilog-login-kicker {
+    display: none;
+  }
+
+  .heilog-login-card {
+    padding: 32px 28px;
+  }
+}
+
+@media (max-width: 620px) {
+  .heilog-login-shell {
+    border-radius: 20px;
+  }
+
+  .heilog-login-brand {
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 14px;
+    padding: 18px;
+  }
+
+  .heilog-login-logo {
+    width: 78px;
+    border-radius: 14px;
+  }
+
+  .heilog-login-brand-copy h1 {
+    font-size: 1.32rem;
+  }
+
+  .heilog-login-card {
+    padding: 27px 20px;
+  }
+
+  .heilog-auth-heading {
+    margin-bottom: 20px;
+  }
+
+  .heilog-auth-heading h2 {
+    font-size: 1.85rem;
+  }
+
+  .heilog-auth-two-columns,
+  .heilog-auth-request-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .heilog-auth-request-actions .heilog-auth-secondary {
+    order: 2;
+  }
+
+  .heilog-auth-device-note {
+    margin-top: 20px;
+  }
+
+  .heilog-user-copy,
+  .heilog-user-session #heilog-logout-btn span {
+    display: none;
+  }
+}
+
+@media (max-height: 760px) and (min-width: 921px) {
+  .heilog-login-shell {
+    min-height: calc(100dvh - 32px);
+  }
+
+  .heilog-login-brand,
+  .heilog-login-card {
+    padding-block: 30px;
+  }
+
+  .heilog-login-brand-copy {
+    margin-block: 24px;
+  }
+}
+
+/* Login compacto inspirado no visual HEICOUNT, com identidade HEILOG. */
+.heilog-login-screen {
+  padding: clamp(18px, 4vw, 48px);
+  background: #005f35;
+}
+
+.heilog-login-shell {
+  display: block;
+  width: min(520px, 100%);
+  min-height: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.heilog-login-card {
+  display: block;
+  width: 100%;
+  min-height: 0;
+  padding: clamp(34px, 5vw, 46px) clamp(30px, 5vw, 40px) 30px;
+  border-top: 5px solid #e51e2a;
+  border-radius: 25px;
+  background: #fff;
+  box-shadow: 0 24px 58px rgba(0, 35, 20, 0.24);
+}
+
+.heilog-login-wordmark {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 30px;
+  color: #073d2c;
+}
+
+.heilog-login-wordmark-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.heilog-login-wordmark-name strong {
+  color: #063f31;
+  font-size: 1.28rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  line-height: 1;
+}
+
+.heilog-login-star {
+  color: #e51e2a;
+  font-size: 1.72rem;
+  line-height: 0.8;
+}
+
+.heilog-login-wordmark-tagline {
+  color: #496c5c;
+  font-size: 0.65rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  line-height: 1.25;
+  text-align: right;
+}
+
+.heilog-auth-heading {
+  gap: 10px;
+  margin-bottom: 26px;
+}
+
+.heilog-auth-badge {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #006c3b;
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+}
+
+.heilog-auth-heading h2 {
+  color: #063b30;
+  font-size: clamp(2.15rem, 7vw, 2.72rem);
+  font-weight: 520;
+  letter-spacing: -0.052em;
+  line-height: 1.02;
+}
+
+.heilog-auth-heading p {
+  max-width: 410px;
+  color: #62776d;
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+
+.heilog-auth-form {
+  gap: 10px;
+}
+
+.heilog-auth-form label {
+  margin-top: 5px;
+  color: #243f35;
+  font-size: 0.79rem;
+  font-weight: 780;
+}
+
+.heilog-auth-field {
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: 54px;
+  padding-inline: 14px;
+  border-color: #b9cae4;
+  border-radius: 11px;
+  background: #eaf1fc;
+}
+
+.heilog-auth-field:focus-within {
+  border-color: #31815d;
+  background: #f4f8ff;
+  box-shadow: 0 0 0 4px rgba(0, 126, 62, 0.11);
+}
+
+.heilog-auth-field > svg {
+  display: none;
+}
+
+#heilog-login-screen .heilog-auth-field input,
+#heilog-login-screen .heilog-auth-field select {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 52px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #14241b !important;
+  -webkit-text-fill-color: #14241b !important;
+  font-size: 0.94rem;
+  font-weight: 700;
+}
+
+#heilog-login-screen .heilog-auth-field select {
+  appearance: auto;
+  cursor: pointer;
+}
+
+.heilog-unit-choice-list {
+  display: grid;
+  gap: 10px;
+}
+
+.heilog-unit-choice {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  min-height: 66px;
+  padding: 10px 13px;
+  border: 1px solid #c7d9ce;
+  border-radius: 13px;
+  background: #f7fbf8;
+  color: #163a2b;
+  text-align: left;
+  cursor: pointer;
+}
+
+.heilog-unit-choice:hover {
+  border-color: #72b28d;
+  background: #edf8f1;
+  transform: translateY(-1px);
+}
+
+.heilog-unit-choice > span:first-child {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 43px;
+  height: 43px;
+  border-radius: 11px;
+  background: #dff2e6;
+  color: #087044;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.heilog-unit-choice > span:last-child {
+  display: grid;
+  gap: 3px;
+}
+
+.heilog-unit-choice strong {
+  font-size: 0.9rem;
+}
+
+.heilog-unit-choice small {
+  color: #6d8076;
+  font-size: 0.72rem;
+}
+
+.heilog-unit-choice-logout {
+  width: 100%;
+  margin-top: 14px;
+}
+
+.heilog-auth-status {
+  min-height: 0;
+  margin-top: 2px;
+}
+
+.heilog-auth-status:not(.is-error):not(.is-success):not(.is-loading) {
+  display: none;
+}
+
+.heilog-auth-primary,
+.heilog-auth-secondary {
+  min-height: 52px;
+  border-radius: 11px;
+  font-size: 0.9rem;
+}
+
+.heilog-auth-primary {
+  margin-top: 7px;
+  border-color: #00984f;
+  background: #009e51;
+  box-shadow: 0 13px 28px rgba(0, 145, 73, 0.2);
+}
+
+.heilog-auth-primary svg {
+  display: none;
+}
+
+.heilog-auth-links {
+  margin-top: 17px;
+  font-size: 0.75rem;
+}
+
+.heilog-auth-links button {
+  color: #087044;
+}
+
+.heilog-auth-two-columns {
+  grid-template-columns: 1fr;
+  gap: 2px;
+}
+
+.heilog-auth-request-actions {
+  grid-template-columns: minmax(112px, 0.38fr) minmax(0, 1fr);
+}
+
+.heilog-auth-request-actions .heilog-auth-primary {
+  margin-top: 0;
+}
+
+.heilog-auth-device-note {
+  margin-top: 23px;
+  padding-top: 20px;
+  border-top: 1px solid #dce6e1;
+  color: #81928a;
+  font-size: 0.68rem;
+}
+
+.heilog-auth-device-note svg {
+  display: none;
+}
+
+@media (max-width: 620px) {
+  .heilog-login-screen {
+    align-items: start;
+    padding: max(14px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom));
+  }
+
+  .heilog-login-card {
+    padding: 28px 22px 24px;
+    border-radius: 21px;
+  }
+
+  .heilog-login-wordmark {
+    margin-bottom: 24px;
+  }
+
+  .heilog-login-wordmark-tagline {
+    font-size: 0.56rem;
+  }
+
+  .heilog-login-wordmark-name strong {
+    font-size: 1.02rem;
+  }
+
+  .heilog-login-star {
+    font-size: 1.45rem;
+  }
+
+  .heilog-auth-heading h2 {
+    font-size: 2rem;
+  }
+
+  .heilog-auth-request-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .heilog-auth-request-actions .heilog-auth-secondary {
+    order: 2;
+  }
+}
+
+.heilog-manage-access-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 6px 9px;
+  border: 1px solid #b8dac6;
+  border-radius: 8px;
+  background: #edf8f1;
+  color: #087044;
+  font-size: 0.72rem;
+  font-weight: 820;
+  cursor: pointer;
+}
+
+.heilog-manage-access-btn[hidden] {
+  display: none !important;
+}
+
+.heilog-manage-access-btn:hover {
+  border-color: #7fbd98;
+  background: #e1f4e8;
+}
+
+.heilog-manage-access-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.heilog-manage-access-btn b {
+  display: grid;
+  place-items: center;
+  min-width: 19px;
+  height: 19px;
+  padding-inline: 5px;
+  border-radius: 999px;
+  background: #e51e2a;
+  color: #fff;
+  font-size: 0.66rem;
+  line-height: 1;
+}
+
+.heilog-manage-access-btn b[hidden] {
+  display: none !important;
+}
+
+.heilog-unit-switcher {
+  display: grid;
+  gap: 1px;
+  min-width: 145px;
+  padding: 4px 9px;
+  border: 1px solid #cfe0d6;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.heilog-unit-switcher[hidden] {
+  display: none !important;
+}
+
+.heilog-unit-switcher > span {
+  color: #789087;
+  font-size: 0.54rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.heilog-unit-switcher select {
+  max-width: 180px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #075b3b;
+  font-size: 0.7rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.heilog-access-modal {
+  position: fixed;
+  z-index: 12000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  overflow: auto;
+  background: rgba(4, 25, 15, 0.62);
+  backdrop-filter: blur(8px);
+}
+
+.heilog-access-modal[hidden] {
+  display: none !important;
+}
+
+.heilog-access-dialog {
+  width: min(860px, 100%);
+  max-height: min(760px, calc(100dvh - 36px));
+  overflow: hidden;
+  border-top: 5px solid #e51e2a;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 28px 70px rgba(0, 27, 15, 0.32);
+  color: #173228;
+}
+
+.heilog-access-dialog-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 26px 28px 20px;
+  border-bottom: 1px solid #e2ebe6;
+}
+
+.heilog-access-dialog-head span {
+  color: #087044;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+
+.heilog-access-dialog-head h2 {
+  margin: 5px 0 5px;
+  color: #073d2c;
+  font-size: 1.65rem;
+  font-weight: 820;
+  letter-spacing: -0.035em;
+}
+
+.heilog-access-dialog-head p {
+  margin: 0;
+  color: #697b72;
+  font-size: 0.84rem;
+}
+
+.heilog-access-dialog-head > button {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #d8e2dc;
+  border-radius: 10px;
+  background: #f7faf8;
+  color: #3d5449;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.heilog-access-status {
+  margin: 18px 28px 10px;
+  padding: 11px 13px;
+  border-radius: 10px;
+  background: #edf7f1;
+  color: #35634c;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.heilog-access-status.is-empty {
+  background: #f4f7f5;
+  color: #718078;
+}
+
+.heilog-access-status.is-error {
+  background: #fff0f0;
+  color: #a32626;
+}
+
+.heilog-access-list {
+  display: grid;
+  gap: 10px;
+  max-height: 470px;
+  padding: 0 28px 18px;
+  overflow-y: auto;
+}
+
+.heilog-access-card {
+  display: grid;
+  grid-template-columns: minmax(210px, 1fr) minmax(360px, 1.35fr);
+  align-items: center;
+  gap: 16px;
+  padding: 13px;
+  border: 1px solid #dce6e0;
+  border-radius: 13px;
+  background: #fbfdfc;
+}
+
+.heilog-access-card.is-owner {
+  border-color: #aad3bb;
+  background: #f3fbf6;
+}
+
+.heilog-access-card.is-pending {
+  border-color: #efd99a;
+  background: #fffdf5;
+}
+
+.heilog-access-card.is-blocked {
+  background: #fafafa;
+}
+
+.heilog-access-identity {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.heilog-access-identity > span {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #dff2e6;
+  color: #087044;
+  font-weight: 900;
+}
+
+.heilog-access-identity > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.heilog-access-identity strong {
+  overflow: hidden;
+  color: #18382b;
+  font-size: 0.87rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.heilog-access-identity small {
+  color: #74857c;
+  font-size: 0.72rem;
+}
+
+.heilog-access-badge {
+  width: max-content;
+  margin-top: 3px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #e8f6ed;
+  color: #087044;
+  font-size: 0.62rem;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: 0.025em;
+}
+
+.heilog-access-badge.is-admin {
+  background: #dff2e6;
+  color: #006b3d;
+}
+
+.heilog-access-badge.is-pending {
+  background: #fff0bd;
+  color: #865d00;
+}
+
+.heilog-access-badge.is-blocked {
+  background: #f7dddd;
+  color: #a32626;
+}
+
+.heilog-access-controls {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.72fr) minmax(190px, 1fr);
+  align-items: end;
+  gap: 10px;
+}
+
+.heilog-access-role-field {
+  display: grid;
+  gap: 4px;
+}
+
+.heilog-access-role-field > span {
+  color: #667970;
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.heilog-access-role-field select {
+  width: 100%;
+  min-height: 36px;
+  padding: 7px 30px 7px 10px;
+  border: 1px solid #cbd9d1;
+  border-radius: 9px;
+  background: #fff;
+  color: #173228;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.heilog-access-role-field select:disabled {
+  background: #eaf5ee;
+  color: #087044;
+  opacity: 1;
+}
+
+.heilog-access-unit-field {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.heilog-access-unit-field legend {
+  width: 100%;
+  margin-bottom: 4px;
+  color: #667970;
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.heilog-access-unit-field label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  padding: 5px 7px;
+  border: 1px solid #ccded3;
+  border-radius: 8px;
+  background: #f5faf7;
+  color: #315445;
+  font-size: 0.66rem;
+  font-weight: 780;
+  cursor: pointer;
+}
+
+.heilog-access-unit-field input {
+  accent-color: #00834a;
+}
+
+.heilog-access-actions {
+  display: flex;
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.heilog-access-actions button {
+  min-height: 36px;
+  padding: 7px 12px;
+  border-radius: 9px;
+  font-size: 0.75rem;
+  font-weight: 820;
+  cursor: pointer;
+}
+
+.heilog-access-actions button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.heilog-access-actions .is-reject {
+  border: 1px solid #efc4c4;
+  background: #fff5f5;
+  color: #ad2727;
+}
+
+.heilog-access-actions .is-approve {
+  border: 1px solid #008a48;
+  background: #009e51;
+  color: #fff;
+}
+
+.heilog-access-actions .is-save {
+  border: 1px solid #075b3b;
+  background: #087044;
+  color: #fff;
+}
+
+.heilog-access-actions .is-delete {
+  border: 1px solid #dc2626;
+  background: #dc2626;
+  color: #fff;
+}
+
+#panel-tabs-wrap .tab-btn[hidden],
+#panel-tabs-wrap .app-nav-section[hidden],
+#pandora-env-btn[hidden] {
+  display: none !important;
+}
+
+.heilog-access-protected {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 12px;
+  border: 1px solid #bdddc9;
+  border-radius: 9px;
+  background: #e7f5ec;
+  color: #087044;
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.heilog-access-dialog-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 28px 22px;
+  border-top: 1px solid #e2ebe6;
+}
+
+.heilog-access-dialog-foot button {
+  min-height: 40px;
+  padding: 9px 15px;
+  border: 1px solid #ccd9d1;
+  border-radius: 10px;
+  background: #fff;
+  color: #365046;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.heilog-account-dialog {
+  width: min(520px, 100%);
+}
+
+.heilog-account-form {
+  display: grid;
+  gap: 14px;
+  padding: 20px 28px 0;
+}
+
+.heilog-account-form > label {
+  display: grid;
+  gap: 6px;
+  color: #4c675b;
+  font-size: 0.74rem;
+  font-weight: 850;
+}
+
+.heilog-account-form input {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid #cbd9d1;
+  border-radius: 11px;
+  background: #f8fbf9;
+  color: #173228;
+  font-size: 0.96rem;
+  font-weight: 780;
+  letter-spacing: 0.08em;
+}
+
+.heilog-account-form input:focus {
+  border-color: #009e51;
+  outline: 3px solid rgba(0, 158, 81, 0.12);
+}
+
+.heilog-account-form .heilog-auth-status {
+  margin: 0;
+}
+
+.heilog-account-form .heilog-access-dialog-foot {
+  gap: 10px;
+  margin: 4px -28px 0;
+}
+
+#heilog-save-password-btn {
+  border-color: #008a48;
+  background: #009e51;
+  color: #fff;
+}
+
+#heilog-save-password-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.heilog-units-dialog {
+  width: min(760px, 100%);
+}
+
+.heilog-unit-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 0.38fr) auto;
+  gap: 10px;
+  padding: 18px 28px 0;
+}
+
+.heilog-unit-form label {
+  display: grid;
+  gap: 5px;
+  color: #60766c;
+  font-size: 0.67rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.heilog-unit-form input {
+  min-height: 40px;
+  padding: 8px 11px;
+  border: 1px solid #cbd9d1;
+  border-radius: 9px;
+  background: #fff;
+  color: #173228;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.heilog-unit-form button {
+  align-self: end;
+  min-height: 40px;
+  padding: 8px 13px;
+  border: 1px solid #008a48;
+  border-radius: 9px;
+  background: #009e51;
+  color: #fff;
+  font-size: 0.76rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.heilog-units-list {
+  display: grid;
+  gap: 9px;
+  max-height: 390px;
+  padding: 0 28px 18px;
+  overflow-y: auto;
+}
+
+.heilog-unit-admin-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #dbe7e0;
+  border-radius: 12px;
+  background: #fbfdfc;
+}
+
+.heilog-unit-admin-card > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.heilog-unit-admin-card > div > span {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #dff2e6;
+  color: #087044;
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
+.heilog-unit-admin-card > div > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.heilog-unit-admin-card strong {
+  color: #173b2b;
+  font-size: 0.84rem;
+}
+
+.heilog-unit-admin-card small {
+  overflow: hidden;
+  color: #71847a;
+  font-size: 0.69rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.heilog-unit-admin-card em {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #e6f5eb;
+  color: #087044;
+  font-size: 0.65rem;
+  font-style: normal;
+  font-weight: 850;
+}
+
+.heilog-unit-admin-card em.is-paused {
+  background: #f3f0eb;
+  color: #806d55;
+}
+
+.heilog-unit-admin-card > button {
+  min-height: 36px;
+  padding: 7px 11px;
+  border: 1px solid #d2ddd6;
+  border-radius: 9px;
+  background: #fff;
+  color: #40594e;
+  font-size: 0.72rem;
+  font-weight: 820;
+  cursor: pointer;
+}
+
+.heilog-unit-admin-card > button:disabled {
+  background: #edf6f0;
+  color: #087044;
+  cursor: default;
+}
+
+body.heilog-access-open {
+  overflow: hidden !important;
+}
+
+@media (max-width: 620px) {
+  .heilog-manage-access-btn span,
+  .heilog-user-session #heilog-logout-btn span {
+    display: none;
+  }
+
+  .heilog-unit-switcher {
+    min-width: 106px;
+  }
+
+  .heilog-unit-switcher select {
+    max-width: 105px;
+  }
+
+  .heilog-access-modal {
+    align-items: end;
+    padding: 10px;
+  }
+
+  .heilog-access-dialog {
+    max-height: calc(100dvh - 20px);
+    border-radius: 20px;
+  }
+
+  .heilog-access-dialog-head {
+    padding: 22px 18px 17px;
+  }
+
+  .heilog-access-dialog-head h2 {
+    font-size: 1.35rem;
+  }
+
+  .heilog-access-status {
+    margin: 14px 18px 9px;
+  }
+
+  .heilog-access-list {
+    padding: 0 18px 15px;
+  }
+
+  .heilog-access-card {
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .heilog-access-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .heilog-access-actions {
+    grid-column: auto;
+  }
+
+  .heilog-access-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .heilog-access-actions:has(.heilog-access-protected),
+  .heilog-access-actions:has(button:only-child) {
+    grid-template-columns: 1fr;
+  }
+
+  .heilog-access-dialog-foot {
+    padding: 14px 18px 18px;
+  }
+
+  .heilog-unit-form {
+    grid-template-columns: 1fr;
+    padding: 16px 18px 0;
+  }
+
+  .heilog-units-list {
+    padding: 0 18px 15px;
+  }
+
+  .heilog-unit-admin-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .heilog-unit-admin-card > button {
+    grid-column: 1 / -1;
+  }
+}
+
+/* =========================================================
+   Cabeçalho HEILOG v2.1 — compacto, premium e responsivo
+   ========================================================= */
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 {
+  position: sticky !important;
+  min-height: 94px !important;
+  padding: 13px 24px !important;
+  overflow: visible !important;
+  border-bottom: 1px solid rgba(6, 122, 64, 0.16) !important;
+  background:
+    radial-gradient(circle at 88% -80%, rgba(0, 157, 79, 0.15), transparent 34%),
+    linear-gradient(112deg, #ffffff 0%, #f9fcfa 52%, #f1f9f4 100%) !important;
+  box-shadow: 0 10px 28px rgba(20, 65, 40, 0.08) !important;
+  isolation: isolate;
+}
+
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: auto 0 0;
+  width: auto;
+  height: 3px;
+  background: linear-gradient(90deg, #008e47 0%, #25c875 18%, rgba(37, 200, 117, 0.08) 46%, transparent 72%);
+  opacity: 1 !important;
+  pointer-events: none;
+}
+
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: -84px;
+  right: 26%;
+  width: 240px;
+  height: 180px;
+  border: 1px solid rgba(0, 142, 71, 0.08);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  opacity: 1 !important;
+  transform: rotate(-12deg);
+  animation: none !important;
+  pointer-events: none;
+}
+
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .site-header-main {
+  position: relative !important;
+  z-index: 2 !important;
+  min-height: 68px !important;
+  gap: 22px !important;
+}
+
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .brand-wrap {
+  position: relative;
+  flex: 0 1 auto;
+  min-width: 220px;
+  padding-left: 18px !important;
+}
+
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .brand-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 5px auto 5px 0;
+  width: 5px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #00a451, #006c38);
+  box-shadow: 0 0 0 5px rgba(0, 154, 77, 0.07);
+}
+
+.header-brand-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  margin-bottom: 3px;
+  color: #087343;
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.header-brand-kicker i {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #e30a1b;
+  box-shadow: 0 0 0 3px rgba(227, 10, 27, 0.09);
+}
+
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .brand-title-main {
+  font-size: clamp(1.3rem, 1.55vw, 1.62rem) !important;
+  line-height: 1.04 !important;
+  letter-spacing: -0.035em !important;
+}
+
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .brand-subtitle-premium {
+  margin-top: 4px !important;
+  color: #66776e !important;
+  font-size: 0.76rem !important;
+  font-weight: 560 !important;
+}
+
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .top-actions {
+  flex: 0 1 auto;
+  gap: 8px !important;
+  min-width: 0;
+  padding: 7px !important;
+  border: 1px solid rgba(18, 93, 56, 0.11);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: 0 8px 24px rgba(30, 75, 49, 0.07), inset 0 1px 0 #fff;
+  backdrop-filter: blur(14px);
+}
+
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .app-v2-live-pill {
+  min-height: 40px;
+  padding-inline: 12px;
+  border-color: #cce8d6;
+  border-radius: 11px;
+  background: linear-gradient(180deg, #f2fbf5, #eaf7ef);
+  color: #0b6d3e;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .app-live-dot {
+  width: 8px;
+  height: 8px;
+}
+
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .heilog-user-session {
+  gap: 8px;
+  min-height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .heilog-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #e7f7ed, #d8f0e1);
+  box-shadow: inset 0 0 0 1px rgba(0, 127, 64, 0.06);
+}
+
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .heilog-user-copy {
+  padding-right: 10px;
+  border-right: 1px solid #e1ebe5;
+}
+
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .heilog-user-copy strong {
+  color: #183a29;
+  font-size: 0.72rem;
+}
+
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .heilog-user-copy small {
+  color: #708178;
+  font-size: 0.61rem;
+}
+
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .heilog-unit-switcher,
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .heilog-manage-access-btn,
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .heilog-user-session #heilog-logout-btn,
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .header-action-btn {
+  min-height: 40px !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+}
+
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .heilog-unit-switcher {
+  min-width: 136px;
+  padding: 4px 10px;
+  border-color: #d2e1d8;
+}
+
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .heilog-manage-access-btn {
+  padding: 7px 10px;
+  background: #f0f9f3;
+}
+
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .pandora-env-btn {
+  min-width: 116px !important;
+  background: linear-gradient(180deg, #ffffff, #f7faf8) !important;
+  font-size: 0.76rem;
+}
+
+@media (max-width: 1320px) and (min-width: 901px) {
+  body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 {
+    min-height: 136px !important;
+    padding-block: 12px !important;
+  }
+
+  body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .site-header-main {
+    flex-wrap: wrap;
+    min-height: 112px !important;
+    row-gap: 8px !important;
+  }
+
+  body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .brand-wrap {
+    flex-basis: 100%;
+  }
+
+  body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .top-actions {
+    width: 100% !important;
+    margin-left: auto;
+    justify-content: flex-end !important;
+  }
+}
+
+@media (max-width: 900px) {
+  body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 {
+    min-height: 78px !important;
+    padding: 10px 14px !important;
+  }
+
+  body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .site-header-main {
+    min-height: 58px !important;
+  }
+
+  body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .brand-wrap {
+    min-width: 0;
+    padding-left: 14px !important;
+  }
+
+  body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .header-brand-kicker,
+  body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .brand-subtitle-premium,
+  body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .app-v2-live-pill,
+  body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .heilog-user-copy {
+    display: none !important;
+  }
+
+  body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .top-actions {
+    padding: 5px !important;
+    border-radius: 13px;
+  }
+}
+
+@media (max-width: 620px) {
+  body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .heilog-user-avatar,
+  body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .heilog-manage-access-btn span,
+  body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .heilog-unit-switcher > span,
+  body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .pandora-env-text {
+    display: none !important;
+  }
+
+  body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .heilog-unit-switcher {
+    min-width: 88px;
+    max-width: 104px;
+  }
+
+  body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .heilog-unit-switcher select {
+    max-width: 84px;
+  }
+
+  body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .pandora-env-btn {
+    min-width: 40px !important;
+    padding-inline: 9px !important;
+  }
+}
+/* Cabeçalho compacto: relógio, identificação e ações essenciais. */
+body.heilog-app-v2 .heilog-header-v2 .app-v2-live-pill svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+body.heilog-app-v2 .heilog-header-v2 #heilog-header-clock {
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  font-weight: 800;
+}
+body.heilog-app-v2 .heilog-header-v2 #driver-code-notification {
+  position: relative;
+  justify-content: center;
+  width: 42px;
+  padding: 8px !important;
+}
+body.heilog-app-v2 .heilog-header-v2 #driver-code-notification svg {
+  width: 20px;
+  height: 20px;
+}
+body.heilog-app-v2 .heilog-header-v2 #driver-code-pending-count {
+  position: absolute;
+  right: -6px;
+  top: -6px;
+  min-width: 19px;
+  padding: 2px 5px;
+  font-size: 10px;
+  line-height: 14px;
+}
+.heilog-header-settings { position: relative; }
+body.heilog-app-v2 .heilog-header-v2 #heilog-settings-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  z-index: 100;
+  display: grid;
+  gap: 8px;
+  width: min(280px, calc(100vw - 32px));
+  max-height: calc(100dvh - 110px);
+  overflow-y: auto;
+  padding: 16px;
+  border: 1px solid #d2e1d8;
+  border-radius: 16px;
+  background: #fff;
+  color: #183a29;
+  box-shadow: 0 14px 40px rgba(20,54,35,.18);
+}
+body.heilog-app-v2 .heilog-header-v2 #heilog-settings-panel[hidden] { display: none !important; }
+body.heilog-app-v2 .heilog-header-v2 #heilog-settings-panel h2 {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 800;
+}
+body.heilog-app-v2 .heilog-header-v2 #heilog-settings-panel button:not([hidden]),
+body.heilog-app-v2 .heilog-header-v2 #heilog-settings-panel .heilog-unit-switcher:not([hidden]) {
+  display: flex !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  justify-content: flex-start !important;
+  padding: 10px 12px !important;
+  font-size: 13px !important;
+}
+body.heilog-app-v2 .heilog-header-v2 #heilog-settings-panel button span,
+body.heilog-app-v2 .heilog-header-v2 #heilog-settings-panel .heilog-unit-switcher > span {
+  display: inline !important;
+}
+body.heilog-app-v2 .heilog-header-v2 #heilog-settings-panel .heilog-unit-switcher {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+body.heilog-app-v2 .heilog-header-v2 #heilog-settings-panel .heilog-unit-switcher select {
+  width: 100%;
+  max-width: none;
+}
+body.heilog-app-v2 .heilog-header-v2 #heilog-settings-btn[aria-expanded="true"] {
+  background: #dff2e7;
+  border-color: #80b797;
+}
+@media (max-width: 900px) {
+  body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .app-v2-live-pill {
+    display: inline-flex !important;
+    padding-inline: 8px;
+  }
+  body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .heilog-user-copy {
+    display: grid !important;
+    padding-right: 4px;
+  }
+  body.heilog-app-v2 .heilog-header-v2 .heilog-user-copy strong { max-width: 110px; }
+  body.heilog-app-v2 .heilog-header-v2 .heilog-user-copy small { display: none; }
+  body.heilog-app-v2 .heilog-header-v2 #heilog-settings-btn > span { display: none; }
+  body.heilog-app-v2 .heilog-header-v2 .site-header-main { flex-wrap: wrap; }
+  body.heilog-app-v2 .heilog-header-v2 .top-actions { flex-wrap: wrap; }
+}
+
+body.heilog-app-v2 .heilog-header-v2 #heilog-logout-btn span { display: inline !important; }
+
+#patio-duplicate-dt-warning[data-has-pending="false"] {
+  background: #f0fdf4 !important;
+  border-color: #86bfa0 !important;
+  color: #166534 !important;
+}
+.duplicate-dt-list { display: grid; gap: 10px; }
+.duplicate-dt-list li { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.duplicate-dt-list button { background: #92400e; color: #fff; border-radius: 9px; padding: 8px 12px; font-weight: 700; font-size: 13px; white-space: nowrap; }
+.duplicate-dt-resolved { margin-top: 12px; color: #166534; }
+.duplicate-dt-resolved summary { cursor: pointer; font-weight: 700; }
+.duplicate-dt-resolved > div { border-top: 1px solid #c7decf; margin-top: 10px; padding-top: 10px; }
+.duplicate-dt-resolved p { white-space: pre-wrap; overflow-wrap: anywhere; margin: 5px 0; }
+#duplicate-dt-resolution-modal { position: fixed; inset: 0; z-index: 18000; display: flex; align-items: center; justify-content: center; background: #0009; padding: 16px; }
+#duplicate-dt-resolution-modal[hidden] { display: none !important; }
+.duplicate-dt-dialog { width: min(560px, 95vw); max-height: 90dvh; overflow-y: auto; padding: 24px; border-radius: 20px; background: #fff; color: #183a29; box-shadow: 0 20px 70px #0005; }
+.duplicate-dt-dialog h2 { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+.duplicate-dt-dialog > p { font-size: 14px; color: #586960; margin-bottom: 18px; }
+.duplicate-dt-dialog label { display: block; font-weight: 700; margin-bottom: 8px; }
+.duplicate-dt-dialog textarea { width: 100%; border: 1px solid #b8ccbf; border-radius: 10px; padding: 12px; background: #fff !important; color: #183a29 !important; resize: vertical; }
+.duplicate-dt-dialog textarea:focus { outline: 2px solid #00763c; outline-offset: 2px; }
+#duplicate-dt-resolution-status { min-height: 24px; font-size: 14px; margin: 10px 0; }
+.duplicate-dt-dialog-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
+.duplicate-dt-dialog-actions button { padding: 10px 14px; border-radius: 10px; background: #edf3ef; color: #183a29; font-weight: 700; }
+.duplicate-dt-dialog-actions #duplicate-dt-resolution-save { background: #00763c; color: #fff; }
+.duplicate-dt-dialog-actions button:disabled { opacity: .6; cursor: wait; }
