@@ -1,0 +1,381 @@
+/* =====================================================================
+   Layout compacto (Pátio, topo, lateral). Carregado por último.
+   Não altera estilos de impressão (folha de marcação / checklist).
+   ===================================================================== */
+@media screen {
+
+/* ---------- Topo em uma linha ---------- */
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 {
+  min-height: 0 !important;
+  padding: 8px 20px !important;
+  margin-bottom: 0 !important;
+  border-radius: 0 !important;
+}
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .site-header-main {
+  min-height: 0 !important;
+  flex-wrap: nowrap !important;
+  justify-content: flex-end !important;
+  gap: 12px !important;
+}
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .brand-wrap {
+  display: none !important;
+}
+body.heilog-app-v2:not(.pandora-env-active) .heilog-header-v2 .top-actions {
+  width: auto !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  gap: 8px !important;
+}
+body.heilog-app-v2 .heilog-header-v2 .heilog-user-session {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+body.heilog-app-v2 .heilog-header-v2 .heilog-user-session[hidden] { display: none !important; }
+/* Nome some; fica só a inicial, no canto direito (nome completo no título). */
+body.heilog-app-v2 .heilog-header-v2 .heilog-user-copy { display: none !important; }
+body.heilog-app-v2 .heilog-header-v2 .heilog-user-avatar { order: 10 !important; cursor: default; }
+/* Configurações vira só a engrenagem. */
+body.heilog-app-v2 .heilog-header-v2 #heilog-settings-btn > span { display: none !important; }
+body.heilog-app-v2 .heilog-header-v2 #heilog-settings-btn {
+  width: 38px !important;
+  min-width: 38px !important;
+  padding: 0 !important;
+  justify-content: center !important;
+}
+
+/* Título da página (Pátio) mais baixo. */
+body.heilog-app-v2 .app-v2-hero {
+  padding: 14px 0 6px !important;
+  margin: 0 !important;
+  min-height: 0 !important;
+}
+
+/* ---------- Alertas do sistema numa linha ---------- */
+#system-alerts-container.has-compact-alerts {
+  display: flex !important;
+  flex-direction: column;
+  gap: 6px !important;
+  margin-bottom: 10px !important;
+}
+#system-alerts-container.is-collapsed > :not(.sys-alerts-toggle) { display: none !important; }
+#system-alerts-container .sys-alerts-toggle {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid #f2b8b0;
+  border-radius: 9px;
+  background: #fdecea;
+  color: #8f1d12;
+  font: 700 13px/1.2 Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+#system-alerts-container .sys-alerts-toggle svg {
+  width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+#system-alerts-container .sys-alerts-toggle u { font-weight: 600; }
+
+/* ---------- Abas Fluxo / Outras compactas ---------- */
+body.heilog-app-v2 #operation-group-tabs.operation-group-tabs {
+  display: inline-flex !important;
+  gap: 0 !important;
+  padding: 3px !important;
+  margin: 0 0 10px !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: #dbe9e0 !important;
+  box-shadow: none !important;
+  width: auto !important;
+}
+body.heilog-app-v2 #operation-group-tabs.operation-group-tabs[hidden] { display: none !important; }
+html body.heilog-app-v2 #operation-group-tabs.operation-group-tabs > button[data-operation-group] {
+  min-height: 34px !important;
+  height: 34px !important;
+  padding: 0 14px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: #2c4337 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+html body.heilog-app-v2 #operation-group-tabs.operation-group-tabs > button[data-operation-group][aria-pressed="true"] {
+  background: #ffffff !important;
+  color: #075b3b !important;
+  font-weight: 700 !important;
+}
+
+/* ---------- Contadores das etapas ---------- */
+.integrated-summary .integrated-heading { margin: 4px 0 8px !important; }
+.integrated-summary .integrated-heading h2 { font-size: 15px !important; }
+body.heilog-app-v2 #integrated-flow-counts .integrated-flow-card {
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 10px 12px !important;
+  gap: 4px !important;
+  justify-content: flex-start !important;
+}
+body.heilog-app-v2 #integrated-flow-counts .integrated-flow-card strong { font-size: 24px !important; line-height: 1.1 !important; }
+body.heilog-app-v2 #integrated-flow-counts .integrated-flow-card .flow-oldest {
+  display: inline-block !important;
+  width: fit-content;
+  margin-top: 2px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+  -webkit-text-fill-color: currentColor !important;
+}
+body.heilog-app-v2 #integrated-flow-counts .flow-oldest-ok { color: #0b5c33; background: #e3f4ea; border: 1px solid #b7dfc6; }
+body.heilog-app-v2 #integrated-flow-counts .flow-oldest-warning { color: #7a4b00; background: #fff1d1; border: 1px solid #f1d08a; }
+body.heilog-app-v2 #integrated-flow-counts .flow-oldest-late { color: #8f1d12; background: #fdecea; border: 1px solid #f2b8b0; }
+
+
+/* ---------- Filtros do Pátio numa linha ---------- */
+html body.heilog-app-v2[data-active-panel-tab="patio"] main#table-main-content #filters-container#filters-container {
+  grid-template-columns: minmax(240px, 2fr) repeat(4, minmax(140px, 1fr)) !important;
+  gap: 8px !important;
+  padding: 10px !important;
+  align-items: end !important;
+}
+body.heilog-app-v2[data-active-panel-tab="patio"] #filters-container > .replica-search-field {
+  grid-column: auto !important;
+  order: -1 !important;
+}
+body.heilog-app-v2[data-active-panel-tab="patio"] #filters-container .replica-filter-label,
+body.heilog-app-v2[data-active-panel-tab="patio"] #filters-container .replica-search-field > label {
+  position: absolute !important; width: 1px !important; height: 1px !important;
+  overflow: hidden !important; clip: rect(0 0 0 0) !important; white-space: nowrap !important;
+}
+body.heilog-app-v2[data-active-panel-tab="patio"] #filters-container .hl-ms-button,
+body.heilog-app-v2[data-active-panel-tab="patio"] #filters-container #search-input {
+  height: 38px !important;
+  min-height: 38px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  border-radius: 9px !important;
+}
+body.heilog-app-v2[data-active-panel-tab="patio"] #filters-container #search-input { font-weight: 500 !important; width: 100% !important; }
+@media (max-width: 1100px) {
+  html body.heilog-app-v2[data-active-panel-tab="patio"] main#table-main-content #filters-container#filters-container { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  body.heilog-app-v2[data-active-panel-tab="patio"] #filters-container > .replica-search-field { grid-column: 1 / -1 !important; }
+}
+
+/* ---------- Barra de lote: só o essencial até selecionar ---------- */
+#bulk-close-toolbar { padding: 8px 12px !important; gap: 10px !important; margin-bottom: 10px !important; }
+#bulk-close-toolbar:not(.has-selection) > :not(label):not([data-bulk-page]) { display: none !important; }
+#bulk-close-toolbar button { padding: 6px 12px !important; }
+#bulk-close-toolbar.has-selection { background: #eef8f2 !important; border-color: #9fd3b6 !important; }
+
+/* ---------- Pátio em cartões ---------- */
+#operations-table[data-active-tab="patio"][data-group="flow"] thead { display: none !important; }
+#operations-table[data-active-tab="patio"][data-group="flow"],
+#operations-table[data-active-tab="patio"][data-group="flow"] > tbody {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+#operations-table[data-active-tab="patio"] tr.patio-card-row {
+  display: block !important;
+  border: 0 !important;
+  background: transparent !important;
+  padding: 0 0 8px !important;
+}
+#operations-table[data-active-tab="patio"] tr.patio-card-row:hover { background: transparent !important; }
+body.heilog-app-v2 #operations-table[data-active-tab="patio"][data-group="flow"] tr.patio-card-row > td.patio-card-cell,
+#operations-table[data-active-tab="patio"] tr.patio-card-row > td.patio-card-cell {
+  display: block !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  vertical-align: top !important;
+}
+
+.patio-card {
+  --patio-tone: #0b5c33;
+  --patio-tone-bg: #e3f4ea;
+  display: grid;
+  grid-template-columns: 38px minmax(230px, 0.85fr) minmax(0, 1.5fr) minmax(372px, 1.1fr);
+  align-items: stretch;
+  background: #ffffff;
+  border: 1px solid #dbe7df;
+  border-radius: 12px;
+  box-shadow: inset 4px 0 0 var(--patio-tone);
+  color: #10241a;
+  font-family: Inter, system-ui, sans-serif;
+  text-align: left;
+}
+.patio-card.flow-time-warning { --patio-tone: #7a4b00; --patio-tone-bg: #fff1d1; }
+.patio-card.flow-time-late { --patio-tone: #8f1d12; --patio-tone-bg: #fdecea; }
+.patio-card-row.animate-pulse-red .patio-card,
+.patio-card-row.animate-pulse-yellow .patio-card { outline: 2px solid var(--patio-tone); }
+
+.patio-card-select { padding: 16px 0 0 14px; }
+.patio-card-select .bulk-row-select {
+  display: inline-flex !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+.patio-card-select .bulk-row-select input { width: 16px; height: 16px; margin: 0; }
+
+.patio-card-op { display: flex; gap: 14px; align-items: flex-start; padding: 14px 16px; min-width: 0; }
+.patio-card-time {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  min-width: 88px; padding: 10px 8px; border-radius: 10px;
+  color: var(--patio-tone); background: var(--patio-tone-bg);
+}
+.patio-card-time strong { font: 700 16px/1 "JetBrains Mono", ui-monospace, Consolas, monospace; letter-spacing: -0.02em; }
+.patio-card-time span { font-size: 10.5px; font-weight: 600; }
+.patio-card-ident { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.patio-card-dt { font: 700 16px/1.2 "JetBrains Mono", ui-monospace, Consolas, monospace; color: #10241a; }
+.patio-card-meta { font-size: 12px; color: #4c6356; line-height: 1.35; }
+.patio-card-meta b { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; color: #2c4337; }
+/* Prioridade compacta (o bloco antigo era um cartão grande). */
+.patio-card-priority .op-priority-card {
+  display: inline-flex !important; flex-wrap: wrap; align-items: center; gap: 4px 6px;
+  width: fit-content !important; min-width: 0 !important; max-width: 100%;
+  margin: 0 !important; padding: 2px 8px !important;
+  border-radius: 999px !important; box-shadow: none !important;
+  border-left-width: 1px !important;
+}
+.patio-card-priority .op-priority-card::before, .patio-card-priority .op-priority-card::after { display: none !important; }
+.patio-card-priority .op-priority-card > * { margin: 0 !important; font-size: 11px !important; line-height: 1.3 !important; }
+.patio-card-priority .op-priority-label { display: none !important; }
+.patio-card-priority > span { display: inline-block; width: fit-content; font-size: 11px !important; padding: 2px 8px !important; }
+
+.patio-card-driver {
+  display: flex; flex-direction: column; gap: 10px; min-width: 0;
+  padding: 14px 16px; border-left: 1px solid #e7eee9;
+}
+.patio-card-driver-name { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; }
+.patio-card-driver-name strong { font-size: 15px; font-weight: 700; color: #10241a; }
+.patio-card-driver-name span { font-size: 12px; color: #4c6356; }
+.patio-card-driver-name span.is-missing { color: #8a5a00; font-weight: 600; }
+.patio-card-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0; }
+.patio-card-facts > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.patio-card-facts dt { font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #5b6f63; }
+.patio-card-facts dd { margin: 0; font-size: 13px; font-weight: 600; color: #10241a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.patio-card-facts dd.is-mono { font: 700 14px/1.3 "JetBrains Mono", ui-monospace, Consolas, monospace; }
+
+.patio-card-flow {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 14px 16px; border-left: 1px solid #e7eee9;
+}
+.patio-card-stage { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 13px; color: #10241a; }
+.patio-card-stage em { font-style: normal; color: #4c6356; }
+.patio-card-stage small { font-size: 12px; color: #4c6356; white-space: nowrap; }
+.patio-card-steps { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px; margin: 0; padding: 0; list-style: none; }
+.patio-card-steps li { height: 6px; border-radius: 3px; background: #dbe7df; }
+.patio-card-steps li.done { background: #087044; }
+.patio-card-steps li.current { background: var(--patio-tone); }
+
+.patio-card-actions { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.patio-card-actions .patio-advance {
+  flex: 1 1 auto; min-width: 96px; height: 34px; padding: 0 12px;
+  border: 0; border-radius: 9px; background: #087044; color: #ffffff;
+  font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+.patio-card-actions .patio-advance:hover { background: #075b3b; }
+body.heilog-app-v2 #table-body .patio-card-actions > .table-action-btn,
+.patio-card-actions .table-action-btn {
+  width: 34px !important; height: 34px !important; min-width: 34px !important; min-height: 34px !important;
+  flex: none !important; padding: 0 !important; margin: 0 !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  border: 1px solid #d5e2da !important; border-radius: 9px !important;
+  background: #ffffff !important; color: #2c4337 !important; box-shadow: none !important;
+}
+.patio-card-actions .table-action-btn:hover { background: #f1f6f3 !important; }
+body.heilog-app-v2 #table-body .patio-card-actions > .table-action-btn svg,
+.patio-card-actions .table-action-btn svg { width: 16px !important; height: 16px !important; color: inherit !important; }
+body.heilog-app-v2 #table-body .patio-card-actions > .table-action-whatsapp { color: #0b5c33 !important; }
+body.heilog-app-v2 #table-body .patio-card-actions > .table-action-whatsapp.already-called { background: #e3f4ea !important; border-color: #9fd3b6 !important; }
+body.heilog-app-v2 #table-body .patio-card-actions > .table-action-whatsapp.sap-locked { color: #8f1d12 !important; border-color: #f2b8b0 !important; }
+body.heilog-app-v2 #table-body .patio-card-actions > [data-action="cancel"] { color: #b42318 !important; }
+.patio-card-actions .table-action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.patio-card-actions .patio-reverse { font-size: 16px !important; font-weight: 700 !important; }
+/* Rótulos dos botões ficam só para leitor de tela; o nome aparece no title. */
+.patio-card-actions .table-action-label {
+  position: absolute !important; width: 1px !important; height: 1px !important;
+  overflow: hidden !important; clip: rect(0 0 0 0) !important; white-space: nowrap !important;
+}
+
+/* Telas médias: o fluxo desce para uma segunda linha. */
+@media (max-width: 1280px) {
+  .patio-card { grid-template-columns: 38px minmax(220px, 0.9fr) minmax(0, 1.5fr); }
+  .patio-card-flow { grid-column: 2 / -1; border-left: 0; border-top: 1px solid #e7eee9; }
+}
+/* Celular: tudo empilhado. */
+@media (max-width: 760px) {
+  .patio-card { grid-template-columns: 34px minmax(0, 1fr); }
+  .patio-card-op, .patio-card-driver, .patio-card-flow { grid-column: 2 / -1; border-left: 0; }
+  .patio-card-driver { border-top: 1px solid #e7eee9; }
+  .patio-card-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ---------- Menu lateral em grupos ---------- */
+#panel-tabs-wrap .app-nav-group-toggle {
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+  width: calc(100% - 12px);
+  margin: 10px 6px 2px !important;
+  padding: 6px 6px !important;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+#panel-tabs-wrap .app-nav-group-toggle[hidden] { display: none !important; }
+#panel-tabs-wrap .app-nav-group-toggle:hover { background: #f2f8f4; color: #2c4337; }
+#panel-tabs-wrap .app-nav-group-toggle svg { width: 12px; height: 12px; flex: none; transition: transform 150ms ease; }
+#panel-tabs-wrap .app-nav-group-toggle[aria-expanded="true"] svg { transform: rotate(90deg); }
+#panel-tabs-wrap .tab-btn.nav-group-collapsed:not(.active-tab) { display: none !important; }
+.sidebar-collapsed #panel-tabs-wrap .tab-btn.nav-group-collapsed { display: flex !important; }
+.sidebar-collapsed #panel-tabs-wrap .app-nav-group-toggle { display: none !important; }
+#panel-tabs-wrap .tab-btn { min-height: 40px !important; padding: 7px 12px !important; }
+
+}
+
+@media screen {
+/* Botão "Liberar DT para a fábrica" no tamanho dos demais. */
+body.heilog-app-v2 #redirects-toolbar [data-redirect-open] {
+  min-height: 38px !important; height: 38px !important; padding: 0 14px !important;
+  font-size: 13px !important; border-radius: 9px !important;
+}
+body.heilog-app-v2 #redirects-toolbar { margin-bottom: 10px !important; }
+}
+
+@media screen {
+/* Cartões não herdam a largura mínima nem os rótulos da tabela antiga no celular. */
+html body.heilog-app-v2 #operations-table#operations-table[data-active-tab="patio"][data-group="flow"] {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+html body.heilog-app-v2 #operations-table[data-active-tab="patio"][data-group="flow"] tr.patio-card-row > td.patio-card-cell::before,
+html body.heilog-app-v2 #operations-table[data-active-tab="patio"][data-group="flow"] tr.patio-card-row::before {
+  content: none !important;
+  display: none !important;
+}
+}

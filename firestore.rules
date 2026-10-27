@@ -1,0 +1,164 @@
+rules_version = '2';
+
+// Regras do HEILOG. Espelham as permissões que o painel já aplica na tela:
+// só quem foi APROVADO lê/grava, cada um só na(s) sua(s) unidade(s),
+// perfis de consulta só leem, e só admin mexe em usuários.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- quem está pedindo ----------
+    function signedIn() { return request.auth != null; }
+    function isOwnerEmail() {
+      return signedIn() && request.auth.token.email == 'joelamerico6@gmail.com';
+    }
+    function profilePath() {
+      return /databases/$(database)/documents/artifacts/heilog-logistica/public/data/usuarios/$(request.auth.uid);
+    }
+    function hasProfile() { return signedIn() && exists(profilePath()); }
+    function me() { return get(profilePath()).data; }
+    function myRole() { return string(me().get('role', me().get('perfil', ''))).lower(); }
+    function myStatus() { return string(me().get('status', '')).lower(); }
+
+    function isBlockedProfile() {
+      return me().get('ativo', null) == false
+        || me().get('aprovado', null) == false
+        || myRole() in ['pendente', 'bloqueado']
+        || myStatus() in ['pendente', 'bloqueado', 'inativo'];
+    }
+    function isApprovedProfile() {
+      return me().get('ativo', false) == true
+        || me().get('aprovado', false) == true
+        || myStatus() in ['aprovado', 'ativo']
+        || myRole() in ['admin', 'analista', 'operador', 'supervisor', 'consulta', 'visualizador', 'tv', 'portaria'];
+    }
+
+    function isGlobalAdmin() {
+      return isOwnerEmail()
+        || (hasProfile() && (me().get('globalAdmin', false) == true || me().get('proprietario', false) == true));
+    }
+    // Usuário liberado (aprovado e não bloqueado).
+    function isActive() {
+      return isGlobalAdmin() || (hasProfile() && !isBlockedProfile() && isApprovedProfile());
+    }
+    function isUnitAdmin() { return isActive() && myRole() == 'admin'; }
+    function isAdmin() { return isGlobalAdmin() || isUnitAdmin(); }
+
+    function myUnits() { return me().get('unidades', []); }
+    function hasUnit(unitId) {
+      return isGlobalAdmin()
+        || (hasProfile() && (
+              myUnits().hasAny(['*', unitId])
+              || (myUnits().size() == 0 && me().get('unidadeSolicitada', 'jacarei') == unitId)));
+    }
+
+    // Leitura: qualquer perfil liberado da unidade.
+    function canRead(unitId) { return isActive() && hasUnit(unitId); }
+    // Gravação: perfis liberados, exceto os só de consulta.
+    function canWrite(unitId) {
+      return canRead(unitId)
+        && (isGlobalAdmin() || !(myRole() in ['consulta', 'visualizador', 'tv']));
+    }
+    // Redirecionamentos HEILO: só analista e admin (igual à tela).
+    function canManageRedirects() {
+      return canRead('jacarei') && (isAdmin() || myRole() == 'analista');
+    }
+
+    // ---------- cadastro de usuários ----------
+    function isProtectedProfile(p) {
+      return p.get('proprietario', false) == true
+        || p.get('globalAdmin', false) == true
+        || p.get('username', '') == 'joel.0609';
+    }
+    // O admin de unidade só mexe em quem é (ou pediu para ser) da unidade dele.
+    function isFromMyUnits(p) {
+      return myUnits().hasAny(['*'])
+        || p.get('unidades', []).hasAny(myUnits())
+        || p.get('unidadeSolicitada', 'jacarei') in myUnits();
+    }
+    // ... e só libera unidades que ele próprio tem.
+    function grantsOnlyMyUnits() {
+      return myUnits().hasAny(['*'])
+        || myUnits().toSet().hasAll(
+             request.resource.data.get('unidades', []).toSet()
+               .difference(resource.data.get('unidades', []).toSet()));
+    }
+    function changedKeys() { return request.resource.data.diff(resource.data).affectedKeys(); }
+
+    match /artifacts/heilog-logistica/public/data/usuarios/{uid} {
+      // Cada um lê o próprio perfil (necessário no login, mesmo pendente); admins leem todos.
+      allow read: if (signedIn() && request.auth.uid == uid) || isAdmin();
+
+      // "Solicitar acesso": só cria o próprio perfil, e obrigatoriamente como pendente.
+      allow create: if isGlobalAdmin()
+        || (signedIn() && request.auth.uid == uid
+            && request.resource.data.keys().hasOnly([
+                 'nome', 'username', 'role', 'status', 'ativo', 'aprovado', 'proprietario',
+                 'globalAdmin', 'unidades', 'unidadeSolicitada', 'solicitadoEm', 'solicitadoEmMs', 'origem'])
+            && request.resource.data.role == 'pendente'
+            && request.resource.data.status == 'pendente'
+            && request.resource.data.ativo == false
+            && request.resource.data.aprovado == false
+            && request.resource.data.get('proprietario', false) == false
+            && request.resource.data.get('globalAdmin', false) == false
+            && request.resource.data.get('unidades', []).size() == 0);
+
+      allow update: if isGlobalAdmin()
+        // Admin da unidade: aprovar, bloquear, mudar perfil e unidades de quem é da unidade dele.
+        || (isUnitAdmin()
+            && request.auth.uid != uid
+            && !isProtectedProfile(resource.data)
+            && !isProtectedProfile(request.resource.data)
+            && isFromMyUnits(resource.data)
+            && grantsOnlyMyUnits()
+            && string(request.resource.data.get('role', '')).lower() in ['analista', 'operador', 'admin', 'bloqueado', 'pendente']
+            && changedKeys().hasOnly([
+                 'role', 'status', 'ativo', 'aprovado', 'unidades', 'unidadeSolicitada',
+                 'aprovadoEm', 'aprovadoPorUid', 'aprovadoPorUsuario',
+                 'bloqueadoEm', 'bloqueadoPorUid', 'bloqueadoPorUsuario',
+                 'alteradoEm', 'alteradoPorUid', 'alteradoPorUsuario']))
+        // O próprio usuário: só registrar troca de PIN (e, se ainda pendente, refazer o pedido).
+        || (signedIn() && request.auth.uid == uid
+            && request.resource.data.get('deveTrocarPin', false) == false
+            && (changedKeys().hasOnly([
+                  'senhaAlteradaEm', 'senhaAlteradaEmMs', 'senhaAlteradaPorUsuario', 'deveTrocarPin'])
+                || (resource.data.get('role', '') == 'pendente'
+                    && changedKeys().hasOnly([
+                         'nome', 'unidadeSolicitada', 'solicitadoEm', 'solicitadoEmMs', 'origem']))));
+
+      allow delete: if isGlobalAdmin()
+        || (isUnitAdmin()
+            && request.auth.uid != uid
+            && !isProtectedProfile(resource.data)
+            && isFromMyUnits(resource.data));
+    }
+
+    // Unidades: todo usuário logado vê a lista; só o admin geral cadastra ou pausa.
+    match /artifacts/heilog-logistica/public/data/unidades/{unitId} {
+      allow read: if signedIn();
+      allow write: if isGlobalAdmin();
+    }
+
+    // Registro de redefinições de PIN: só o servidor grava; só o admin geral lê.
+    match /artifacts/heilog-logistica/public/data/auditoria_acessos/{id} {
+      allow read: if isGlobalAdmin();
+      allow write: if false;
+    }
+
+    // ---------- dados operacionais ----------
+    // Jacareí (caminho original): pátio, histórico, ocorrências, motoristas, Controle DT etc.
+    match /artifacts/heilog-logistica/public/data/{col}/{rest=**} {
+      allow read: if !(col in ['usuarios', 'unidades', 'auditoria_acessos'])
+        && canRead('jacarei');
+      allow write: if (!(col in ['usuarios', 'unidades', 'auditoria_acessos', 'redirects']) && canWrite('jacarei'))
+        || (col == 'redirects' && canManageRedirects());
+    }
+
+    // Demais unidades.
+    match /artifacts/heilog-logistica/units/{unitId}/{rest=**} {
+      allow read: if canRead(unitId);
+      allow write: if canWrite(unitId);
+    }
+
+    // Qualquer outro caminho fica fechado.
+  }
+}

@@ -47,22 +47,74 @@
     if (subtitle) subtitle.textContent = meta[1];
   }
 
-  function addNavigationSections(nav) {
-    const sections = [
-      ["tab-patio", "Operação"],
-      ["tab-performance", "Desempenho"],
-      ["tab-controle-dt", "Controles"],
-      ["tab-drop-panel", "Drop & Hook"],
-      ["tab-dashboard", "Gestão"]
-    ];
+  // Menu lateral: os mais usados no topo; o resto em grupos que abrem e fecham.
+  // A estrutura continua plana (título seguido das abas) porque o controle de
+  // perfil do painel percorre os irmãos de cada .app-nav-section.
+  const NAV_MAIN = ["tab-patio", "tab-historico", "tab-ocorrencias", "tab-performance", "tab-motoristas", "tab-baldeios"];
+  const NAV_GROUPS = [
+    ["operacao", "Operação", ["tab-avisos-history", "tab-drop-dashboard", "tab-movimento-dia"]],
+    ["controles", "Controles", ["tab-controle-dt", "tab-ritmo", "tab-pre-carga"]],
+    ["drop", "Drop & Hook", ["tab-drop-panel", "tab-pandora"]],
+    ["gestao", "Gestão", ["tab-dashboard"]]
+  ];
+  const NAV_STORAGE_KEY = "heilog-nav-groups-open";
 
-    sections.forEach(([id, label]) => {
+  function readOpenGroups() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(NAV_STORAGE_KEY) || "null");
+      if (Array.isArray(saved)) return new Set(saved);
+    } catch (_) {}
+    return new Set(["operacao"]);
+  }
+
+  function saveOpenGroups(open) {
+    try { localStorage.setItem(NAV_STORAGE_KEY, JSON.stringify([...open])); } catch (_) {}
+  }
+
+  function addNavigationSections(nav) {
+    if (nav.dataset.navGrouped) return;
+    nav.dataset.navGrouped = "true";
+    nav.querySelectorAll(".app-nav-section").forEach((section) => section.remove());
+    const open = readOpenGroups();
+    const placed = new Set();
+
+    const mainLabel = document.createElement("div");
+    mainLabel.className = "app-nav-section app-nav-main-label";
+    mainLabel.textContent = "Mais usados";
+    nav.appendChild(mainLabel);
+    NAV_MAIN.forEach((id) => {
       const tab = document.getElementById(id);
-      if (!tab || tab.previousElementSibling?.classList.contains("app-nav-section")) return;
-      const section = document.createElement("div");
-      section.className = "app-nav-section";
-      section.textContent = label;
-      nav.insertBefore(section, tab);
+      if (tab) { nav.appendChild(tab); placed.add(id); }
+    });
+
+    const groups = NAV_GROUPS.map(([key, label, ids]) => ({ key, label, ids: [...ids] }));
+    // Abas novas que não estejam na lista entram no último grupo, para nunca sumirem.
+    nav.querySelectorAll(".tab-btn").forEach((tab) => {
+      if (!placed.has(tab.id) && !groups.some((group) => group.ids.includes(tab.id))) groups[groups.length - 1].ids.push(tab.id);
+    });
+
+    groups.forEach(({ key, label, ids }) => {
+      const tabs = ids.map((id) => document.getElementById(id)).filter(Boolean);
+      if (!tabs.length) return;
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "app-nav-section app-nav-group-toggle";
+      toggle.dataset.navGroup = key;
+      toggle.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span></span>`;
+      toggle.querySelector("span").textContent = label;
+      nav.appendChild(toggle);
+      tabs.forEach((tab) => { tab.dataset.navGroup = key; nav.appendChild(tab); });
+      const apply = (isOpen) => {
+        toggle.setAttribute("aria-expanded", String(isOpen));
+        tabs.forEach((tab) => tab.classList.toggle("nav-group-collapsed", !isOpen));
+      };
+      apply(open.has(key));
+      toggle.addEventListener("click", () => {
+        const isOpen = toggle.getAttribute("aria-expanded") !== "true";
+        if (isOpen) open.add(key); else open.delete(key);
+        saveOpenGroups(open);
+        apply(isOpen);
+      });
     });
   }
 

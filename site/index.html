@@ -37,6 +37,8 @@
   <link rel="stylesheet" href="./painel.css">
 <link rel="stylesheet" href="./app-v2.css?v=17">
 <script defer src="./app-v2.js?v=11"></script>
+<link rel="stylesheet" href="./patio-layout.css">
+<script defer src="./patio-layout.js"></script>
 
 <style>
   #driver-code-notification[hidden], #driver-code-pending-modal[hidden] { display:none !important; }
@@ -571,6 +573,27 @@ body.heilog-app-v2 #baldeio-sap-import{background:#d6edde!important;color:#153c2
         <button id="heilog-save-password-btn" type="submit">Alterar PIN</button>
       </footer>
     </form>
+  </section>
+</div>
+
+<div id="heilog-pin-result-modal" class="heilog-access-modal" hidden>
+  <section class="heilog-access-dialog heilog-account-dialog" role="dialog" aria-modal="true" aria-labelledby="heilog-pin-result-title">
+    <header class="heilog-access-dialog-head">
+      <div>
+        <span>GERENCIAR ACESSOS</span>
+        <h2 id="heilog-pin-result-title">PIN temporário gerado</h2>
+        <p>Passe este PIN para <strong id="heilog-pin-result-name"></strong> pessoalmente ou por mensagem direta. No próximo acesso ele vai criar um PIN novo.</p>
+      </div>
+    </header>
+    <div class="heilog-pin-result-box">
+      <output id="heilog-pin-result-value" aria-live="polite">••••••</output>
+      <small>Este PIN aparece só agora. Se perder, gere outro.</small>
+      <small id="heilog-pin-result-copy-status" role="status"></small>
+    </div>
+    <footer class="heilog-access-dialog-foot">
+      <button id="heilog-pin-result-copy" type="button">Copiar PIN</button>
+      <button id="heilog-pin-result-ok" type="button">Pronto</button>
+    </footer>
   </section>
 </div>
 

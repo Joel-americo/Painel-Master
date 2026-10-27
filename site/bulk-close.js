@@ -17,6 +17,7 @@
    filtered=rows.filter(eligible);page=visible.filter(eligible);
    const ids=new Set(filtered.map(op=>op.id));for(const id of selected)if(!ids.has(id))selected.delete(id);
    element.hidden=!isVisible()||!canManage();if(element.hidden){selected.clear();return;}
+   element.classList.toggle('has-selection',selected.size>0||busy);
    element.innerHTML=`<label><input type="checkbox" data-bulk-overdue ${overdue?'checked':''}> Mais de 2 horas no pátio</label><button type="button" data-bulk-page ${busy?'disabled':''}>Selecionar esta página</button><button type="button" data-bulk-clear ${!selected.size||busy?'disabled':''}>Limpar seleção</button><strong role="status">${selected.size} selecionada(s)</strong><button type="button" data-bulk-open ${!selected.size||busy?'disabled':''}>Finalizar em lote</button><small>Até 50 DTs por lote · Admin e Analista</small>`;
   }
   function checkbox(op){return canManage()&&isVisible()&&eligible(op)?`<label class="bulk-row-select"><input type="checkbox" data-bulk-id="${esc(op.id)}" ${selected.has(op.id)?'checked':''} ${busy?'disabled':''}> Selecionar DT ${esc(op.dt||'—')}</label>`:'';}

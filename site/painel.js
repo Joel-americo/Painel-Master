@@ -5456,8 +5456,9 @@ function renderIntegratedSummary(){
 
  const priorityHeading=document.getElementById('integrated-priority-heading');if(priorityHeading)priorityHeading.hidden=activeTab!=='patio';
  if(!visible)return;
- const stageCounts=Array(6).fill(0);for(const op of patioData)if(!isOtherOperation(op)&&op.status!=='Cancelado')stageCounts[getEwmFlow(op).stage]++;
- document.getElementById('integrated-flow-counts').innerHTML=EWM_STAGES.map((label,index)=>operator&&![2,3].includes(index)?'':`<button type="button" class="integrated-flow-card ${index===5?'closed':''}" data-flow-stage="${index}" aria-pressed="${integratedStageFilter===index}"><span>${index===5?'Finalizados no dia':label}</span><strong>${index===5?closedCount:stageCounts[index]}</strong><small>${index===5?'Saída de portaria':'No pátio agora'}</small></button>`).join('');
+ const stageCounts=Array(6).fill(0),stageOldest=Array(6).fill(0);for(const op of patioData)if(!isOtherOperation(op)&&op.status!=='Cancelado'){const stage=getEwmFlow(op).stage;stageCounts[stage]++;const start=getOperationMarkingMs(op);if(start&&(!stageOldest[stage]||start<stageOldest[stage]))stageOldest[stage]=start;}
+ const oldestBadge=index=>{if(activeTab!=='patio'||index===5||!stageCounts[index]||!stageOldest[index])return '';const ms=Math.max(0,Date.now()-stageOldest[index]),tone=getBoardTimeStatus(ms).tone,minutes=Math.floor(ms/60000);return `<em class="flow-oldest flow-oldest-${tone}" title="Há mais tempo no pátio nesta etapa">mais antigo ${Math.floor(minutes/60)}h${String(minutes%60).padStart(2,'0')}</em>`;};
+ document.getElementById('integrated-flow-counts').innerHTML=EWM_STAGES.map((label,index)=>operator&&![2,3].includes(index)?'':`<button type="button" class="integrated-flow-card ${index===5?'closed':''}" data-flow-stage="${index}" aria-pressed="${integratedStageFilter===index}"><span>${index===5?'Finalizados no dia':label}</span><strong>${index===5?closedCount:stageCounts[index]}</strong><small>${index===5?'Saída de portaria':'No pátio agora'}</small>${oldestBadge(index)}</button>`).join('');
  const totals=['1','2','3'].map(turn=>`${turn}º turno: ${closedByShift[turn]}`).join(' • ');
  document.getElementById('integrated-flow-totals').hidden=operator;
  document.getElementById('integrated-flow-totals').textContent=`Finalizados em ${day.split('-').reverse().join('/')}: ${totals}${integratedStageFilter!==null?' • Filtro: '+EWM_STAGES[integratedStageFilter]+' (clique novamente para limpar)':''}`;
@@ -5613,6 +5614,64 @@ function initIntegratedFlow(){
   // ==============================
   // TABLE
   // ==============================
+  // Pátio (fluxo operacional): cada caminhão vira um cartão compacto.
+  // Os botões são os mesmos da linha antiga (mesmos data-action e permissões).
+  const renderPatioFlowCard = ({ op, pulseClass, statusBadge, duplicateBadge, driverName, truckPlate, trailerPlate, actionsHTML }) => {
+    const id = String(op.id || '');
+    const flow = getEwmFlow(op);
+    const stage = flow.stage;
+    const metrics = getFlowMetrics(op, Date.now(), false);
+    const timeStatus = getBoardTimeStatus(metrics.totalMs);
+    const controls = op.status !== 'Cancelado';
+    const canAdvance = controls && stage < 5 && canChangeEwmStage(op, 1);
+    const canReverse = controls && stage > 0 && canChangeEwmStage(op, -1);
+    if (isOperatorAccess()) actionsHTML = actionsHTML.replace(/<button\b[\s\S]*?<\/button>/g, button => /data-action="(?:occurrence|details)"/.test(button) ? button : '');
+    const code = String(op.codigoMotorista ?? '').trim() || String(getDriverInfoFromOperacao(op)?.codigoMotorista ?? '').trim();
+    const stageLabel = op.encerramentoManual ? 'Encerrado manualmente' : EWM_STAGES[stage];
+    const nextLabel = stage < 5 ? EWM_STAGES[stage + 1] : '';
+    const live = !metrics.closed;
+    const stageTime = stage < 5 && live
+      ? `<div class="patio-card-meta">na etapa <b data-flow-duration="${escapeHtml(id)}" data-stage-index="${stage}">${stage === 2 && !metrics.loadingKnown ? '—' : durationText(metrics.durations[stage])}</b></div>`
+      : '';
+    const steps = EWM_STAGES.map((label, index) => {
+      const when = flow.times[index] ? ' · ' + new Date(flow.times[index]).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+      return `<li class="${index < stage ? 'done' : index === stage ? 'current' : 'pending'}" title="${escapeHtml(label + when)}"></li>`;
+    }).join('');
+    const fact = (label, value, mono = false) => `<div><dt>${label}</dt><dd${mono ? ' class="is-mono"' : ''}>${escapeHtml(value || '—')}</dd></div>`;
+    return `<tr class="patio-card-row ${pulseClass}"><td colspan="3" class="patio-card-cell">
+      <article class="patio-card flow-time-${timeStatus.tone}" data-board-time-id="${escapeHtml(id)}">
+        <div class="patio-card-select">${window.HeilogBulkUI?.checkbox(op) || ''}</div>
+        <div class="patio-card-op">
+          <div class="patio-card-time" title="${escapeHtml(timeStatus.label || '')}">
+            <strong ${live ? `data-total-time="${escapeHtml(id)}"` : ''}>${durationText(metrics.totalMs)}</strong>
+            <span>no pátio</span>
+          </div>
+          <div class="patio-card-ident">
+            <div class="patio-card-dt">${escapeHtml(op.dt || '—')}</div>
+            ${duplicateBadge}
+            <div class="patio-card-priority">${statusBadge}</div>
+            <div class="patio-card-meta">${escapeHtml(getOtherOperationType(op) || getTipoOperacaoPainel(op) || '—')} · agenda ${escapeHtml(op.agenda || 'N/A')}</div>
+            ${stageTime}
+            ${op.encerramentoManual ? `<div class="bulk-manual-note"><b>Encerrado manualmente</b><br>${escapeHtml(op.encerramentoManual.reason)}<br>Por ${escapeHtml(op.encerramentoManual.username || op.encerramentoManual.uid)}</div>` : ''}
+          </div>
+        </div>
+        <div class="patio-card-driver">
+          <div class="patio-card-driver-name"><strong>${escapeHtml(driverName)}</strong><span class="${code ? '' : 'is-missing'}">${code ? 'cód. ' + escapeHtml(code) : 'código do motorista não informado'}</span></div>
+          <dl class="patio-card-facts">${fact('Cavalo', truckPlate, true)}${fact('Carreta', trailerPlate, true)}${fact('Veículo', op.vehicleType || op.tipoVeiculo || 'Não informado')}${fact('Transportadora', op.transportadora)}</dl>
+        </div>
+        <div class="patio-card-flow">
+          <div class="patio-card-stage"><span><strong>${escapeHtml(stageLabel)}</strong>${nextLabel && !op.encerramentoManual ? ` <em>→ ${escapeHtml(nextLabel)}</em>` : ''}</span><small>etapa ${stage + 1} de 6</small></div>
+          <ol class="patio-card-steps" aria-label="Etapa ${stage + 1} de 6: ${escapeHtml(stageLabel)}">${steps}</ol>
+          <div class="patio-card-actions" role="group" aria-label="Ações da DT ${escapeHtml(op.dt || '')}">
+            ${canAdvance ? `<button type="button" class="patio-advance" data-action="ewm-advance" data-id="${escapeHtml(id)}" title="Avançar para ${escapeHtml(nextLabel)}">Avançar →</button>` : ''}
+            ${canReverse ? `<button type="button" class="table-action-btn patio-reverse" data-action="ewm-reverse" data-id="${escapeHtml(id)}" title="${stage === 5 ? 'Estornar fluxo' : 'Estornar etapa'}"><span aria-hidden="true">↶</span><span class="table-action-label">${stage === 5 ? 'Estornar fluxo' : 'Estornar etapa'}</span></button>` : ''}
+            ${actionsHTML}
+          </div>
+        </div>
+      </article>
+    </td></tr>`;
+  };
+
   const renderTable = (data, duplicateDtWarnings = new Map()) => {
     const tableBody = document.getElementById('table-body');
     const tableHead = document.getElementById('table-head');
@@ -5626,7 +5685,10 @@ function initIntegratedFlow(){
     if(operationGroupView==='other') { headers.patio='Operação e tempo,Motorista e veículo,Atendimento e ações'; headers.historico='Operação e tempos,Motorista e veículo,Atendimento e ações'; }
 
     const operationsTable = document.getElementById('operations-table');
-    if (operationsTable) operationsTable.dataset.activeTab = activeTab;
+    if (operationsTable) {
+      operationsTable.dataset.activeTab = activeTab;
+      operationsTable.dataset.group = operationGroupView === 'other' ? 'other' : 'flow';
+    }
 
     tableHead.innerHTML =
       `<tr class="border-b border-gray-700">${
@@ -5826,6 +5888,19 @@ function initIntegratedFlow(){
 
       const operationActionsHTML = `${whatsappButtonHTML}${reprintButtonHTML}${specificActions}`;
       const actionButtonsHTML = `<td class="p-3 action-cell"><div class="action-cell-inner">${operationActionsHTML}</div></td>`;
+
+      if (activeTab === 'patio' && !isOtherOperation(opDataForActions)) {
+        return renderPatioFlowCard({
+          op: opDataForActions,
+          pulseClass,
+          statusBadge,
+          duplicateBadge: renderPatioDuplicateDtBadge(op, duplicateDtWarnings),
+          driverName: tableMotoristaNome,
+          truckPlate,
+          trailerPlate,
+          actionsHTML: operationActionsHTML
+        });
+      }
 
       let rowCells = '';
       if (activeTab === 'ocorrencias') {
@@ -22324,6 +22399,7 @@ document.getElementById('clear-date-filter-btn')?.addEventListener('click', () =
         userRole.textContent = username ? `${label} • ${unitName} • ${username}` : `${label} • ${unitName}`;
       }
       if (userAvatar) userAvatar.textContent = (displayName.charAt(0) || 'U').toUpperCase();
+      if (userAvatar) userAvatar.title = userRole?.textContent ? `${displayName} · ${userRole.textContent}` : displayName;
       if (userSession) userSession.hidden = false;
       if (manageAccessButton) manageAccessButton.hidden = !isAdminAccess(user, profile);
       if (manageUnitsButton) manageUnitsButton.hidden = !isGlobalAdminAccess(user, profile);
@@ -22657,6 +22733,13 @@ document.getElementById('clear-date-filter-btn')?.addEventListener('click', () =
             reactivate.textContent = 'Reativar';
             actions.appendChild(reactivate);
           } else {
+            const resetPin = document.createElement('button');
+            resetPin.type = 'button';
+            resetPin.className = 'is-reset-pin';
+            resetPin.dataset.accessAction = 'reset-pin';
+            resetPin.textContent = 'Redefinir PIN';
+            resetPin.title = 'Gera um PIN temporário para quem esqueceu o PIN';
+            actions.appendChild(resetPin);
             const block = document.createElement('button');
             block.type = 'button';
             block.className = 'is-reject';
@@ -22762,7 +22845,81 @@ document.getElementById('clear-date-filter-btn')?.addEventListener('click', () =
       window.setTimeout(() => document.getElementById('heilog-close-access-x')?.focus(), 0);
     };
 
+    // ---- Redefinição de PIN pelo administrador (função de servidor "redefinirPin") ----
+    const PIN_RESET_REGION = 'southamerica-east1';
+    let pinResetCallable = null;
+    const requestPinReset = async (uid) => {
+      if (!pinResetCallable) {
+        const [{ getApp }, { getFunctions, httpsCallable }] = await Promise.all([
+          import('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js'),
+          import('https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js')
+        ]);
+        pinResetCallable = httpsCallable(getFunctions(getApp(), PIN_RESET_REGION), 'redefinirPin');
+      }
+      const result = await pinResetCallable({ uid });
+      const pin = String(result?.data?.pinTemporario || '');
+      if (!/^\d{6}$/.test(pin)) throw new Error('Resposta inválida do servidor.');
+      return pin;
+    };
+    const pinResetErrorMessage = (error) => {
+      const code = String(error?.code || '').replace(/^functions\//, '');
+      if (code === 'not-found' && /function|NOT_FOUND/i.test(String(error?.message || '')) && !/Perfil|conta/i.test(String(error?.message || ''))) {
+        return 'A redefinição de PIN ainda não foi publicada no Firebase.';
+      }
+      if (['permission-denied', 'not-found', 'failed-precondition', 'invalid-argument', 'unauthenticated'].includes(code) && error?.message) {
+        return String(error.message);
+      }
+      if (code === 'internal' || code === 'unavailable') {
+        return 'Não foi possível falar com o servidor de redefinição. Verifique se a função foi publicada e tente de novo.';
+      }
+      return 'Não foi possível redefinir o PIN agora.';
+    };
+    const pinResultModal = document.getElementById('heilog-pin-result-modal');
+    const closePinResult = () => {
+      if (!pinResultModal) return;
+      pinResultModal.hidden = true;
+      const value = document.getElementById('heilog-pin-result-value');
+      if (value) value.textContent = '••••••';
+    };
+    const showPinResult = (name, username, pin) => {
+      if (!pinResultModal) {
+        window.alert(`PIN temporário de ${name}: ${pin}`);
+        return;
+      }
+      document.getElementById('heilog-pin-result-name').textContent = username ? `${name} (@${username})` : name;
+      document.getElementById('heilog-pin-result-value').textContent = pin;
+      const status = document.getElementById('heilog-pin-result-copy-status');
+      if (status) status.textContent = '';
+      pinResultModal.hidden = false;
+      window.setTimeout(() => document.getElementById('heilog-pin-result-ok')?.focus(), 0);
+    };
+    document.getElementById('heilog-pin-result-ok')?.addEventListener('click', closePinResult);
+    document.getElementById('heilog-pin-result-copy')?.addEventListener('click', async () => {
+      const pin = document.getElementById('heilog-pin-result-value')?.textContent || '';
+      const status = document.getElementById('heilog-pin-result-copy-status');
+      try {
+        await navigator.clipboard.writeText(pin);
+        if (status) status.textContent = 'Copiado.';
+      } catch (_) {
+        if (status) status.textContent = 'Não foi possível copiar; anote o PIN.';
+      }
+    });
+
+    let accountChangeRequired = false;
+    const setAccountModalForced = (forced) => {
+      accountChangeRequired = forced;
+      const closeX = document.getElementById('heilog-close-account-x');
+      if (closeX) closeX.hidden = forced;
+      const cancelButton = document.getElementById('heilog-close-account-btn');
+      if (cancelButton) cancelButton.textContent = forced ? 'Sair' : 'Cancelar';
+      const title = document.getElementById('heilog-account-title');
+      if (title) title.textContent = forced ? 'Crie um PIN novo' : 'Alterar senha';
+      const currentLabel = document.querySelector('label:has(#heilog-current-pin) > span');
+      if (currentLabel) currentLabel.textContent = forced ? 'PIN temporário' : 'PIN atual';
+    };
+
     const closeAccountModal = () => {
+      if (accountChangeRequired) return;
       if (accountModal) accountModal.hidden = true;
       if (accountForm) accountForm.reset();
       document.body.classList.remove('heilog-access-open');
@@ -22774,7 +22931,9 @@ document.getElementById('clear-date-filter-btn')?.addEventListener('click', () =
       closeUnitsModal();
       accountModal.hidden = false;
       document.body.classList.add('heilog-access-open');
-      setAuthStatus(accountStatus, 'A alteração vale no próximo acesso.');
+      setAuthStatus(accountStatus, accountChangeRequired
+        ? 'Seu PIN foi redefinido pelo administrador. Digite o PIN temporário que você recebeu e escolha um PIN novo para continuar.'
+        : 'A alteração vale no próximo acesso.');
       window.setTimeout(() => document.getElementById('heilog-current-pin')?.focus(), 0);
     };
 
@@ -22805,7 +22964,14 @@ document.getElementById('clear-date-filter-btn')?.addEventListener('click', () =
 
     accountButton?.addEventListener('click', openAccountModal);
     document.getElementById('heilog-close-account-x')?.addEventListener('click', closeAccountModal);
-    document.getElementById('heilog-close-account-btn')?.addEventListener('click', closeAccountModal);
+    document.getElementById('heilog-close-account-btn')?.addEventListener('click', async () => {
+      if (!accountChangeRequired) return closeAccountModal();
+      try {
+        await signOut(auth);
+      } finally {
+        window.location.reload();
+      }
+    });
     accountModal?.addEventListener('click', (event) => {
       if (event.target === accountModal) closeAccountModal();
     });
@@ -22839,8 +23005,11 @@ document.getElementById('clear-date-filter-btn')?.addEventListener('click', () =
         await setDoc(accessProfileRef(currentSessionUser.uid), {
           senhaAlteradaEm: serverTimestamp(),
           senhaAlteradaEmMs: Date.now(),
-          senhaAlteradaPorUsuario: sessionAuditUsername()
+          senhaAlteradaPorUsuario: sessionAuditUsername(),
+          deveTrocarPin: false
         }, { merge: true });
+        if (currentSessionProfile) currentSessionProfile.deveTrocarPin = false;
+        setAccountModalForced(false);
         setAuthStatus(accountStatus, 'PIN alterado com sucesso.', 'success');
         showToast('Seu PIN foi alterado com sucesso.', 'success');
         window.setTimeout(closeAccountModal, 900);
@@ -22886,7 +23055,7 @@ document.getElementById('clear-date-filter-btn')?.addEventListener('click', () =
         return;
       }
       if (username !== OWNER_USERNAME) {
-        setAuthStatus(loginStatus, 'Peça ao administrador Joel para redefinir seu acesso.', 'error');
+        setAuthStatus(loginStatus, 'Peça ao administrador da sua unidade para redefinir seu PIN em Gerenciar acessos. Você vai receber um PIN temporário.', 'error');
         return;
       }
       setAuthStatus(loginStatus, 'Enviando a recuperação do PIN…', 'loading');
@@ -23121,6 +23290,27 @@ document.getElementById('clear-date-filter-btn')?.addEventListener('click', () =
         });
         return;
       }
+      if (action === 'reset-pin') {
+        if (!uid || isProtectedOwner) return;
+        const profileName = String(card?.querySelector('.heilog-access-identity strong')?.textContent || card?.dataset.username || 'este usuário').trim();
+        showConfirmModal(`Redefinir o PIN de ${profileName}? Será gerado um PIN temporário e a pessoa vai criar um novo no próximo acesso.`, async () => {
+          button.disabled = true;
+          accessStatus.textContent = `Redefinindo o PIN de ${profileName}…`;
+          accessStatus.className = 'heilog-access-status';
+          try {
+            const pin = await requestPinReset(uid);
+            showPinResult(profileName, card?.dataset.username || '', pin);
+            accessStatus.textContent = `PIN de ${profileName} redefinido. Ele terá que criar um novo PIN ao entrar.`;
+          } catch (error) {
+            console.error('Falha ao redefinir o PIN.', error);
+            accessStatus.textContent = pinResetErrorMessage(error);
+            accessStatus.className = 'heilog-access-status is-error';
+          } finally {
+            button.disabled = false;
+          }
+        });
+        return;
+      }
       if (
         !uid ||
         isProtectedOwner ||
@@ -23239,6 +23429,10 @@ document.getElementById('clear-date-filter-btn')?.addEventListener('click', () =
       if (!idleSession.check()) return;
       unlockApplication(user, approval.profile);
       realtimeSync.reauthorize();
+      if (approval.profile?.deveTrocarPin === true) {
+        setAccountModalForced(true);
+        openAccountModal();
+      }
 
       const attachDriverSnapshot = (collectionName) => {
         if (firebaseDriversAttached[collectionName]) return;

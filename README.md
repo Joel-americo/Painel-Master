@@ -45,3 +45,19 @@ Acesse `http://localhost:8080/`. Não abra o HTML por `file://`. Para conferir c
 Testes automatizados validam caminhos locais, subdiretório, manifesto, sintaxe, configuração das APIs e ausência do catálogo privado. Nenhuma gravação operacional ou alteração de regras foi realizada. Login real, arquivos de importação, impressão e sincronização precisam de teste integrado no endereço final antes da migração. Mudar de hospedagem não garante corrigir a rejeição observada em alguns PCs.
 
 Documentação GitHub: https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages
+
+## Redefinição de PIN (função de servidor)
+
+O botão **Redefinir PIN** em Gerenciar acessos gera um PIN temporário para quem esqueceu o PIN; no próximo login a pessoa é obrigada a criar um novo. Trocar a senha de outra conta só é possível no servidor, por isso existe a função `redefinirPin` na pasta `functions/` (região `southamerica-east1`).
+
+Quem pode usar: o administrador geral (todas as unidades) e o admin de unidade (só usuários da mesma unidade). A conta do proprietário é protegida. Cada redefinição fica registrada em `artifacts/heilog-logistica/public/data/auditoria_acessos`.
+
+Publicar a função (uma vez, e de novo só se `functions/` mudar). Requer o projeto Firebase no plano **Blaze**; o uso do painel fica dentro da cota gratuita.
+
+```sh
+# no Google Cloud Shell (console.cloud.google.com, ícone >_ no topo) ou num PC com Node 22
+git clone https://github.com/Joel-americo/Painel-Master.git
+cd Painel-Master/functions && npm install && cd ..
+npx firebase-tools login --no-localhost
+npx firebase-tools deploy --only functions:heilog --project heilog-logistica
+```

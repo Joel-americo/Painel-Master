@@ -3801,3 +3801,29 @@ body.heilog-app-v2 .heilog-header-v2 #heilog-logout-btn span { display: inline !
 .duplicate-dt-dialog-actions button { padding: 10px 14px; border-radius: 10px; background: #edf3ef; color: #183a29; font-weight: 700; }
 .duplicate-dt-dialog-actions #duplicate-dt-resolution-save { background: #00763c; color: #fff; }
 .duplicate-dt-dialog-actions button:disabled { opacity: .6; cursor: wait; }
+
+/* Redefinir PIN (Gerenciar acessos) */
+.heilog-access-actions { flex-wrap: wrap; }
+.heilog-access-actions .is-reset-pin {
+  border: 1px solid #b7c9bf;
+  background: #ffffff;
+  color: #075b3b;
+}
+.heilog-pin-result-box {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  margin: 8px 24px 4px;
+  padding: 18px 12px;
+  border: 1px dashed #9cc9ae;
+  border-radius: 14px;
+  background: #f1faf4;
+  color: #29453a;
+  text-align: center;
+}
+.heilog-pin-result-box output {
+  font: 800 2.4rem/1.1 ui-monospace, "SFMono-Regular", Consolas, monospace;
+  letter-spacing: 0.32em;
+  color: #075b3b;
+}
+.heilog-pin-result-box small { font-size: 0.75rem; }
