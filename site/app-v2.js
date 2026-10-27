@@ -125,7 +125,7 @@
       }
     };
     updateClock();
-    if (clock) setInterval(updateClock, 1000);
+    if (clock) setInterval(() => { if (!document.hidden) updateClock(); }, 1000);
     document.addEventListener('visibilitychange', updateClock);
 
     const settings = header.querySelector('#heilog-header-settings');

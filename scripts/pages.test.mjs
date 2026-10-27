@@ -6,8 +6,9 @@ import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import vm from 'node:vm';
 const html=readFileSync('site/index.html','utf8');
+const code=html+readFileSync('site/painel.js','utf8');
 test('Pátio, Histórico, liberação HEILO e código do motorista preservados',()=>{
- for(const feature of ['tab-patio','tab-historico','redirects-toolbar','Código do motorista','heilog-logistica'])assert.ok(html.includes(feature),feature);
+ for(const feature of ['tab-patio','tab-historico','redirects-toolbar','Código do motorista','heilog-logistica'])assert.ok(code.includes(feature),feature);
 });
 test('recursos locais resolvem na raiz e em subdiretório do repositório',()=>{
  const resources=[...html.matchAll(/(?:src|href)=["']([^"']+)["']/g)].map(m=>m[1]).filter(x=>x.startsWith('./'));
@@ -31,7 +32,7 @@ function fixture(base=''){
 }
 test('API não configurada falha sem requisição e sem expor tokens',async()=>{
  const f=fixture();assert.equal(f.api.apiEnabled(),false);await assert.rejects(f.api.apiFetch('lusitana'));assert.equal(f.calls.length,0);
- assert.ok(html.includes('!window.HeilogPages.apiEnabled()'));
+ assert.ok(code.includes('!window.HeilogPages.apiEnabled()'));
 });
 test('somente origem HTTPS configurada e rotas conhecidas recebem requisição',async()=>{
  for(const base of ['http://api.example.com','https://a:b@api.example.com','https://api.example.com/caminho'])assert.equal(fixture(base).api.apiEnabled(),false);
@@ -55,12 +56,20 @@ test('bibliotecas servidas pelo próprio site, com versões fixas',()=>{
  const external=[...html.matchAll(/<(?:script|link)[^>]+(?:src|href)=["'](https?:[^"']+)["']/g)].map(m=>m[1]);
  assert.deepEqual(external,['https://cdn.tailwindcss.com/3.4.17']);
  assert.doesNotMatch(html,/fonts\.googleapis\.com|cdn\.jsdelivr\.net|xlsx@0\.18/);
- for(const m of html.matchAll(/from "(https:\/\/www\.gstatic\.com[^"]+)"/g))assert.match(m[1],/firebasejs\/\d+\.\d+\.\d+\//);
+ for(const m of code.matchAll(/from "(https:\/\/www\.gstatic\.com[^"]+)"/g))assert.match(m[1],/firebasejs\/\d+\.\d+\.\d+\//);
  assert.ok(!existsSync('site/painel.html'),'painel.html é gerado no build');
  assert.match(readFileSync('scripts/build.mjs','utf8'),/painel\.html/);
 });
+test('código principal fora do HTML, cronômetros pausam com a aba oculta',()=>{
+ assert.ok(html.length<400000,'index.html deve ficar leve');
+ assert.ok(html.includes('<script type="module" src="./painel.js"></script>'));
+ assert.ok(html.includes('<link rel="stylesheet" href="./painel.css">'));
+ assert.doesNotMatch(html,/<script type="module">/);
+ assert.ok(code.includes("setInterval(()=>{if(!document.hidden)refreshLiveTimers();},1000)"));
+ assert.match(code,/timerIntervalId = setInterval\(\(\) => \{\n\s*if \(document\.hidden\) return;/);
+});
 test('publicação contém só site, sem diretório privado nem configurações de servidor',()=>{
  assert.ok(!existsSync('site/lib'));assert.ok(!existsSync('site/private'));assert.ok(!existsSync('site/_headers'));
- assert.ok(!html.includes('id="driver-code-known-names"'));
+ assert.ok(!code.includes('id="driver-code-known-names"'));
  const workflow=readFileSync('.github/workflows/pages.yml','utf8');assert.match(workflow,/path: _site/);
 });
