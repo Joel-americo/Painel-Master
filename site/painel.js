@@ -18686,6 +18686,7 @@ async function handleAddOccurrence(e) {
       sec.classList.toggle('pandora-hidden', sec.dataset.pandoraSection !== view);
     });
     renderPandora();
+    if (view === 'painel') pandoraCarregarCanhotosPendentes(false);
   }
 
   function getPandoraFormPayload() {
@@ -18722,6 +18723,7 @@ async function handleAddOccurrence(e) {
       dt: String(document.getElementById('pd-dt')?.value || '').trim(),
       placa: String(document.getElementById('pd-placa')?.value || '').trim().toUpperCase(),
       responsavel: String(document.getElementById('pd-responsavel')?.value || '').trim(),
+      canhotoEsperado: !!document.getElementById('pd-canhoto-esperado')?.checked,
       problema: String(document.getElementById('pd-problema')?.value || '').trim(),
       tratativa: String(document.getElementById('pd-tratativa')?.value || '').trim(),
       observacao: String(document.getElementById('pd-observacao')?.value || '').trim(),
@@ -18737,6 +18739,8 @@ async function handleAddOccurrence(e) {
     pandoraEditId = null;
     document.getElementById('pandora-form')?.reset();
     const st = document.getElementById('pd-status'); if (st) st.value = 'Em andamento';
+    const canhotoCb = document.getElementById('pd-canhoto-esperado'); if (canhotoCb) canhotoCb.checked = true;
+    const respEl = document.getElementById('pd-responsavel'); if (respEl && !respEl.value) respEl.value = pandoraUltimoResponsavel();
     updatePandoraAgingField();
     const title = document.getElementById('pandora-form-title'); if (title) title.textContent = 'Cadastrar NF';
     document.getElementById('pandora-cancel-edit-btn')?.classList.add('pandora-hidden');
@@ -18749,6 +18753,8 @@ async function handleAddOccurrence(e) {
     item = pandoraCompleteNfSerieFromChave(item);
     pandoraEditId = pandoraDocKey(item);
     setPandoraView('cadastro');
+    const canhotoCb = document.getElementById('pd-canhoto-esperado');
+    if (canhotoCb) canhotoCb.checked = pandoraCanhotoEsperadoPadrao(item);
     const values = {
       'pd-nf': item.nf || '',
       'pd-serie': item.serie || '',
@@ -18771,7 +18777,7 @@ async function handleAddOccurrence(e) {
       'pd-transportadora': item.transportadora || '',
       'pd-dt': item.dt || '',
       'pd-placa': item.placa || '',
-      'pd-responsavel': item.responsavel || '',
+      'pd-responsavel': item.responsavel || pandoraUltimoResponsavel(),
       'pd-problema': item.problema || '',
       'pd-tratativa': item.tratativa || '',
       'pd-observacao': item.observacao || ''
@@ -18795,6 +18801,7 @@ async function handleAddOccurrence(e) {
     if (pandoraHistoryResponsible(item)) return true;
     showToast(message, 'info');
     try {
+      pandoraVoltarAoPainel = true;
       fillPandoraForm(item);
       setTimeout(() => document.getElementById('pd-responsavel')?.focus(), 80);
     } catch (_) {}
@@ -18842,6 +18849,8 @@ async function handleAddOccurrence(e) {
       if (!existing) existing = await pandoraGetByChaveFromFirestore(payload.chaveNorm);
       if (existing) pandoraEditId = pandoraDocKey(existing);
     }
+    // Entrada no ATO: marca o início da espera pelo canhoto assinado (portaria).
+    payload.entradaAtoMs = Number(existing?.entradaAtoMs) || (payload.canhotoEsperado ? pandoraMs() : 0);
 
     if (pandoraEditId && existing) {
       const patch = { ...payload };
@@ -18849,6 +18858,7 @@ async function handleAddOccurrence(e) {
         if (db && existing._docId && !pandoraUsingLocalFallback) {
           const savedRouted = await pandoraPatchItemRouted(existing, patch);
           pandoraUpsertLocalItem(savedRouted || { ...existing, ...patch, id: existing._docId, _docId: existing._docId });
+          pandoraVincularCanhoto(savedRouted || { ...existing, ...patch });
         } else {
           const idx = pandoraData.findIndex(x => pandoraDocKey(x) === pandoraEditId);
           if (idx >= 0) pandoraData[idx] = { ...pandoraData[idx], ...patch };
@@ -18859,8 +18869,7 @@ async function handleAddOccurrence(e) {
         await pandoraAdjustDashboardSummaryDelta(existing, { ...existing, ...patch, id: existing._docId || existing.id, _docId: existing._docId || existing.id }, 'Edição de NF');
         await pandoraAddHistory('Editou NF', { ...existing, ...patch }, 'Informações da nota atualizadas.');
         showToast('NF atualizada no Pandora.', 'success');
-        resetPandoraForm();
-        setPandoraView('painel');
+        pandoraAposSalvar(payload.responsavel);
       } catch (err) {
         console.warn('Firestore não salvou a edição do Pandora; usando modo local:', err);
         const idx = pandoraData.findIndex(x => pandoraDocKey(x) === pandoraEditId);
@@ -18871,8 +18880,7 @@ async function handleAddOccurrence(e) {
         pandoraPushUndo({ type: 'update', before: existing, after: { ...existing, ...patch, localOnly: true } });
         await pandoraAddHistory('Editou NF', { ...existing, ...patch, localOnly: true }, 'Edição salva localmente no navegador.');
         showToast('NF atualizada localmente no Pandora.', 'success');
-        resetPandoraForm();
-        setPandoraView('painel');
+        pandoraAposSalvar(payload.responsavel);
       }
       return;
     }
@@ -18889,6 +18897,7 @@ async function handleAddOccurrence(e) {
       if (db && !pandoraUsingLocalFallback) {
         savedItem = await pandoraSaveItemRouted({ ...newPayload, id: docId, _docId: docId }, { merge: true });
         pandoraUpsertLocalItem(savedItem);
+        pandoraVincularCanhoto(savedItem);
       } else {
         const localId = docId;
         savedItem = { ...newPayload, id: localId, _docId: localId, localOnly: true };
@@ -18900,8 +18909,7 @@ async function handleAddOccurrence(e) {
       await pandoraAdjustDashboardSummaryDelta(null, savedItem, 'Cadastro de NF');
       await pandoraAddHistory('Cadastrou NF', savedItem, 'Nota fiscal criada no Pandora.');
       showToast('NF cadastrada no Pandora.', 'success');
-      resetPandoraForm();
-      setPandoraView('painel');
+      pandoraAposSalvar(payload.responsavel);
     } catch (err) {
       console.warn('Firestore não salvou o cadastro do Pandora; usando modo local:', err);
       const localId = payload.chaveNorm ? `CH_${payload.chaveNorm}` : pandoraLocalId('PDNF');
@@ -18913,8 +18921,7 @@ async function handleAddOccurrence(e) {
       pandoraPushUndo({ type: 'create', item: savedItem });
       await pandoraAddHistory('Cadastrou NF', savedItem, 'Cadastro salvo localmente no navegador.');
       showToast('NF cadastrada localmente no Pandora.', 'success');
-      resetPandoraForm();
-      setPandoraView('painel');
+      pandoraAposSalvar(payload.responsavel);
     }
   }
 
@@ -19364,6 +19371,192 @@ async function handleAddOccurrence(e) {
     }
   }
 
+  // ==============================
+  // PANDORA — CANHOTOS (foto do canhoto assinado tirada pela portaria no app canhotos.html)
+  // ==============================
+  const PANDORA_CANHOTOS_COLLECTION = 'pandora_canhotos';
+  // Bipagem em sequência no Cadastro de NF: depois de salvar, o cadastro continua aberto.
+  // Só volta ao Painel quando a edição foi aberta pelo botão Editar de uma linha.
+  const PANDORA_ULTIMO_RESP_KEY = 'heilog_pandora_ultimo_responsavel_v1';
+  let pandoraVoltarAoPainel = false;
+  function pandoraUltimoResponsavel() {
+    try { return localStorage.getItem(PANDORA_ULTIMO_RESP_KEY) || ''; } catch (_) { return ''; }
+  }
+  function pandoraLembrarResponsavel(nome = '') {
+    const v = String(nome || '').trim();
+    if (!v) return;
+    try { localStorage.setItem(PANDORA_ULTIMO_RESP_KEY, v); } catch (_) {}
+  }
+  function pandoraAposSalvar(responsavel = '') {
+    const voltar = pandoraVoltarAoPainel;
+    pandoraVoltarAoPainel = false;
+    pandoraLembrarResponsavel(responsavel);
+    resetPandoraForm();
+    if (voltar) { setPandoraView('painel'); return; }
+    setPandoraView('cadastro');
+    setTimeout(() => document.getElementById('pd-chave')?.focus(), 60);
+  }
+  const PANDORA_CANHOTOS_FOTOS_COLLECTION = 'pandora_canhotos_fotos';
+  const PANDORA_CANHOTO_ATRASO_MS = 24 * 3600 * 1000;
+  let pandoraCanhotosPendentes = [];
+  let pandoraCanhotosCarregadoMs = 0;
+
+  function pandoraCanhotoEsperadoPadrao(item = {}) {
+    if (item.canhotoEsperado === true || item.canhotoEsperado === false) return item.canhotoEsperado;
+    if (item.canhoto?.foto || pandoraIsArquivado(item.status)) return false;
+    const emissao = Number(item.emissaoMs || 0);
+    return !emissao || (Date.now() - emissao) < 20 * 24 * 3600 * 1000;
+  }
+
+  function pandoraIdadeTexto(ms = 0) {
+    const min = Math.max(0, Math.round(ms / 60000));
+    if (min < 60) return `${min} min`;
+    const h = Math.floor(min / 60);
+    if (h < 24) return `${h}h`;
+    return `${Math.floor(h / 24)}d ${h % 24}h`;
+  }
+
+  function pandoraCanhotoDesdeMs(item = {}) {
+    return Number(item.entradaAtoMs || item.createdAtMs || 0);
+  }
+
+  function pandoraCanhotoCell(item = {}) {
+    const c = item.canhoto || {};
+    const id = escapeHtml(pandoraDocKey(item));
+    if (c.foto) {
+      const quando = c.fotografadoEm ? new Date(c.fotografadoEm).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+      return `<span class="pandora-status-pill pandora-canhoto-ok">Foto ok</span>
+        <div class="text-xs pandora-muted mt-1">${escapeHtml(quando)}${c.por ? ' · ' + escapeHtml(c.por) : ''}</div>
+        <button type="button" data-pandora-action="canhoto-fotos" data-id="${id}" class="pandora-btn pandora-btn-soft pandora-btn-mini mt-1">Ver foto</button>`;
+    }
+    if (item.canhotoEsperado) {
+      const desde = pandoraCanhotoDesdeMs(item);
+      const idade = desde ? Date.now() - desde : 0;
+      const atrasado = idade > PANDORA_CANHOTO_ATRASO_MS;
+      return `<span class="pandora-status-pill ${atrasado ? 'pandora-canhoto-late' : 'pandora-canhoto-wait'}">${atrasado ? 'Canhoto atrasado' : 'Aguardando'}</span>
+        ${desde ? `<div class="text-xs pandora-muted mt-1">há ${escapeHtml(pandoraIdadeTexto(idade))}</div>` : ''}`;
+    }
+    return '<span class="pandora-muted text-xs">—</span>';
+  }
+
+  // Liga uma foto tirada antes da entrada no ATO à NF recém-cadastrada/atualizada.
+  async function pandoraVincularCanhoto(item = {}) {
+    try {
+      if (!db || pandoraUsingLocalFallback || item?.canhoto?.foto) return;
+      const docId = item._docId || item.id || (item.chaveNorm ? `CH_${item.chaveNorm}` : '');
+      if (!docId) return;
+      const snap = await getDoc(pandoraDocRef(PANDORA_CANHOTOS_COLLECTION, docId));
+      if (!snap.exists()) return;
+      const d = snap.data() || {};
+      const fotos = Array.isArray(d.fotos) ? d.fotos : [];
+      if (!fotos.length) return;
+      const canhoto = { foto: true, fotos: fotos.length, fotografadoEm: d.ultimaFotoEm || '', fotografadoMs: Number(d.ultimaFotoMs || 0), por: d.ultimaFotoPor || '', primeiraFotoEm: d.primeiraFotoEm || '' };
+      const atual = pandoraData.find(x => pandoraDocKey(x) === docId) || item;
+      const salvo = await pandoraPatchItemRouted({ ...atual, _docId: docId, id: docId }, { canhoto });
+      pandoraUpsertLocalItem(salvo || { ...atual, canhoto });
+      await pandoraUpdateDoc(PANDORA_CANHOTOS_COLLECTION, docId, { pandoraDocId: docId });
+    } catch (err) {
+      console.warn('Pandora: não consegui ligar a foto do canhoto à NF:', err);
+    }
+  }
+
+  async function pandoraUpdateDoc(collectionName, docId, patch) {
+    try { await updateDoc(pandoraDocRef(collectionName, docId), patch); } catch (_) {}
+  }
+
+  async function pandoraAbrirFotosCanhoto(item = {}) {
+    const docId = pandoraDocKey(item);
+    let overlay = document.getElementById('pandora-canhoto-fotos-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'pandora-canhoto-fotos-overlay';
+      overlay.className = 'pandora-canhoto-overlay';
+      overlay.addEventListener('click', (ev) => { if (ev.target === overlay || ev.target.closest('[data-fechar]')) overlay.classList.add('pandora-hidden'); });
+      (document.getElementById('pandora-content') || document.body).appendChild(overlay);
+    }
+    overlay.classList.remove('pandora-hidden');
+    overlay.innerHTML = `<div class="pandora-canhoto-modal"><div class="pandora-card-title"><h3>Canhoto · NF ${escapeHtml(item.nf || '')}</h3><button type="button" data-fechar class="pandora-btn pandora-btn-soft">Fechar</button></div><div class="pandora-muted">Carregando fotos…</div></div>`;
+    const modal = overlay.firstElementChild;
+    try {
+      const snap = await getDoc(pandoraDocRef(PANDORA_CANHOTOS_COLLECTION, docId));
+      const fotos = snap.exists() && Array.isArray(snap.data().fotos) ? snap.data().fotos : [];
+      if (!fotos.length) { modal.lastElementChild.textContent = 'Nenhuma foto encontrada para esta NF.'; return; }
+      const imgs = await Promise.all(fotos.map(async f => {
+        const fs = await getDoc(pandoraDocRef(PANDORA_CANHOTOS_FOTOS_COLLECTION, f.id));
+        return fs.exists() ? { ...f, url: fs.data().dataUrl } : null;
+      }));
+      modal.lastElementChild.outerHTML = `<div class="pandora-canhoto-fotos">${imgs.filter(Boolean).map(f => `
+        <figure><img src="${escapeHtml(f.url)}" alt="Canhoto assinado da NF ${escapeHtml(item.nf || '')}"><figcaption>${escapeHtml(new Date(f.em).toLocaleString('pt-BR'))}${f.por ? ' · ' + escapeHtml(f.por) : ''}</figcaption></figure>`).join('')}</div>`;
+    } catch (err) {
+      modal.lastElementChild.textContent = 'Não consegui carregar as fotos. Verifique a conexão.';
+    }
+  }
+
+  async function pandoraCarregarCanhotosPendentes(forcar = false) {
+    const body = document.getElementById('pandora-canhotos-body');
+    if (!body || !db || pandoraUsingLocalFallback) return;
+    if (!forcar && Date.now() - pandoraCanhotosCarregadoMs < 120000) return pandoraRenderCanhotosPendentes();
+    body.innerHTML = '<div class="pandora-muted text-sm">Carregando canhotos…</div>';
+    try {
+      const snap = await getDocs(query(pandoraCollection(PANDORA_ACTIVE_COLLECTION), where('canhotoEsperado', '==', true)));
+      pandoraCanhotosPendentes = snap.docs.map(d => ({ ...d.data(), id: d.id, _docId: d.id }));
+      pandoraCanhotosCarregadoMs = Date.now();
+      pandoraRenderCanhotosPendentes();
+    } catch (err) {
+      console.warn('Pandora: canhotos pendentes não carregaram:', err);
+      body.innerHTML = '<div class="pandora-muted text-sm">Não consegui carregar os canhotos. Clique em Atualizar canhotos.</div>';
+    }
+  }
+
+  function pandoraGruposCanhoto() {
+    const semFoto = pandoraCanhotosPendentes.filter(x => !x.canhoto?.foto && !pandoraIsArquivado(x.status));
+    const grupos = new Map();
+    semFoto.forEach(item => {
+      const area = pandoraDefaultArea(item) || 'Sem área';
+      if (!grupos.has(area)) grupos.set(area, []);
+      grupos.get(area).push(item);
+    });
+    return [...grupos.entries()].map(([area, itens]) => ({
+      area,
+      itens: itens.sort((a, b) => pandoraCanhotoDesdeMs(a) - pandoraCanhotoDesdeMs(b))
+    })).sort((a, b) => pandoraCanhotoDesdeMs(a.itens[0]) - pandoraCanhotoDesdeMs(b.itens[0]));
+  }
+
+  function pandoraRenderCanhotosPendentes() {
+    const body = document.getElementById('pandora-canhotos-body');
+    if (!body) return;
+    const grupos = pandoraGruposCanhoto();
+    const comFoto = pandoraCanhotosPendentes.filter(x => x.canhoto?.foto && !pandoraIsArquivado(x.status)).length;
+    const total = grupos.reduce((n, g) => n + g.itens.length, 0);
+    const atrasados = grupos.reduce((n, g) => n + g.itens.filter(x => Date.now() - pandoraCanhotoDesdeMs(x) > PANDORA_CANHOTO_ATRASO_MS).length, 0);
+    const resumo = `<div class="pandora-canhotos-resumo"><span><b>${total}</b> sem foto</span><span class="${atrasados ? 'pandora-canhoto-txt-late' : ''}"><b>${atrasados}</b> há +24h</span><span><b>${comFoto}</b> com foto, aguardando escrituração</span></div>`;
+    if (!grupos.length) {
+      body.innerHTML = resumo + '<div class="pandora-muted text-sm">Nenhum canhoto pendente. Todas as NFs com entrada no ATO já têm foto do canhoto.</div>';
+      return;
+    }
+    body.innerHTML = resumo + `<div class="overflow-x-auto"><table class="w-full text-left pandora-aging-area-table"><thead><tr><th>Área</th><th class="text-center">Sem foto</th><th class="text-center">Há +24h</th><th>Mais antiga</th><th></th></tr></thead><tbody>${grupos.map(g => {
+      const late = g.itens.filter(x => Date.now() - pandoraCanhotoDesdeMs(x) > PANDORA_CANHOTO_ATRASO_MS).length;
+      const mais = g.itens[0];
+      return `<tr><td class="font-bold">${escapeHtml(g.area)}</td><td class="text-center">${g.itens.length}</td><td class="text-center ${late ? 'pandora-canhoto-txt-late' : ''}">${late}</td>
+        <td>NF ${escapeHtml(mais.nf || '—')} · há ${escapeHtml(pandoraIdadeTexto(Date.now() - pandoraCanhotoDesdeMs(mais)))}</td>
+        <td><button type="button" class="pandora-btn pandora-btn-soft pandora-btn-mini" data-canhoto-copy="${escapeHtml(g.area)}">Copiar cobrança</button></td></tr>`;
+    }).join('')}</tbody></table></div>`;
+  }
+
+  async function pandoraCopiarCobrancaCanhoto(btn) {
+    const g = pandoraGruposCanhoto().find(x => x.area === btn.dataset.canhotoCopy);
+    if (!g) return;
+    const texto = `Canhotos assinados que ainda não voltaram para a portaria (${g.area}):\n` +
+      g.itens.map(x => `• NF ${x.nf || '—'}${x.serie ? '/' + x.serie : ''} – ${x.fornecedor || x.clienteNomeBase || 'fornecedor não informado'} – entrada há ${pandoraIdadeTexto(Date.now() - pandoraCanhotoDesdeMs(x))}`).join('\n') +
+      '\n\nPor favor, devolvam o canhoto assinado na portaria.';
+    try {
+      await navigator.clipboard.writeText(texto);
+      showToast(`Cobrança de ${g.area} copiada.`, 'success');
+    } catch (_) {
+      showToast('Não consegui copiar. Selecione e copie manualmente.', 'error');
+    }
+  }
+
   function renderPandoraTable() {
     const tbody = document.getElementById('pandora-table-body');
     if (!tbody) return;
@@ -19372,7 +19565,7 @@ async function handleAddOccurrence(e) {
       const emptyMessage = pandoraDateFilter?.active
         ? 'Nenhuma NF pendente encontrada no período selecionado.'
         : 'Nenhuma NF pendente acima de 30 dias encontrada no Pandora. Use o filtro de data para carregar NFs com menos de 30 dias sem precisar da chave.';
-      tbody.innerHTML = `<tr><td colspan="11" class="text-center pandora-muted py-8">${escapeHtml(emptyMessage)}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="12" class="text-center pandora-muted py-8">${escapeHtml(emptyMessage)}</td></tr>`;
       renderPandoraPagination('painel', 0, 1, 1, getPandoraPageSize());
       return;
     }
@@ -19388,6 +19581,7 @@ async function handleAddOccurrence(e) {
             <div class="text-xs pandora-muted">${escapeHtml((item.chave || '').slice(0, 44) || 'Sem chave')}</div>
           </td>
           <td><span class="${pandoraStatusClass(pandoraDefaultStatus(item))}">${escapeHtml(pandoraDefaultStatus(item))}</span><div class="text-xs pandora-muted mt-1">XML: ${escapeHtml(item.statusXml || '—')}</div><div class="text-xs pandora-muted mt-1">ZGR001: ${escapeHtml(pandoraZgrStatusText(item))}</div></td>
+          <td>${pandoraCanhotoCell(item)}</td>
           <td class="font-bold">${escapeHtml(pandoraDefaultArea(item))}${pandoraAreaProtegidaPorCliente(item) ? '<div class="text-xs pandora-muted mt-1">Base Clientes protegida</div>' : ''}</td>
           <td><div>${escapeHtml(item.tipo || '—')}</div><div class="text-xs pandora-muted">${escapeHtml(item.processo || item.evento || '')}</div></td>
           <td>${escapeHtml(item.fornecedor || item.clienteNomeBase || '—')}<div class="text-xs pandora-muted">Parceiro: ${escapeHtml(item.parceiro || item.clienteCodigo || '—')}</div>${item.clienteNomeBase ? `<div class="text-xs pandora-muted">Cliente base: ${escapeHtml(item.clienteNomeBase)}</div>` : ''}</td>
@@ -20157,8 +20351,8 @@ async function handleAddOccurrence(e) {
 
     document.getElementById('pandora-form')?.addEventListener('submit', pandoraSaveNF);
     document.getElementById('pandora-clear-form-btn')?.addEventListener('click', resetPandoraForm);
-    document.getElementById('pandora-cancel-edit-btn')?.addEventListener('click', resetPandoraForm);
-    document.getElementById('pandora-new-btn')?.addEventListener('click', () => { resetPandoraForm(); setPandoraView('cadastro'); });
+    document.getElementById('pandora-cancel-edit-btn')?.addEventListener('click', () => { pandoraVoltarAoPainel = false; resetPandoraForm(); });
+    document.getElementById('pandora-new-btn')?.addEventListener('click', () => { pandoraVoltarAoPainel = false; resetPandoraForm(); setPandoraView('cadastro'); setTimeout(() => document.getElementById('pd-chave')?.focus(), 60); });
     document.getElementById('pandora-export-btn')?.addEventListener('click', exportPandoraCsv);
     document.getElementById('pandora-undo-btn')?.addEventListener('click', pandoraUndoLastAction);
     document.getElementById('pandora-refresh-btn')?.addEventListener('click', () => { renderPandora(); showToast('Pandora atualizado.', 'success'); });
@@ -20177,6 +20371,21 @@ async function handleAddOccurrence(e) {
     });
     document.getElementById('pd-chave')?.addEventListener('input', (ev) => pandoraAutofillNfSerieFromChave(ev.target.value || ''));
     document.getElementById('pd-chave')?.addEventListener('blur', pandoraLookupByChave);
+    document.getElementById('pd-chave-camera')?.addEventListener('click', () => {
+      if (!window.DanfeScanner) return showToast('Leitor de câmera indisponível. Recarregue a página.', 'error');
+      window.DanfeScanner.open((chave) => {
+        const el = document.getElementById('pd-chave');
+        if (!el) return;
+        el.value = chave;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        pandoraLookupByChave();
+      });
+    });
+    document.getElementById('pandora-canhotos-refresh')?.addEventListener('click', () => pandoraCarregarCanhotosPendentes(true));
+    document.getElementById('pandora-canhotos-body')?.addEventListener('click', (ev) => {
+      const btn = ev.target.closest('button[data-canhoto-copy]');
+      if (btn) pandoraCopiarCobrancaCanhoto(btn);
+    });
     document.getElementById('pd-chave')?.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pandoraLookupByChave(); } });
 
     const pandoraParceiroAutofillDebounced = debounce(() => pandoraAutocompleteParceiro({ showToast: false, autocorrect: false }), HEILOG_PERF.pandoraSearchDebounceMs);
@@ -20253,12 +20462,13 @@ async function handleAddOccurrence(e) {
       const item = pandoraData.find(x => pandoraDocKey(x) === id);
       if (!item) return showToast('NF não encontrada.', 'error');
       const action = btn.dataset.pandoraAction;
-      if (action === 'edit') return fillPandoraForm(item);
+      if (action === 'edit') { pandoraVoltarAoPainel = true; return fillPandoraForm(item); }
       if (action === 'encerrar') return pandoraUpdateStatus(id, 'Escriturado');
       if (action === 'problema') return pandoraUpdateStatus(id, 'Com problema');
       if (action === 'reabrir') return pandoraUpdateStatus(id, 'Em andamento');
       if (action === 'cancelar') return pandoraUpdateStatus(id, 'Cancelada');
       if (action === 'excluir') return pandoraDeleteNF(id);
+      if (action === 'canhoto-fotos') return pandoraAbrirFotosCanhoto(item);
     });
 
     document.getElementById('pandora-db-table-body')?.addEventListener('click', (ev) => {
@@ -20267,6 +20477,7 @@ async function handleAddOccurrence(e) {
       const id = btn.dataset.pandoraDbEdit || '';
       const item = pandoraData.find(x => pandoraDocKey(x) === id);
       if (!item) return showToast('Registro não encontrado no Banco XML.', 'error');
+      pandoraVoltarAoPainel = true;
       fillPandoraForm(item);
     });
 

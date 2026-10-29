@@ -1777,7 +1777,8 @@ body.heilog-app-v2 #baldeio-sap-import{background:#d6edde!important;color:#153c2
           </div>
           <form id="pandora-form" class="space-y-4">
             <div class="pandora-form-grid">
-              <div class="pandora-field"><label>Chave de acesso *</label><input id="pd-chave" required placeholder="Cole a chave de acesso da NF-e"></div>
+              <div class="pandora-field"><label>Chave de acesso *</label><input id="pd-chave" required placeholder="Cole ou bipe a chave de acesso da NF-e"><button type="button" id="pd-chave-camera" class="pandora-btn pandora-btn-soft pandora-btn-mini pandora-camera-btn">Ler pela câmera</button></div>
+              <div class="pandora-field"><label>Canhoto</label><label class="pandora-check-label"><input id="pd-canhoto-esperado" type="checkbox" class="pd-check" checked> Aguardar canhoto assinado na portaria</label></div>
               <div class="pandora-field"><label>Número da NF</label><input id="pd-nf" placeholder="Autopreenche pela chave/banco"></div>
               <div class="pandora-field"><label>Série</label><input id="pd-serie" placeholder="Autopreenche pela chave/banco"></div>
               <div class="pandora-field"><label>Área responsável *</label><input id="pd-area" list="pd-area-list" required placeholder="Digite a área responsável"></div>
@@ -1822,6 +1823,19 @@ body.heilog-app-v2 #baldeio-sap-import{background:#d6edde!important;color:#153c2
             </div>
             <button id="pandora-refresh-btn" type="button" class="pandora-btn pandora-btn-soft">Atualizar</button>
           </div>
+          <div class="pandora-canhotos" id="pandora-canhotos-card">
+            <div class="pandora-canhotos-head">
+              <div>
+                <h4>Canhotos aguardando a portaria</h4>
+                <p class="pandora-muted text-sm">NFs com entrada no ATO e sem foto do canhoto assinado. A portaria fotografa pelo app de canhotos.</p>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <a class="pandora-btn pandora-btn-soft" href="./canhotos.html" target="_blank" rel="noopener">Abrir app da portaria</a>
+                <button id="pandora-canhotos-refresh" type="button" class="pandora-btn pandora-btn-soft">Atualizar canhotos</button>
+              </div>
+            </div>
+            <div id="pandora-canhotos-body" class="pandora-canhotos-body"><div class="pandora-muted text-sm">Carregando canhotos…</div></div>
+          </div>
           <div class="pandora-filter-row mb-4">
             <input id="pandora-search" placeholder="Buscar NF, chave, área, parceiro, centro...">
             <select id="pandora-filter-status"></select>
@@ -1841,7 +1855,7 @@ body.heilog-app-v2 #baldeio-sap-import{background:#d6edde!important;color:#153c2
             <table class="pandora-table">
               <thead>
                 <tr>
-                  <th>NF / Chave</th><th>Status</th><th>Área</th><th>XML</th><th>Fornecedor/Cliente</th><th>Centro / CFOP</th><th>Valor</th><th>Responsável</th><th>Aging</th><th>Tempo</th><th>Ações</th>
+                  <th>NF / Chave</th><th>Status</th><th>Canhoto</th><th>Área</th><th>XML</th><th>Fornecedor/Cliente</th><th>Centro / CFOP</th><th>Valor</th><th>Responsável</th><th>Aging</th><th>Tempo</th><th>Ações</th>
                 </tr>
               </thead>
               <tbody id="pandora-table-body"></tbody>
@@ -2279,6 +2293,7 @@ body.heilog-app-v2 #baldeio-sap-import{background:#d6edde!important;color:#153c2
 </div>
 
 
+<script src="./danfe-scanner.js"></script>
 <script type="module" src="./painel.js"></script>
 
 <script>

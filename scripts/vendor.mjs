@@ -24,6 +24,10 @@ const VENDOR = [
   // SheetJS saiu do npm; o pacote oficial fica no CDN da própria SheetJS.
   {to: 'xlsx-0.20.3/xlsx.full.min.js', spec: 'https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz',
    from: ['package/dist/xlsx.full.min.js']},
+  // Leitura de código de barras pela câmera (DANFE) quando o navegador não tem BarcodeDetector (iPhone/iPad).
+  // Opcional: se o download falhar, a publicação segue e só a câmera no iPhone/iPad fica sem leitor.
+  {to: 'zxing-library-0.21.3/index.min.js', spec: '@zxing/library@0.21.3',
+   from: ['package/umd/index.min.js', 'package/umd/index.js'], optional: true},
   // Já incluídos no repositório (baixados dos releases oficiais no GitHub).
   {to: 'html2canvas-1.4.1/html2canvas.min.js', sha256: 'e87e550794322e574a1fda0c1549a3c70dae5a93d9113417a429016838eab8cb'},
   {to: 'sortablejs-1.15.2/Sortable.min.js', sha256: 'ca68430703c4f5960e90735867c6e94d29b5a3de37107d8100e5a301007e9e6e'},
@@ -67,6 +71,7 @@ for (const item of VENDOR) {
       console.log(`ok       ${item.to}`);
     }
   } catch (error) {
+    if (item.optional) { console.warn(`AVISO    ${item.to} (opcional): ${error.message}`); continue; }
     failed = true;
     console.error(`ERRO     ${item.to}: ${error.message}`);
   }

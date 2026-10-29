@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#16202a">
+<title>Canhotos · Portaria</title>
+<link rel="icon" href="./favicon.png">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<style>
+/* Portaria: uma coluna, alvos grandes para tablet. Topo = ler DANFE; meio = NF lida + foto; fim = fotografados hoje. */
+:root{
+  --bg:#EDEFF2; --surface:#FFFFFF; --ink:#16202A; --muted:#5A6672; --line:#D2D8DF;
+  --stamp:#2A47A0; --stamp-soft:#E2E8F7; --on-stamp:#FFFFFF;
+  --ok:#1C7548; --ok-soft:#DDF0E5; --warn:#9A5800; --warn-soft:#FAEAD0; --bad:#B42318; --bad-soft:#FADFDB;
+  --f-body:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#10151B; --surface:#1A212A; --ink:#E5EAF0; --muted:#9AA5B1; --line:#2D3742;
+    --stamp:#93A9F2; --stamp-soft:#1E2946; --on-stamp:#0E1530;
+    --ok:#5FC690; --ok-soft:#14321F; --warn:#EBAA4C; --warn-soft:#382810; --bad:#F27C70; --bad-soft:#3C1A17;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.45;-webkit-text-size-adjust:100%}
+[hidden]{display:none!important}
+.wrap{max-width:760px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top,0px)) max(18px,env(safe-area-inset-right,0px)) calc(40px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:18px}
+header{display:flex;justify-content:space-between;align-items:center;gap:10px}
+h1{font-size:26px;font-weight:800;letter-spacing:-.01em;margin:0}
+h2{font-size:22px;font-weight:800;margin:0}
+.who{font-size:14px;color:var(--muted);text-align:right}
+.btn{font:700 17px/1.1 var(--f-body);border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:14px 16px;cursor:pointer;min-height:54px;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.btn.primary{background:var(--stamp);border-color:var(--stamp);color:var(--on-stamp)}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.big{width:100%;min-height:72px;font-size:20px}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted);min-height:44px;padding-inline:8px;font-size:15px}
+.btn:disabled{opacity:.55}
+:focus-visible{outline:3px solid var(--stamp);outline-offset:2px}
+input{font:17px var(--f-body);color:var(--ink)}
+.card{background:var(--surface);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.stub{border-top:2px dashed var(--line);position:relative}
+.stub::before,.stub::after{content:"";position:absolute;top:-9px;width:16px;height:16px;border-radius:50%;background:var(--bg)}
+.stub::before{left:-8px}.stub::after{right:-8px}
+.row2{display:flex;gap:8px}
+#chaveInput{flex:1;min-width:0;font:500 17px var(--f-mono);padding:14px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg)}
+.hint{font-size:14px;color:var(--muted);margin:0}
+.msg{margin:0;font-size:16px;padding:12px 14px;border-radius:10px}
+.msg.err{background:var(--bad-soft);color:var(--bad)}
+.msg.info{background:var(--stamp-soft);color:var(--stamp)}
+.msg.warn{background:var(--warn-soft);color:var(--warn)}
+.msg.ok{background:var(--ok-soft);color:var(--ok);font-weight:700;font-size:19px;text-align:center;padding:20px}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:6px 16px;margin:0;font-size:16px}
+.kv dt{color:var(--muted)}.kv dd{margin:0;min-width:0;overflow-wrap:anywhere;font-weight:600}
+.chave{font:13px/1.5 var(--f-mono);overflow-wrap:anywhere;color:var(--muted)}
+.filebtn{position:relative;overflow:hidden}
+.filebtn input{position:absolute;inset:0;opacity:0;font-size:0}
+.fotos{display:flex;gap:8px;flex-wrap:wrap}
+.fotos img{width:110px;height:110px;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:var(--bg)}
+.fotos img.big{width:100%;height:auto;max-height:70vh;object-fit:contain}
+.list{display:flex;flex-direction:column;gap:6px}
+.item{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;background:var(--surface);border-radius:12px;padding:12px 14px;border:0;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.item .t{font-weight:700;display:flex;gap:10px;align-items:baseline;min-width:0}
+.item .t span:last-child{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.item .d{font-size:14px;color:var(--muted)}
+.item .h{font:700 15px var(--f-mono);color:var(--muted)}
+.mono{font-family:var(--f-mono)}
+.empty{background:var(--surface);border-radius:12px;padding:18px;color:var(--muted)}
+.login{max-width:420px;margin:10vh auto 0}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:14px;font-weight:600;color:var(--muted)}
+.field input{padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--bg);width:100%}
+.section-title{font-size:15px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:4px 0 -6px}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="bootView">
+  <div class="card login"><h1>Canhotos</h1><p class="msg info" id="bootMsg">Carregando…</p></div>
+</div>
+<script>
+(function(){
+  var msg = document.getElementById('bootMsg');
+  function falha(t){ if (window.__canhotosPronto) return; msg.className = 'msg err'; msg.textContent = t; }
+  if (!/^https?:$/.test(location.protocol)){ falha('Este app não funciona aberto direto do arquivo. Abra pelo endereço publicado: joel-americo.github.io/Painel-Master/canhotos.html'); return; }
+  setTimeout(function(){ falha('O app não carregou. Verifique a internet e recarregue a página.'); }, 15000);
+})();
+</script>
+
+<div class="wrap" id="loginView" hidden>
+  <form class="card login" id="loginForm" autocomplete="on">
+    <div><h1>Canhotos</h1><p class="hint">Entre com o mesmo usuário e PIN do Painel HEILOG.</p></div>
+    <div class="field"><label for="lgUser">Usuário</label><input id="lgUser" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
+    <div class="field"><label for="lgPin">PIN (6 números)</label><input id="lgPin" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password" required></div>
+    <button class="btn primary big" type="submit" id="lgBtn">Entrar</button>
+    <div id="lgMsg"></div>
+  </form>
+</div>
+
+<div class="wrap" id="appView" hidden>
+  <header>
+    <h1>Canhotos</h1>
+    <div class="who"><span id="whoName"></span><br><button class="btn ghost" id="logoutBtn" type="button">Sair</button></div>
+  </header>
+
+  <!-- 1. Ler -->
+  <section class="card stub" id="readCard" aria-label="Ler DANFE">
+    <button class="btn primary big" id="camBtn" type="button">Ler código de barras do DANFE</button>
+    <form class="row2" id="chaveForm" autocomplete="off">
+      <input id="chaveInput" inputmode="numeric" placeholder="Ou digite a chave (44 números)" aria-label="Chave de acesso">
+      <button class="btn" type="submit">Buscar</button>
+    </form>
+    <div id="readMsg"></div>
+  </section>
+
+  <!-- 2. NF lida + foto -->
+  <section class="card" id="nfCard" hidden aria-live="polite"></section>
+
+  <!-- 3. Hoje -->
+  <p class="section-title" id="hojeTitulo">Fotografados hoje</p>
+  <div class="list" id="hojeList"><div class="empty">Carregando…</div></div>
+</div>
+
+<script src="./danfe-scanner.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, addDoc, collection, query, where, getDocs, onSnapshot, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+// Mesmo projeto e mesma pasta do Painel HEILOG / Pandora (unidade Jacareí).
+const firebaseConfig = {
+  apiKey: "AIzaSyB9B2-xYb6gr92cQDbajriQiinfQurrOwI",
+  authDomain: "heilog-logistica.firebaseapp.com",
+  projectId: "heilog-logistica",
+  storageBucket: "heilog-logistica.firebasestorage.app",
+  messagingSenderId: "790492229739",
+  appId: "1:790492229739:web:de49887de535a839e8412e"
+};
+const DATA = 'artifacts/heilog-logistica/public/data';
+const COL = DATA + '/pandora_canhotos';            // um documento por NF, mesmo id do Pandora (CH_<chave>)
+const COL_FOTOS = DATA + '/pandora_canhotos_fotos'; // fotos comprimidas
+const PANDORA_COLS = ['pandora_ativo', 'pandora_arquivo', 'pandora_nfs'];
+const OWNER_USERNAME = 'joel.0609', OWNER_EMAIL = 'joelamerico6@gmail.com';
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+setPersistence(auth, browserLocalPersistence).catch(() => {});
+
+const $ = s => document.querySelector(s);
+let me = { nome: '' }, atual = null, ocupado = false, unsubHoje = null, timerVolta = null;
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const digits = v => String(v ?? '').replace(/\D/g, '');
+const chaveNorm = v => digits(v).replace(/^0+/, '') || digits(v);   // igual ao Pandora
+const docIdFor = chave => 'CH_' + chaveNorm(chave);
+const fmtNf = n => String(n || '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+const hora = iso => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+const dataHora = iso => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + hora(iso);
+const hojeKey = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().trim();
+const isEscriturado = st => ['ESCRITURADO', 'ESCRITURADA', 'ENCERRADO', 'ENCERRADA'].includes(norm(st));
+function partesChave(c){ return { cnpj: c.slice(6, 20), serie: String(parseInt(c.slice(22, 25), 10)), nf: String(parseInt(c.slice(25, 34), 10)) }; }
+
+// ---------- login (mesmo do painel) ----------
+const normalizeUsername = v => String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase()
+  .replace(/\s+/g, '.').replace(/[^a-z0-9._-]/g, '').replace(/\.{2,}/g, '.').replace(/^[._-]+|[._-]+$/g, '');
+const usernameToAuthEmail = u => { const n = normalizeUsername(u); return n === OWNER_USERNAME ? OWNER_EMAIL : `${n}@usuarios.heilog.app`; };
+function authMsg(e){
+  const c = e && e.code || '';
+  if (/invalid-credential|wrong-password|user-not-found|invalid-email/.test(c)) return 'Usuário ou PIN incorretos.';
+  if (/too-many-requests/.test(c)) return 'Muitas tentativas. Espere alguns minutos.';
+  if (/network/.test(c)) return 'Sem conexão. Verifique a internet.';
+  return 'Não foi possível entrar. Tente de novo.';
+}
+$('#loginForm').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const u = normalizeUsername($('#lgUser').value), pin = $('#lgPin').value;
+  if (u.length < 3 || !/^\d{6}$/.test(pin)){ $('#lgMsg').innerHTML = '<p class="msg err">Preencha o usuário e o PIN de 6 números.</p>'; return; }
+  $('#lgBtn').disabled = true; $('#lgMsg').innerHTML = '<p class="msg info">Entrando…</p>';
+  try { await signInWithEmailAndPassword(auth, usernameToAuthEmail(u), pin); }
+  catch(e){ $('#lgMsg').innerHTML = `<p class="msg err">${authMsg(e)}</p>`; }
+  finally { $('#lgBtn').disabled = false; }
+});
+$('#logoutBtn').addEventListener('click', () => signOut(auth));
+
+onAuthStateChanged(auth, async user => {
+  window.__canhotosPronto = true; $('#bootView').hidden = true;
+  if (unsubHoje){ unsubHoje(); unsubHoje = null; }
+  if (!user){ $('#appView').hidden = true; $('#loginView').hidden = false; return; }
+  me = { nome: (user.email || '').split('@')[0] };
+  try { const p = await getDoc(doc(db, DATA + '/usuarios', user.uid)); if (p.exists()){ const d = p.data(); me.nome = d.displayName || d.nome || d.username || me.nome; } } catch(e){}
+  $('#whoName').textContent = me.nome;
+  $('#loginView').hidden = true; $('#appView').hidden = false;
+  assinarHoje();
+});
+
+// ---------- fotografados hoje ----------
+function assinarHoje(){
+  unsubHoje = onSnapshot(query(collection(db, COL), where('fotografadoDia', '==', hojeKey())), snap => {
+    const rows = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.ultimaFotoMs || 0) - (a.ultimaFotoMs || 0));
+    $('#hojeTitulo').textContent = `Fotografados hoje · ${rows.length}`;
+    $('#hojeList').innerHTML = rows.length ? rows.map(r => `
+      <button class="item" data-chave="${esc(r.chave)}">
+        <span><span class="t"><span class="mono">NF ${esc(fmtNf(r.nf))}</span><span>${esc(r.fornecedor || '')}</span></span>
+        <span class="d">${esc(r.area || 'Área não informada')}${r.pandoraDocId ? '' : ' · sem entrada no Pandora'}</span></span>
+        <span class="h">${r.ultimaFotoEm ? hora(r.ultimaFotoEm) : ''}</span>
+      </button>`).join('')
+      : '<div class="empty">Nenhum canhoto fotografado hoje. Quando o canhoto assinado chegar, leia o DANFE e tire a foto.</div>';
+  }, err => {
+    $('#hojeList').innerHTML = err && err.code === 'permission-denied'
+      ? '<div class="empty">Seu usuário não tem acesso. Peça ao administrador do Painel HEILOG para liberar seu usuário na unidade Jacareí.</div>'
+      : '<div class="empty">Conexão perdida. Recarregue a página.</div>';
+  });
+}
+
+// ---------- busca da NF ----------
+async function acharPandora(chave){
+  const id = docIdFor(chave);
+  for (const c of PANDORA_COLS){
+    try { const s = await getDoc(doc(db, `${DATA}/${c}`, id)); if (s.exists()) return { col: c, id: s.id, data: s.data() }; } catch(e){}
+  }
+  for (const c of PANDORA_COLS.slice(0, 2)){
+    try { const q = await getDocs(query(collection(db, `${DATA}/${c}`), where('chaveNorm', '==', chaveNorm(chave)))); if (!q.empty) return { col: c, id: q.docs[0].id, data: q.docs[0].data() }; } catch(e){}
+  }
+  return null;
+}
+
+function readMsg(html, kind){ $('#readMsg').innerHTML = html ? `<p class="msg ${kind || 'info'}">${html}</p>` : ''; }
+
+async function abrirChave(raw){
+  clearTimeout(timerVolta);
+  const chave = String(raw || '').toUpperCase().replace(/[^0-9A-Z]/g, '');
+  if (chave.length !== 44 || !window.DanfeScanner.chaveValida(chave)){
+    readMsg(chave.length === 44 ? 'Essa chave não fecha o dígito verificador. Leia de novo ou confira a digitação.' : 'A chave de acesso tem 44 números. Leia o código de barras do DANFE ou digite a chave completa.', 'err');
+    return;
+  }
+  readMsg('Buscando a NF…');
+  $('#chaveInput').value = '';
+  const id = docIdFor(chave);
+  const [p, c] = await Promise.all([acharPandora(chave), getDoc(doc(db, COL, id)).catch(() => null)]);
+  readMsg('');
+  const pd = p ? p.data : {};
+  const ex = c && c.exists() ? c.data() : {};
+  const pc = partesChave(chave);
+  atual = {
+    id, chave, p,
+    nf: pd.nf || ex.nf || pc.nf, serie: pd.serie || ex.serie || pc.serie, cnpj: pc.cnpj,
+    fornecedor: pd.fornecedor || pd.clienteNomeBase || ex.fornecedor || '',
+    area: pd.area || ex.area || '',
+    status: pd.status || '',
+    fotos: ex.fotos || []
+  };
+  renderNf();
+}
+
+function renderNf(salvo){
+  const a = atual; if (!a) return;
+  const card = $('#nfCard');
+  card.hidden = false;
+  const aviso = !a.p
+    ? '<p class="msg warn">Essa NF ainda não teve entrada no Pandora. Pode fotografar mesmo assim: a foto fica ligada à chave e aparece para o ATO quando a NF for cadastrada.</p>'
+    : isEscriturado(a.status) ? '<p class="msg info">NF já escriturada no Pandora. A foto fica como registro do canhoto.</p>' : '';
+  card.innerHTML = `
+    ${salvo ? `<p class="msg ok">Canhoto da NF ${esc(fmtNf(a.nf))} salvo ✓</p>` : ''}
+    <h2>NF ${esc(fmtNf(a.nf))}${a.serie ? ` <span class="mono" style="font-size:16px;color:var(--muted)">série ${esc(a.serie)}</span>` : ''}</h2>
+    <dl class="kv">
+      <dt>Fornecedor</dt><dd>${esc(a.fornecedor || 'Não informado')}</dd>
+      <dt>Área</dt><dd>${esc(a.area || 'Não informada')}</dd>
+      ${a.p ? `<dt>Pandora</dt><dd>${esc(a.status || 'Em andamento')}</dd>` : ''}
+    </dl>
+    <div class="chave">${esc(a.chave)}</div>
+    ${aviso}
+    <div class="fotos" id="fotos">${a.fotos.map(f => `<img alt="Foto do canhoto" data-foto="${esc(f.id)}">`).join('')}</div>
+    ${a.fotos.length ? `<p class="hint">${a.fotos.length} foto${a.fotos.length > 1 ? 's' : ''} já salva${a.fotos.length > 1 ? 's' : ''} · última em ${esc(dataHora(a.fotos[a.fotos.length - 1].em))}</p>` : ''}
+    <label class="btn ${salvo ? '' : 'ok'} big filebtn" id="fotoBtn">${a.fotos.length ? 'Tirar outra foto' : 'Fotografar canhoto assinado'}<input id="fotoInput" type="file" accept="image/*" capture="environment"></label>
+    <p id="nfErr"></p>
+    <button class="btn ${salvo ? 'primary big' : 'ghost'}" id="proximoBtn" type="button">${salvo ? 'Ler o próximo DANFE' : 'Cancelar'}</button>`;
+  card.querySelectorAll('[data-foto]').forEach(async img => {
+    try { const f = await getDoc(doc(db, COL_FOTOS, img.dataset.foto)); if (f.exists()) img.src = f.data().dataUrl; } catch(e){}
+    img.addEventListener('click', () => img.classList.toggle('big'));
+  });
+  $('#fotoInput').addEventListener('click', () => clearTimeout(timerVolta));
+  $('#fotoInput').addEventListener('change', ev => { const f = ev.target.files && ev.target.files[0]; if (f) salvarFoto(f); });
+  $('#proximoBtn').addEventListener('click', proximo);
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function proximo(){
+  clearTimeout(timerVolta);
+  atual = null; $('#nfCard').hidden = true; $('#nfCard').innerHTML = ''; readMsg('');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ---------- foto ----------
+async function comprimir(file, max, q){
+  let src = await createImageBitmap(file, { imageOrientation: 'from-image' }).catch(() => null);
+  if (!src) src = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = URL.createObjectURL(file); });
+  const k = Math.min(1, max / Math.max(src.width, src.height));
+  const c = document.createElement('canvas'); c.width = Math.round(src.width * k); c.height = Math.round(src.height * k);
+  c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', q);
+}
+function nfErr(t){ const el = $('#nfErr'); if (el){ el.className = t ? 'msg err' : ''; el.textContent = t || ''; } }
+
+async function salvarFoto(file){
+  if (ocupado || !atual) return;
+  ocupado = true; nfErr('');
+  const btn = $('#fotoBtn'); if (btn) btn.firstChild.textContent = 'Salvando foto…';
+  const a = atual, agora = new Date(), em = agora.toISOString(), emMs = agora.getTime();
+  try {
+    let url = await comprimir(file, 1280, 0.72);
+    if (url.length > 700000) url = await comprimir(file, 1000, 0.55);
+    if (url.length > 900000) throw Object.assign(new Error('grande'), { code: 'grande' });
+    const ref = await addDoc(collection(db, COL_FOTOS), { canhotoId: a.id, chave: a.chave, dataUrl: url, em, emMs, por: me.nome || '' });
+    const foto = { id: ref.id, em, por: me.nome || '' };
+    const base = {
+      chave: a.chave, chaveNorm: chaveNorm(a.chave), nf: a.nf, serie: a.serie, cnpj: a.cnpj,
+      fornecedor: a.fornecedor, area: a.area,
+      pandoraCol: a.p ? a.p.col : '', pandoraDocId: a.p ? a.p.id : '',
+      fotos: arrayUnion(foto), ultimaFotoEm: em, ultimaFotoMs: emMs, ultimaFotoPor: me.nome || '', fotografadoDia: hojeKey()
+    };
+    if (!a.fotos.length){ base.primeiraFotoEm = em; base.primeiraFotoMs = emMs; }
+    await setDoc(doc(db, COL, a.id), base, { merge: true });
+    a.fotos = [...a.fotos, foto];
+    // Resumo no documento da NF no Pandora: é o que a coluna "Canhoto" do painel lê.
+    if (a.p){
+      const resumo = { canhoto: { foto: true, fotos: a.fotos.length, fotografadoEm: em, fotografadoMs: emMs, por: me.nome || '', primeiraFotoEm: a.fotos[0].em } };
+      try { await updateDoc(doc(db, `${DATA}/${a.p.col}`, a.p.id), resumo); }
+      catch(e){ const p2 = await acharPandora(a.chave); if (p2){ try { await updateDoc(doc(db, `${DATA}/${p2.col}`, p2.id), resumo); } catch(_){} } }
+    }
+    ocupado = false;
+    renderNf(true);
+    navigator.vibrate?.(60);
+    timerVolta = setTimeout(proximo, 8000);
+  } catch(e){
+    ocupado = false;
+    if (btn) btn.firstChild.textContent = a.fotos.length ? 'Tirar outra foto' : 'Fotografar canhoto assinado';
+    nfErr(e && e.code === 'grande' ? 'A foto ficou grande demais. Tire de novo, mais perto do canhoto.'
+      : e && e.code === 'permission-denied' ? 'Seu usuário não pode gravar. Peça liberação ao administrador.'
+      : 'A foto não foi salva. Verifique a internet e tente de novo.');
+  }
+}
+
+// ---------- eventos ----------
+$('#camBtn').addEventListener('click', () => { readMsg(''); window.DanfeScanner.open(abrirChave); });
+$('#chaveForm').addEventListener('submit', ev => { ev.preventDefault(); abrirChave($('#chaveInput').value); });
+$('#hojeList').addEventListener('click', ev => { const b = ev.target.closest('[data-chave]'); if (b) abrirChave(b.dataset.chave); });
+</script>
+</body>
+</html>
